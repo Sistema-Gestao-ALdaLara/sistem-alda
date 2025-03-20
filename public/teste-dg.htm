@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <title>D. GERAL - Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Dashboard do Diretor Geral">
+    <meta name="keywords" content="Dashboard, Escola, Diretor Geral">
+    <meta name="author" content="Sua Escola">
+    <link rel="icon" href="libraries/assets/images/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="libraries/bower_components/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="libraries/assets/icon/feather/css/feather.css">
+    <link rel="stylesheet" type="text/css" href="libraries/assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="libraries/assets/css/jquery.mCustomScrollbar.css">
+    <style>
+        .bg-img {
+            background-image: url('assets/img/IMG_20250113_104838.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Pre-loader -->
+    <div class="theme-loader">
+        <div class="ball-scale">
+            <div class='contain'>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+                <div class="ring"><div class="frame"></div></div>
+            </div>
+        </div>
+    </div>
+    <!-- Pre-loader end -->
+
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+            <!-- Navbar -->
+            <nav class="navbar header-navbar pcoded-header">
+                <div class="navbar-wrapper">
+                    <div class="navbar-logo">
+                        <a href="dashboard.php">
+                            <img class="img-fluid" src="libraries/assets/images/logo.png" alt="Logo">
+                            <span class="font-italic font-weight-bold text-uppercase text-warning text-center">D. GERAL | Alda Lara</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            <!-- Navbar end -->
+
+            <!-- Sidebar -->
+            <div class="pcoded-main-container">
+                <div class="pcoded-wrapper">
+                    <nav class="pcoded-navbar">
+                        <div class="pcoded-inner-navbar main-menu">
+                            <div class="pcoded-navigatio-lavel">Navegação</div>
+                            <ul class="pcoded-item pcoded-left-item">
+                                <li class="pcoded-hasmenu active pcoded-trigger">
+                                    <a href="javascript:void(0)">
+                                        <span class="pcoded-micon"><i class="feather icon-home"></i></span>
+                                        <span class="pcoded-mtext">Dashboard</span>
+                                    </a>
+                                </li>
+                                <!-- Outros menus aqui -->
+                            </ul>
+                        </div>
+                    </nav>
+                    <!-- Sidebar end -->
+
+                    <!-- Conteúdo Principal -->
+                    <div class="pcoded-content">
+                        <div class="pcoded-inner-content">
+                            <div class="main-body bg-img">
+                                <div class="page-wrapper">
+                                    <div class="page-body">
+                                        <!-- Resumo Estatístico -->
+                                        <div class="row">
+                                            <div class="col-xl-3 col-md-6">
+                                                <div class="card bg-c-yellow update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white">1200</h4>
+                                                                <h6 class="text-white m-b-0">Total de Alunos</h6>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-3 col-md-6">
+                                                <div class="card bg-c-green update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white">85</h4>
+                                                                <h6 class="text-white m-b-0">Total de Professores</h6>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-3 col-md-6">
+                                                <div class="card bg-c-pink update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white">50</h4>
+                                                                <h6 class="text-white m-b-0">Total de Funcionários</h6>
+                                                            </div>
+                                                        </div>
+                                                    </div> 
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Resumo Estatístico end -->
+
+                                        <!-- Gráficos de Desempenho -->
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5>Desempenho Acadêmico</h5>
+                                                    </div>
+                                                    <div class="card-block">
+                                                        <canvas id="desempenhoChart" height="100"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Gráficos de Desempenho end -->
+
+                                        <!-- Últimos Registros -->
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5>Últimas Matrículas e Transferências</h5>
+                                                    </div>
+                                                    <div class="card-block">
+                                                        <ul class="list-group">
+                                                            <li class="list-group-item">Matrícula: João Silva - 12/10/2023</li>
+                                                            <li class="list-group-item">Transferência: Maria Souza - 10/10/2023</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Últimos Registros end -->
+
+                                        <!-- Pendências -->
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5>Pendências</h5>
+                                                    </div>
+                                                    <div class="card-block">
+                                                        <ul class="list-group">
+                                                            <li class="list-group-item">Pedido de materiais - Aguardando aprovação</li>
+                                                            <li class="list-group-item">Evento cultural - Pendente</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Pendências end -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Conteúdo Principal end -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="libraries/bower_components/jquery/js/jquery.min.js"></script>
+    <script src="libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
+    <script src="libraries/assets/js/pcoded.min.js"></script>
+    <script src="libraries/assets/js/vartical-layout.min.js"></script>
+    <script src="libraries/assets/js/script.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Gráfico de Desempenho
+        const ctx = document.getElementById('desempenhoChart').getContext('2d');
+        const desempenhoChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['1º Trimestre', '2º Trimestre', '3º Trimestre'],
+                datasets: [{
+                    label: 'Aprovações',
+                    data: [85, 90, 88],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Reprovações',
+                    data: [15, 10, 12],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

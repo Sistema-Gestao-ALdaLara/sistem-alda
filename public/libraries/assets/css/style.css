@@ -4884,8 +4884,8 @@ a[data-toggle="lightbox"] .img-fluid {
     border-radius: 50%;
     padding: 10px;
     border: 3px solid transparent;
-    border-left-color: #01a9ac;
-    border-right-color: #01a9ac;
+    border-left-color: #f4ed24;
+    border-right-color: #181be3;
     -webkit-animation: round-rotate 1.5s ease-in-out infinite;
     animation: round-rotate 1.5s ease-in-out infinite
 }
@@ -4895,8 +4895,8 @@ a[data-toggle="lightbox"] .img-fluid {
     width: 100%;
     border-radius: 50%;
     border: 3px solid transparent;
-    border-left-color: #0ac282;
-    border-right-color: #0ac282;
+    border-left-color: #f4ed24;
+    border-right-color: #181be3;
     -webkit-animation: round-rotate 1.5s ease-in-out infinite;
     animation: round-rotate 1.5s ease-in-out infinite
 }
