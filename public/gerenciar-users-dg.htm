@@ -1,3 +1,8 @@
+<!--<?php
+require_once "../auth/permissoes.php";
+verificarPermissao(['diretor_pedagogico']);
+?>
+-->
 <!DOCTYPE html>
 <html lang="pt">
 
@@ -471,6 +476,168 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5>Gerenciamento de Usuários</h5>
+                                            </div>
+                                            <div class="card-block">
+                                                <ul class="nav nav-tabs md-tabs" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" data-toggle="tab" href="#alunos" role="tab">Alunos</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" data-toggle="tab" href="#professores" role="tab">Professores</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" data-toggle="tab" href="#coordenadores" role="tab">Coordenadores</a>
+                                                    </li>
+                                                </ul>
+                                        
+                                                <div class="tab-content">
+                                                    <!-- Alunos Organizados por Curso -->
+                                                    <div class="tab-pane active" id="alunos" role="tabpanel">
+                                                        <div class="accordion" id="accordionAlunos">
+                                                            
+                                                            <!-- Curso: Ciências Exatas -->
+                                                            <div class="card">
+                                                                <div class="card-header" id="curso1">
+                                                                    <h5 class="mb-0">
+                                                                        <button class="btn btn-link" data-toggle="collapse" data-target="#turmasCurso1">
+                                                                            📚 Ciências Exatas
+                                                                        </button>
+                                                                    </h5>
+                                                                </div>
+                                                                <div id="turmasCurso1" class="collapse show" data-parent="#accordionAlunos">
+                                                                    <div class="card-body">
+                                                                        <!-- Turma: 10º A -->
+                                                                        <h6>Turma: 10º A</h6>
+                                                                        <table class="table table-striped">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Nome</th>
+                                                                                    <th>Email</th>
+                                                                                    <th>Status</th>
+                                                                                    <th>Ações</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td>João Silva</td>
+                                                                                    <td>joao@email.com</td>
+                                                                                    <td><span class="badge badge-success">Ativo</span></td>
+                                                                                    <td>
+                                                                                        <button class="btn btn-sm btn-primary"><i class="feather icon-edit"></i></button>
+                                                                                        <button class="btn btn-sm btn-danger"><i class="feather icon-trash"></i></button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                        <!-- Turma: 10º B -->
+                                                                        <h6>Turma: 10º B</h6>
+                                                                        <table class="table table-striped">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td>Maria Santos</td>
+                                                                                    <td>maria@email.com</td>
+                                                                                    <td><span class="badge badge-danger">Inativo</span></td>
+                                                                                    <td>
+                                                                                        <button class="btn btn-sm btn-primary"><i class="feather icon-edit"></i></button>
+                                                                                        <button class="btn btn-sm btn-success"><i class="feather icon-check"></i></button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                        
+                                                            <!-- Curso: Informática -->
+                                                            <div class="card">
+                                                                <div class="card-header" id="curso2">
+                                                                    <h5 class="mb-0">
+                                                                        <button class="btn btn-link" data-toggle="collapse" data-target="#turmasCurso2">
+                                                                            💻 Informática
+                                                                        </button>
+                                                                    </h5>
+                                                                </div>
+                                                                <div id="turmasCurso2" class="collapse" data-parent="#accordionAlunos">
+                                                                    <div class="card-body">
+                                                                        <h6>Turma: 11º A</h6>
+                                                                        <table class="table table-striped">
+                                                                            <tbody>
+                                                                                <tr>
+                                                                                    <td>Pedro Lima</td>
+                                                                                    <td>pedro@email.com</td>
+                                                                                    <td><span class="badge badge-success">Ativo</span></td>
+                                                                                    <td>
+                                                                                        <button class="btn btn-sm btn-primary"><i class="feather icon-edit"></i></button>
+                                                                                        <button class="btn btn-sm btn-danger"><i class="feather icon-trash"></i></button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                        </div>
+                                                    </div>
+                                        
+                                                    <!-- Professores Organizados por Curso -->
+                                                    <div class="tab-pane" id="professores" role="tabpanel">
+                                                        <div class="table-responsive">
+                                                            <h6>Curso: Ciências Exatas</h6>
+                                                            <table class="table table-striped">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Nome</th>
+                                                                        <th>Email</th>
+                                                                        <th>Disciplina</th>
+                                                                        <th>Status</th>
+                                                                        <th>Ações</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>Fernando Costa</td>
+                                                                        <td>fernando@email.com</td>
+                                                                        <td>Física</td>
+                                                                        <td><span class="badge badge-success">Ativo</span></td>
+                                                                        <td>
+                                                                            <button class="btn btn-sm btn-primary"><i class="feather icon-edit"></i></button>
+                                                                            <button class="btn btn-sm btn-danger"><i class="feather icon-trash"></i></button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                        
+                                                    <!-- Coordenadores Organizados por Curso -->
+                                                    <div class="tab-pane" id="coordenadores" role="tabpanel">
+                                                        <div class="table-responsive">
+                                                            <h6>Curso: Informática</h6>
+                                                            <table class="table table-striped">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td>Ricardo Nogueira</td>
+                                                                        <td>ricardo@email.com</td>
+                                                                        <td><span class="badge badge-success">Ativo</span></td>
+                                                                        <td>
+                                                                            <button class="btn btn-sm btn-primary"><i class="feather icon-edit"></i></button>
+                                                                            <button class="btn btn-sm btn-danger"><i class="feather icon-trash"></i></button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                        
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                         
                                     </div>
                                 </div>

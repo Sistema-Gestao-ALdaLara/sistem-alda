@@ -1,0 +1,23 @@
+<!--so um exemplo ainda-->
+<?php include '../includes/cursos_listagem.php'; ?>
+<div class="card">
+    <div class="card-header">
+        <h5>Gerenciamento de Usuários</h5>
+    </div>
+    <div class="card-block">
+        <ul class="nav nav-tabs md-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#ciencias_exatas" role="tab">Ciências Exatas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#informatica" role="tab">Informática</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#gestao" role="tab">Gestão</a>
+            </li>
+        </ul>
+
+        <?php listarCursosETurmas("alunos"); ?>
+
+    </div>
+</div>
