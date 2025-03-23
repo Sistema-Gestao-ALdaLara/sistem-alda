@@ -557,9 +557,14 @@
                                                 <h5>Editar Aluno</h5>
                                             </div>
                                             <div class="card-block">
-                                                <form id="formEditarAluno">
+                                                <form id="formEditarUsuario">
                                                     <input type="hidden" id="idAluno" name="idAluno">
                                                     
+                                                    <!-- Campo de busca AJAX -->
+                                                    <label for="buscarUsuario">Buscar Aluno:</label>
+                                                    <input type="text" id="buscarUsuario" class="form-control">
+                                                    <ul id="listaUsuarios" class="list-group"></ul>
+                                            
                                                     <div class="form-group">
                                                         <label for="nome">Nome:</label>
                                                         <input type="text" id="nome" name="nome" class="form-control" required>
@@ -571,18 +576,12 @@
                                                     </div>
                                                     
                                                     <div class="form-group">
-                                                        <label for="curso">Curso:</label>
-                                                        <select id="curso" name="curso" class="form-control" required>
-                                                            <option value="TI">TI</option>
-                                                            <option value="Gestão">Gestão</option>
-                                                        </select>
-                                                    </div>
-                                                    
-                                                    <div class="form-group">
                                                         <label for="turma">Turma:</label>
                                                         <select id="turma" name="turma" class="form-control" required>
-                                                            <option value="A">Turma A</option>
-                                                            <option value="B">Turma B</option>
+                                                            <option value="1A">1A</option>
+                                                            <option value="1B">1B</option>
+                                                            <option value="2A">2A</option>
+                                                            <option value="2B">2B</option>
                                                         </select>
                                                     </div>
                                                     
@@ -596,7 +595,7 @@
                                                     
                                                     <button type="submit" class="btn btn-success">Salvar Alterações</button>
                                                 </form>
-                                            </div>
+                                            </div>   
                                         </div>
                                     </div>
 
@@ -703,19 +702,99 @@
      
     <script>
         $(document).ready(function() {
-            $('#formEditarAluno').on('submit', function(event) {
-                event.preventDefault();
+            // Buscar usuário pelo nome
+            $("#buscarUsuario").on("keyup", function() {
+                let nome = $(this).val();
+                if (nome.length > 2) {
+                    $.ajax({
+                        url: "buscar_usuario.php",
+                        method: "GET",
+                        data: { nome: nome },
+                        success: function(data) {
+                            let lista = "";
+                            let usuarios = JSON.parse(data);
+                            usuarios.forEach(function(usuario) {
+                                lista += `<li data-id="${usuario.id_usuario}" class="list-group-item">${usuario.nome}</li>`;
+                            });
+                            $("#listaUsuarios").html(lista);
+                        }
+                    });
+                } else {
+                    $("#listaUsuarios").html(""); // Limpar lista se não houver input suficiente
+                }
+            });
+        
+            // Selecionar usuário da lista e preencher os campos
+            $("#listaUsuarios").on("click", "li", function() {
+                let id = $(this).attr("data-id");
+                let nome = $(this).text();
+        
+                $("#buscarUsuario").val(nome);
+                $("#listaUsuarios").html(""); // Limpar lista após seleção
+        
                 $.ajax({
-                    url: 'atualizar_aluno.php',
-                    method: 'POST',
-                    data: $(this).serialize(),
+                    url: "buscar_usuario.php",
+                    method: "GET",
+                    data: { id: id },
+                    success: function(data) {
+                        let usuario = JSON.parse(data);
+                        $("#idAluno").val(usuario.id_usuario);
+                        $("#nome").val(usuario.nome);
+                        $("#email").val(usuario.email);
+                        $("#turma").val(usuario.turma);
+                        $("#status").val(usuario.status);
+                        alert("Usuário " + usuario.nome + " selecionado com sucesso!");
+                    }
+                });
+            });
+        
+            // Capturar ID do usuário na URL e carregar dados automaticamente
+            let urlParams = new URLSearchParams(window.location.search);
+            let idAluno = urlParams.get('id');
+            if (idAluno !== null && idAluno !== "") {
+                $.ajax({
+                    url: "buscar_usuario.php",
+                    method: "GET",
+                    data: { id: idAluno },
+                    success: function(data) {
+                        let usuario = JSON.parse(data);
+                        $("#idAluno").val(usuario.id_usuario);
+                        $("#nome").val(usuario.nome);
+                        $("#email").val(usuario.email);
+                        $("#turma").val(usuario.turma);
+                        $("#status").val(usuario.status);
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $("#formEditarUsuario").on("submit", function(e) {
+                e.preventDefault(); // Impede o envio tradicional do formulário
+                
+                $.ajax({
+                    url: "atualizar_usuario.php",
+                    method: "POST",
+                    data: $(this).serialize(), // Envia todos os campos do formulário
+                    dataType: "json",
                     success: function(response) {
-                        alert(response);
+                        if (response.success) {
+                            alert(response.success);
+                        } else {
+                            alert(response.error);
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao conectar ao servidor.");
                     }
                 });
             });
         });
+
     </script>
+        
 </body>
 
 </html>

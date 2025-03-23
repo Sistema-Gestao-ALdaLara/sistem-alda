@@ -572,9 +572,6 @@
                                                             <option value="B">Turma B</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-4 d-flex align-items-end">
-                                                        <button id="btnFiltrar" class="btn btn-primary">Aplicar Filtro</button>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="card-block">
@@ -713,10 +710,19 @@
                         d.curso = $("#filtroCurso").val();
                     }
                 },
+                "columnDefs": [
+                    {
+                        "targets": 5,
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return '<a href="editar-aluno.php?id=' + row[0] + '" class="btn btn-primary">Editar</a>';
+                        }
+                    }
+                ],
                 "language": { "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Portuguese-Brasil.json" }
             });
-    
-            $("#btnFiltrar").on("click", function() {
+            
+            $("#filtroCurso, #filtroTurma").on("change", function() {
                 tabelaAlunos.ajax.reload();
             });
         });

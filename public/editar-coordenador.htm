@@ -551,38 +551,49 @@
 
                                     <!-- Page-body start -->
                                     <!-- Gerenciamento de Coordenadores - Diretor Geral -->
+                                    <!-- Página de Edição de Coordenador -->
                                     <div class="page-body">
                                         <div class="card">
                                             <div class="card-header">
-                                                <h5>Gerenciar Coordenadores</h5>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <label for="filtroCurso">Filtrar por Curso:</label>
-                                                        <select id="filtroCurso" class="form-control">
-                                                            <option value="">Todos</option>
+                                                <h5>Editar Coordenador</h5>
+                                            </div>
+                                            <div class="card-block">
+                                                <form id="formEditarUsuario">
+                                                    <input type="hidden" id="idCoordenador" name="idCoordenador">
+                                                    
+                                                    <!-- Campo de busca AJAX -->
+                                                    <label for="buscarUsuario">Buscar Coordenador:</label>
+                                                    <input type="text" id="buscarUsuario" class="form-control">
+                                                    <ul id="listaUsuarios" class="list-group"></ul>
+                                            
+                                                    <div class="form-group">
+                                                        <label for="nome">Nome:</label>
+                                                        <input type="text" id="nome" name="nome" class="form-control" required>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="email">Email:</label>
+                                                        <input type="email" id="email" name="email" class="form-control" required>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="curso">Curso:</label>
+                                                        <select id="curso" name="curso" class="form-control" required>
                                                             <option value="TI">TI</option>
                                                             <option value="Gestão">Gestão</option>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-6 d-flex align-items-end">
-                                                        <button id="btnFiltrar" class="btn btn-primary">Aplicar Filtro</button>
+                                                    
+                                                    <div class="form-group">
+                                                        <label for="status">Status:</label>
+                                                        <select id="status" name="status" class="form-control">
+                                                            <option value="ativo">Ativo</option>
+                                                            <option value="inativo">Inativo</option>
+                                                        </select>
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <div class="card-block">
-                                                <table id="tabelaCoordenadores" class="table table-striped table-bordered">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Nome</th>
-                                                            <th>Email</th>
-                                                            <th>Curso</th>
-                                                            <th>Ações</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Dados carregados dinamicamente -->
-                                                    </tbody>
-                                                </table>
+                                                    
+                                                    <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
@@ -591,7 +602,10 @@
                                     <!-- Page-body end -->
                                 </div>
                             </div>
-                            
+                            <!-- Main body end -->
+                            <div id="styleSelector">
+
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -690,33 +704,91 @@
 
     <script>
         $(document).ready(function() {
-            let tabelaCoordenadores = $('#tabelaCoordenadores').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "ajax": {
-                    "url": "fetch_usuarios.php",
-                    "data": function (d) {
-                        d.tipo = "coordenador";
-                        d.curso = $("#filtroCurso").val();
-                    }
-                },
-                "columnDefs": [
-                    {
-                        "targets": 3,
-                        "data": null,
-                        "render": function(data, type, row) {
-                            return '<a href="editar-coordenador.php?id=' + row[0] + '" class="btn btn-primary">Editar</a>';
+            // Buscar coordenador pelo nome
+            $("#buscarUsuario").on("keyup", function() {
+                let nome = $(this).val();
+                if (nome.length > 2) {
+                    $.ajax({
+                        url: "buscar_usuario.php",
+                        method: "GET",
+                        data: { nome: nome },
+                        success: function(data) {
+                            $("#listaUsuarios").html(data);
                         }
-                    }
-                ],
-                "language": { "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Portuguese-Brasil.json" }
+                    });
+                }
             });
         
-            $("#btnFiltrar").on("click", function() {
-                tabelaCoordenadores.ajax.reload();
+            // Selecionar coordenador na lista e preencher os campos
+            $("#listaUsuarios").on("click", "li", function() {
+                let id = $(this).data("id");
+                let nome = $(this).text();
+        
+                $("#buscarUsuario").val(nome);
+                $("#listaUsuarios").html(""); // Limpar lista após seleção
+        
+                $.ajax({
+                    url: "buscar_usuario.php",
+                    method: "GET",
+                    data: { id: id },
+                    success: function(data) {
+                        let usuario = JSON.parse(data);
+                        $("#idCoordenador").val(usuario.id_usuario);
+                        $("#nome").val(usuario.nome);
+                        $("#email").val(usuario.email);
+                        $("#curso").val(usuario.curso);
+                        $("#status").val(usuario.status);
+                        alert("Coordenador " + usuario.nome + " selecionado com sucesso!");
+                    }
+                });
+            });
+        
+            // Capturar ID do coordenador na URL e carregar dados automaticamente
+            let urlParams = new URLSearchParams(window.location.search);
+            let idCoordenador = urlParams.get('id');
+            if (idCoordenador) {
+                $.ajax({
+                    url: "buscar_usuario.php",
+                    method: "GET",
+                    data: { id: idCoordenador },
+                    success: function(data) {
+                        let usuario = JSON.parse(data);
+                        $("#idCoordenador").val(usuario.id_usuario);
+                        $("#nome").val(usuario.nome);
+                        $("#email").val(usuario.email);
+                        $("#curso").val(usuario.curso);
+                        $("#status").val(usuario.status);
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $("#formEditarUsuario").on("submit", function(e) {
+                e.preventDefault(); // Impede o envio tradicional do formulário
+                
+                $.ajax({
+                    url: "atualizar_usuario.php",
+                    method: "POST",
+                    data: $(this).serialize(), // Envia todos os campos do formulário
+                    dataType: "json",
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.success);
+                        } else {
+                            alert(response.error);
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao conectar ao servidor.");
+                    }
+                });
             });
         });
-        </script>
+
+    </script>
 </body>
 
 </html>
