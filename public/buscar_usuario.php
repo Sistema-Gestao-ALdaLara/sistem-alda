@@ -7,12 +7,12 @@ $id = $_GET['id'] ?? '';
 
 if (!empty($id)) {
     // Buscar usuário pelo ID
-    $sql = "SELECT id_usuario, nome, email, curso, status FROM usuarios WHERE id_usuario = ?";
+    $sql = "SELECT id_usuario, nome, email, curso, status FROM usuario WHERE id_usuario = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
 } elseif (!empty($nome)) {
     // Buscar usuários pelo nome (retorna lista)
-    $sql = "SELECT id_usuario, nome FROM usuarios WHERE nome LIKE ? LIMIT 10";
+    $sql = "SELECT id_usuario, nome FROM usuario WHERE nome LIKE ? LIMIT 10";
     $stmt = $conn->prepare($sql);
     $searchTerm = "%$nome%";
     $stmt->bind_param("s", $searchTerm);

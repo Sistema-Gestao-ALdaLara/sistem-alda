@@ -1,6 +1,6 @@
 <?php
 // Conectar ao banco de dados
-$conn = new mysqli("localhost", "root", "", "escola");
+$conn = new mysqli("localhost", "root", "", "escoladb");
 
 // Verificar conexão
 if ($conn->connect_error) {

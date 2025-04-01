@@ -11,9 +11,9 @@ if (empty($idAluno)) {
 
 // Consulta para buscar o histórico acadêmico (notas e frequência)
 $sql = "SELECT d.nome AS disciplina, n.nota, n.data_lancamento, f.frequencia 
-        FROM notas n 
-        JOIN disciplinas d ON n.id_disciplina = d.id_disciplina
-        LEFT JOIN frequencias f ON n.id_aluno = f.id_aluno AND n.id_disciplina = f.id_disciplina
+        FROM nota n 
+        JOIN disciplina d ON n.id_disciplina = d.id_disciplina
+        LEFT JOIN frequencia_aluno f ON n.id_aluno = f.id_aluno AND n.id_disciplina = f.id_disciplina
         WHERE n.id_aluno = ?";
 
 $stmt = $conn->prepare($sql);

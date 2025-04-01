@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Atualizar os dados do usuário
-    $sql = "UPDATE usuarios SET nome = ?, email = ?, curso = ?, status = ? WHERE id_usuario = ?";
+    $sql = "UPDATE usuario SET nome = ?, email = ?, curso = ?, status = ? WHERE id_usuario = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssi", $nome, $email, $curso, $status, $id);
     

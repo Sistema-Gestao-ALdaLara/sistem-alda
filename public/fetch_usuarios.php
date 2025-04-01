@@ -13,7 +13,7 @@ $data_filtered_count = 0;
 
 // Consulta base
 $sql = "SELECT id_usuario, nome, email, tipo FROM usuarios WHERE 1";
-$data_total_count_query = "SELECT COUNT(*) AS total FROM usuarios WHERE 1";
+$data_total_count_query = "SELECT COUNT(*) AS total FROM usuario WHERE 1";
 $params = [];
 $types = "";
 
@@ -27,8 +27,8 @@ if (!empty($tipo_usuario)) {
 
 // Filtro por turma (apenas para alunos)
 if ($tipo_usuario == 'aluno' && !empty($turma)) {
-    $sql .= " AND id_usuario IN (SELECT id_usuario FROM alunos WHERE id_turma = ?)";
-    $data_total_count_query .= " AND id_usuario IN (SELECT id_usuario FROM alunos WHERE id_turma = ?)";
+    $sql .= " AND id_usuario IN (SELECT id_usuario FROM aluno WHERE id_turma = ?)";
+    $data_total_count_query .= " AND id_usuario IN (SELECT id_usuario FROM aluno WHERE id_turma = ?)";
     $params[] = $turma;
     $types .= "s";
 }
@@ -36,7 +36,7 @@ if ($tipo_usuario == 'aluno' && !empty($turma)) {
 // Filtro por curso (para alunos, coordenadores e professores)
 if (($tipo_usuario == 'aluno' || $tipo_usuario == 'coordenador' || $tipo_usuario == 'professor') && !empty($curso)) {
     $sql .= " AND id_usuario IN (SELECT id_usuario FROM usuarios WHERE id_curso = ?)";
-    $data_total_count_query .= " AND id_usuario IN (SELECT id_usuario FROM usuarios WHERE id_curso = ?)";
+    $data_total_count_query .= " AND id_usuario IN (SELECT id_usuario FROM usuario WHERE id_curso = ?)";
     $params[] = $curso;
     $types .= "s";
 }
