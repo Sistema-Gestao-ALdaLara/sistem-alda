@@ -10,6 +10,8 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 // Verificar conexão
 if ($conn->connect_error) {
     die("Falha na conexão: " . $conn->connect_error);
+    // Não revelar detalhes do erro em produção
+    //die("Erro ao conectar ao sistema. Contate o administrador.");
 }
 ?>
 
