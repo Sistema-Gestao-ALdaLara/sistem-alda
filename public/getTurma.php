@@ -1,17 +1,19 @@
 <?php
-require_once "../config/conexao.php";
+require_once 'conexao.php';
 
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
 
 if ($id_curso) {
-    $stmt = $pdo->prepare("SELECT id_turma, nome FROM turma WHERE id_curso = ? ORDER BY nome");
-    $stmt->execute([$id_curso]);
-    $turmas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare("SELECT id_turma, nome FROM turma WHERE curso_id_curso = ? ORDER BY nome");
+    $stmt->bind_param("i", $id_curso);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
-    echo '<option value="">Todas as turmas</option>';
-    foreach ($turmas as $turma) {
-        echo '<option value="' . $turma['id_turma'] . '">' . htmlspecialchars($turma['nome']) . '</option>';
+    $options = '<option value="">Selecione a turma</option>';
+    while ($turma = $result->fetch_assoc()) {
+        $options .= "<option value='{$turma['id_turma']}'>{$turma['nome']}</option>";
     }
+    echo $options;
 } else {
     echo '<option value="">Selecione um curso primeiro</option>';
 }

@@ -1,45 +1,34 @@
-﻿<!DOCTYPE html>
-<!--<?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['secretaria']);
+<?php
+// require_once "../auth/permissoes.php";
+// verificarPermissao(['secretaria']);
 
-require_once '../config/conexao.php';
+require_once 'conexao.php';
 
 // Filtros recebidos via GET
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
-$id_turma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : null;
 
-// Query base para listar alunos
+// Query para coordenadores
 $query = "SELECT 
-             a.id_aluno,
+             c.id_coordenador,
              u.nome, 
              u.email,
              u.bi_numero,
-             a.numero_matricula,
-             t.nome AS turma,
-             t.id_turma,
-             c.nome AS curso,
-             c.id_curso,
-             a.ano_letivo,
-             m.status_matricula
-          FROM aluno a
-          JOIN usuario u ON a.id_usuario = u.id_usuario
-          LEFT JOIN turma t ON a.id_turma = t.id_turma
-          LEFT JOIN curso c ON a.id_curso = c.id_curso
-          LEFT JOIN matricula m ON m.id_aluno = a.id_aluno AND m.ano_letivo = a.ano_letivo";
+             cr.nome AS curso,
+             cr.id_curso,
+             u.status
+          FROM coordenador c
+          JOIN usuario u ON c.usuario_id_usuario = u.id_usuario
+          JOIN curso cr ON c.curso_id_curso = cr.id_curso";
 
-// Adiciona filtros dinamicamente
+// Filtros
 $where = [];
 $params = [];
+$types = "";
 
 if ($id_curso) {
-    $where[] = "c.id_curso = ?";
+    $where[] = "cr.id_curso = ?";
     $params[] = $id_curso;
-}
-
-if ($id_turma) {
-    $where[] = "t.id_turma = ?";
-    $params[] = $id_turma;
+    $types .= "i";
 }
 
 if (!empty($where)) {
@@ -48,30 +37,31 @@ if (!empty($where)) {
 
 $query .= " ORDER BY u.nome ASC";
 
-// Executa a query com filtros
-$stmt = $pdo->prepare($query);
-$stmt->execute($params);
-$alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Preparar e executar
+$stmt = $conn->prepare($query);
 
-// Obter lista de cursos para os filtros e modal
-$cursos = $pdo->query("SELECT id_curso, nome FROM curso ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
-
-// Obter turmas do curso selecionado (se houver)
-$turmas = [];
-if ($id_curso) {
-    $stmt_turmas = $pdo->prepare("SELECT id_turma, nome FROM turma WHERE id_curso = ? ORDER BY nome");
-    $stmt_turmas->execute([$id_curso]);
-    $turmas = $stmt_turmas->fetchAll(PDO::FETCH_ASSOC);
+if ($params) {
+    $stmt->bind_param($types, ...$params);
 }
-?>-->
+
+$stmt->execute();
+$result = $stmt->get_result();
+$coordenadores = $result->fetch_all(MYSQLI_ASSOC);
+
+// Obter cursos
+$result_cursos = $conn->query("SELECT id_curso, nome FROM curso ORDER BY nome");
+$cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
+?>
+
+<!DOCTYPE html>
 <html lang="pt">
 <head>
-    <title>SECRETARIA - Gestão de Alunos | Alda Lara</title>
+    <title>SECRETARIA - Gestão de Coordenadores | Alda Lara</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="Sistema de Gestão Escolar - Escola Alda Lara">
-    <meta name="keywords" content="Escola, Alda Lara, Angola, Luanda, Secretaria, Alunos">
+    <meta name="keywords" content="Escola, Alda Lara, Angola, Luanda, Secretaria, Coordenadores">
     <meta name="author" content="Escola Alda Lara">
     <link rel="icon" href="libraries/assets/images/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
@@ -187,7 +177,7 @@ if ($id_curso) {
                                 <div class="main-search morphsearch-search">
                                     <div class="input-group">
                                         <span class="input-group-addon search-close"><i class="feather icon-x"></i></span>
-                                        <input type="text" class="form-control" placeholder="Pesquisar aluno...">
+                                        <input type="text" class="form-control" placeholder="Pesquisar coordenador...">
                                         <span class="input-group-addon search-btn"><i class="feather icon-search"></i></span>
                                     </div>
                                 </div>
@@ -208,7 +198,7 @@ if ($id_curso) {
                                                 <img class="d-flex align-self-center img-radius" src="libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
                                                 <div class="media-body">
                                                     <h5 class="notification-user">Secretaria</h5>
-                                                    <p class="notification-msg">Novas matrículas pendentes de aprovação</p>
+                                                    <p class="notification-msg">Novos coordenadores cadastrados</p>
                                                     <span class="notification-time">Hoje</span>
                                                 </div>
                                             </div>
@@ -254,6 +244,14 @@ if ($id_curso) {
                                     <span class="pcoded-mtext">Gerenciar Alunos</span></a>
                                 </li>
                                 <li class="pcoded-hasmenu">
+                                    <a href="/secretaria/professores.php"><span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                                    <span class="pcoded-mtext">Gerenciar Professores</span></a>
+                                </li>
+                                <li class="pcoded-hasmenu active">
+                                    <a href="/secretaria/coordenadores.php"><span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                                    <span class="pcoded-mtext">Gerenciar Coordenadores</span></a>
+                                </li>
+                                <li class="pcoded-hasmenu">
                                     <a href="/secretaria/turmas.php"><span class="pcoded-micon"><i class="feather icon-layers"></i></span>
                                     <span class="pcoded-mtext">Gerenciar Turmas</span></a>
                                 </li>
@@ -280,12 +278,12 @@ if ($id_curso) {
                                                 <!-- Filtros -->
                                                 <div class="card card-table mb-3">
                                                     <div class="card-header">
-                                                        <h5 class="text-white mb-0">Filtrar Alunos</h5>
+                                                        <h5 class="text-white mb-0">Filtrar Coordenadores</h5>
                                                     </div>
                                                     <div class="card-body">
                                                         <form id="formFiltros" method="GET" action="">
                                                             <div class="row">
-                                                                <div class="col-md-5">
+                                                                <div class="col-md-10">
                                                                     <div class="form-group">
                                                                         <label for="filtro_curso">Curso</label>
                                                                         <select class="form-control" id="filtro_curso" name="id_curso">
@@ -298,26 +296,11 @@ if ($id_curso) {
                                                                         </select>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-5">
-                                                                    <div class="form-group">
-                                                                        <label for="filtro_turma">Turma</label>
-                                                                        <select class="form-control" id="filtro_turma" name="id_turma" <?= empty($turmas) ? 'disabled' : '' ?>>
-                                                                            <option value="">Todas as turmas</option>
-                                                                            <?php if (!empty($turmas)): ?>
-                                                                                <?php foreach ($turmas as $turma): ?>
-                                                                                <option value="<?= $turma['id_turma'] ?>" <?= ($id_turma == $turma['id_turma']) ? 'selected' : '' ?>>
-                                                                                    <?= htmlspecialchars($turma['nome']) ?>
-                                                                                </option>
-                                                                                <?php endforeach; ?>
-                                                                            <?php endif; ?>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
                                                                 <div class="col-md-2">
                                                                     <button type="submit" class="btn btn-primary btn-filtrar">
                                                                         <i class="feather icon-filter"></i> Filtrar
                                                                     </button>
-                                                                    <a href="alunos.php" class="btn btn-limpar btn-secondary">
+                                                                    <a href="coordenadores.php" class="btn btn-limpar btn-secondary">
                                                                         <i class="feather icon-refresh-ccw"></i> Limpar
                                                                     </a>
                                                                 </div>
@@ -326,55 +309,57 @@ if ($id_curso) {
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Tabela de Alunos -->
+                                                <!-- Tabela de Coordenadores -->
                                                 <div class="card card-table">
                                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h5 class="text-white mb-0">Lista de Alunos</h5>
+                                                        <h5 class="text-white mb-0">Lista de Coordenadores</h5>
                                                         <div>
-                                                            <button class="btn btn-primary mr-2" onclick="novoAluno()" data-toggle="modal" data-target="#modalAluno">
-                                                                <i class="feather icon-plus"></i> Novo Aluno
+                                                            <button class="btn btn-primary mr-2" onclick="novoCoordenador()" data-toggle="modal" data-target="#modalCoordenador">
+                                                                <i class="feather icon-plus"></i> Novo Coordenador
                                                             </button>
-                                                            <button class="btn btn-info" onclick="exportarAlunos()">
+                                                            <button class="btn btn-info" onclick="exportarCoordenadores()">
                                                                 <i class="feather icon-download"></i> Exportar
                                                             </button>
                                                         </div>
                                                     </div>
                                                     <div class="card-block">
                                                         <div class="table-responsive">
-                                                            <table class="table table-custom" id="tabelaAlunos">
+                                                            <table class="table table-custom" id="tabelaCoordenadores">
                                                                 <thead>
                                                                     <tr>
-                                                                        <th>Matrícula</th>
                                                                         <th>Nome</th>
                                                                         <th>BI</th>
-                                                                        <th>Turma</th>
+                                                                        <th>Email</th>
                                                                         <th>Curso</th>
-                                                                        <th>Ano Letivo</th>
+                                                                        <th>Status</th>
                                                                         <th>Ações</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <?php if (empty($alunos)): ?>
+                                                                    <?php if (empty($coordenadores)): ?>
                                                                     <tr>
-                                                                        <td colspan="7" class="text-center">Nenhum aluno encontrado com os filtros selecionados</td>
+                                                                        <td colspan="6" class="text-center">Nenhum coordenador encontrado</td>
                                                                     </tr>
                                                                     <?php else: ?>
-                                                                    <?php foreach ($alunos as $aluno): ?>
+                                                                    <?php foreach ($coordenadores as $coordenador): ?>
                                                                     <tr>
-                                                                        <td><?= htmlspecialchars($aluno['numero_matricula']) ?></td>
-                                                                        <td><?= htmlspecialchars($aluno['nome']) ?></td>
-                                                                        <td><?= htmlspecialchars($aluno['bi_numero']) ?></td>
-                                                                        <td><?= htmlspecialchars($aluno['turma'] ?? 'N/D') ?></td>
-                                                                        <td><?= htmlspecialchars($aluno['curso'] ?? 'N/D') ?></td>
-                                                                        <td><?= htmlspecialchars($aluno['ano_letivo']) ?></td>
+                                                                        <td><?= htmlspecialchars($coordenador['nome']) ?></td>
+                                                                        <td><?= htmlspecialchars($coordenador['bi_numero']) ?></td>
+                                                                        <td><?= htmlspecialchars($coordenador['email']) ?></td>
+                                                                        <td><?= htmlspecialchars($coordenador['curso']) ?></td>
+                                                                        <td>
+                                                                            <span class="badge <?= $coordenador['status'] == 'ativo' ? 'badge-success' : 'badge-danger' ?>">
+                                                                                <?= ucfirst($coordenador['status']) ?>
+                                                                            </span>
+                                                                        </td>
                                                                         <td class="action-buttons">
-                                                                            <button class="btn btn-warning btn-sm" onclick="editarAluno(<?= $aluno['id_aluno'] ?>)">
+                                                                            <!-- Botão Editar -->
+                                                                            <button class="btn btn-warning btn-sm" onclick="editarCoordenador(<?= $coordenador['id_coordenador'] ?>)">
                                                                                 <i class="feather icon-edit"></i>
                                                                             </button>
-                                                                            <button class="btn btn-info btn-sm" onclick="verDocumentos(<?= $aluno['id_aluno'] ?>)">
-                                                                                <i class="feather icon-file-text"></i>
-                                                                            </button>
-                                                                            <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $aluno['id_aluno'] ?>)">
+                                                                            
+                                                                            <!-- Botão Excluir -->
+                                                                            <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $coordenador['id_coordenador'] ?>)">
                                                                                 <i class="feather icon-trash"></i>
                                                                             </button>
                                                                         </td>
@@ -386,6 +371,91 @@ if ($id_curso) {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!-- Modal Coordenador -->
+                                                <div class="modal fade" id="modalCoordenador" tabindex="-1" role="dialog" aria-labelledby="modalCoordenadorLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-primary text-white">
+                                                                <h5 class="modal-title" id="modalCoordenadorLabel">Novo Coordenador</h5>
+                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <form id="formCoordenador" method="POST" action="salvar_coordenador.php">
+                                                                    <input type="hidden" id="coordenadorId" name="coordenadorId">
+                                                                    <input type="hidden" name="tipo" value="coordenador">
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="nome">Nome Completo *</label>
+                                                                                <input type="text" class="form-control" id="nome" name="nome" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="bi_numero">Nº do BI *</label>
+                                                                                <input type="text" class="form-control" id="bi_numero" name="bi_numero" 
+                                                                                    pattern="[0-9]{9}[A-Z]{2}[0-9]{3}" required>
+                                                                                <small class="form-text text-muted">Formato: 123456789LA123</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="email">Email *</label>
+                                                                                <input type="email" class="form-control" id="email" name="email" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="senha">Senha *</label>
+                                                                                <input type="password" class="form-control" id="senha" name="senha" required>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="id_curso">Curso *</label>
+                                                                                <select class="form-control" id="id_curso" name="id_curso" required>
+                                                                                    <option value="">Selecione...</option>
+                                                                                    <?php foreach ($cursos as $curso): ?>
+                                                                                    <option value="<?= $curso['id_curso'] ?>"><?= htmlspecialchars($curso['nome']) ?></option>
+                                                                                    <?php endforeach; ?>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="status">Status *</label>
+                                                                                <select class="form-control" id="status" name="status" required>
+                                                                                    <option value="ativo" selected>Ativo</option>
+                                                                                    <option value="inativo">Inativo</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                                            <i class="feather icon-x"></i> Cancelar
+                                                                        </button>
+                                                                        <button type="submit" class="btn btn-primary">
+                                                                            <i class="feather icon-save"></i> Salvar
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
@@ -393,99 +463,6 @@ if ($id_curso) {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Aluno -->
-    <div class="modal fade" id="modalAluno" tabindex="-1" role="dialog" aria-labelledby="modalAlunoLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalAlunoLabel">Novo Aluno</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="formAluno" method="POST" action="salvar_aluno.php">
-                        <input type="hidden" id="alunoId" name="alunoId">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="nome">Nome Completo *</label>
-                                    <input type="text" class="form-control" id="nome" name="nome" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="bi_numero">Nº do BI *</label>
-                                    <input type="text" class="form-control" id="bi_numero" name="bi_numero" 
-                                           pattern="[0-9]{9}[A-Z]{2}[0-9]{3}" required>
-                                    <small class="form-text text-muted">Formato: 123456789LA123</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="email">Email *</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="numero_matricula">Nº Matrícula *</label>
-                                    <input type="text" class="form-control" id="numero_matricula" name="numero_matricula" 
-                                           pattern="AL-\d{4}-\d{4}" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="id_curso">Curso *</label>
-                                    <select class="form-control" id="id_curso" name="id_curso" required>
-                                        <option value="">Selecione...</option>
-                                        <?php foreach ($cursos as $curso): ?>
-                                        <option value="<?= $curso['id_curso'] ?>"><?= htmlspecialchars($curso['nome']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="id_turma">Turma</label>
-                                    <select class="form-control" id="id_turma" name="id_turma">
-                                        <option value="">Selecione um curso primeiro</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="ano_letivo">Ano Letivo *</label>
-                                    <select class="form-control" id="ano_letivo" name="ano_letivo" required>
-                                        <option value="<?= date('Y') ?>"><?= date('Y') ?></option>
-                                        <option value="<?= date('Y')-1 ?>"><?= date('Y')-1 ?></option>
-                                        <option value="<?= date('Y')+1 ?>"><?= date('Y')+1 ?></option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                <i class="feather icon-x"></i> Cancelar
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="feather icon-save"></i> Salvar
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -505,81 +482,48 @@ if ($id_curso) {
 
     <script>
     // Funções do Sistema
-    function carregarTurmas(id_curso, turma_selecionada = null) {
-        if(id_curso) {
-            $.ajax({
-                url: 'getTurmas.php',
-                method: 'GET',
-                data: { id_curso: id_curso },
-                success: function(response) {
-                    $('#id_turma').html(response);
-                    $('#filtro_turma').html(response.replace('Selecione um curso primeiro', 'Todas as turmas'));
-                    $('#filtro_turma').prop('disabled', false);
-                    
-                    if(turma_selecionada) {
-                        setTimeout(function() {
-                            $('#id_turma').val(turma_selecionada);
-                        }, 500);
-                    }
-                },
-                error: function() {
-                    $('#id_turma').html('<option value="">Erro ao carregar turmas</option>');
-                    $('#filtro_turma').html('<option value="">Erro ao carregar turmas</option>');
-                }
-            });
-        } else {
-            $('#id_turma').html('<option value="">Selecione um curso primeiro</option>');
-            $('#filtro_turma').html('<option value="">Todas as turmas</option>');
-            $('#filtro_turma').prop('disabled', true);
-        }
+    function novoCoordenador() {
+        $('#formCoordenador')[0].reset();
+        $('#coordenadorId').val('');
+        $('#modalCoordenadorLabel').text('Novo Coordenador');
     }
     
-    function novoAluno() {
-        $('#formAluno')[0].reset();
-        $('#alunoId').val('');
-        $('#modalAlunoLabel').text('Novo Aluno');
-        $('#numero_matricula').val('AL-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000));
-        $('#id_curso').val('');
-        $('#id_turma').html('<option value="">Selecione um curso primeiro</option>');
-    }
-    
-    function editarAluno(id) {
+    function editarCoordenador(id) {
         $.ajax({
-            url: 'getAluno.php',
+            url: 'getCoordenador.php',
             method: 'GET',
             data: { id: id },
             dataType: 'json',
-            success: function(aluno) {
-                $('#alunoId').val(aluno.id_aluno);
-                $('#nome').val(aluno.nome);
-                $('#bi_numero').val(aluno.bi_numero);
-                $('#email').val(aluno.email);
-                $('#numero_matricula').val(aluno.numero_matricula);
-                $('#id_curso').val(aluno.id_curso).trigger('change');
-                $('#ano_letivo').val(aluno.ano_letivo);
+            success: function(coordenador) {
+                $('#coordenadorId').val(coordenador.id_coordenador);
+                $('#nome').val(coordenador.nome);
+                $('#bi_numero').val(coordenador.bi_numero);
+                $('#email').val(coordenador.email);
+                $('#id_curso').val(coordenador.id_curso);
+                $('#status').val(coordenador.status);
                 
-                setTimeout(function() {
-                    $('#id_turma').val(aluno.id_turma);
-                }, 500);
+                // Não preenche a senha por questões de segurança
+                $('#senha').val('');
+                $('#senha').removeAttr('required');
                 
-                $('#modalAlunoLabel').text('Editar Aluno: ' + aluno.nome);
-                $('#modalAluno').modal('show');
+                $('#modalCoordenadorLabel').text('Editar Coordenador: ' + coordenador.nome);
+                $('#modalCoordenador').modal('show');
             },
             error: function() {
-                alert('Erro ao carregar dados do aluno');
+                alert('Erro ao carregar dados do coordenador');
             }
         });
     }
     
     function confirmarExclusao(id) {
-        if(confirm('Tem certeza que deseja excluir este aluno?')) {
+        if(confirm('Tem certeza que deseja excluir este coordenador?')) {
             $.ajax({
-                url: 'excluir_aluno.php',
+                url: 'excluir_coordenador.php',
                 method: 'POST',
                 data: { id: id },
                 success: function(response) {
                     if(response.success) {
-                        alert('Aluno excluído com sucesso');
+                        alert('Coordenador excluído com sucesso');
                         location.reload();
                     } else {
                         alert('Erro ao excluir: ' + response.message);
@@ -592,55 +536,36 @@ if ($id_curso) {
         }
     }
     
-    function verDocumentos(id) {
-        window.open('documentos.php?id_aluno=' + id, '_blank');
-    }
-    
-    function exportarAlunos() {
-        // Passa os parâmetros de filtro para a exportação
+    function exportarCoordenadores() {
         const id_curso = $('#filtro_curso').val() || '';
-        const id_turma = $('#filtro_turma').val() || '';
-        window.open('exportar_alunos.php?id_curso=' + id_curso + '&id_turma=' + id_turma, '_blank');
+        window.open('exportar_coordenadores.php?id_curso=' + id_curso, '_blank');
     }
     
-    // Eventos
-    $(document).ready(function() {
-        // Carrega turmas quando um curso é selecionado no modal
-        $('#id_curso').change(function() {
-            carregarTurmas($(this).val());
-        });
+    // Validação do formulário de coordenador
+    $('#formCoordenador').submit(function(e) {
+        e.preventDefault();
         
-        // Carrega turmas quando um curso é selecionado nos filtros
-        $('#filtro_curso').change(function() {
-            carregarTurmas($(this).val());
-        });
+        if(!validarBI($('#bi_numero').val())) {
+            alert('Número de BI inválido. Formato correto: 123456789LA123');
+            return false;
+        }
         
-        // Validação do formulário de aluno
-        $('#formAluno').submit(function(e) {
-            e.preventDefault();
-            
-            if(!validarBI($('#bi_numero').val())) {
-                alert('Número de BI inválido. Formato correto: 123456789LA123');
-                return false;
-            }
-            
-            $.ajax({
-                url: $(this).attr('action'),
-                method: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if(response.success) {
-                        alert(response.message);
-                        location.reload();
-                    } else {
-                        alert('Erro: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('Erro na comunicação com o servidor');
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
                 }
-            });
+            },
+            error: function() {
+                alert('Erro na comunicação com o servidor');
+            }
         });
     });
     

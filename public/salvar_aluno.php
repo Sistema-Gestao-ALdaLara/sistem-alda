@@ -1,91 +1,71 @@
 <?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['secretaria']);
-
-require_once "../config/conexao.php";
+require_once 'conexao.php';
 
 header('Content-Type: application/json');
 
+// Verifica se é uma requisição POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Método não permitido']);
+    exit;
+}
+
+// Recebe os dados do formulário
+$alunoId = isset($_POST['alunoId']) ? intval($_POST['alunoId']) : null;
+$nome = $conn->real_escape_string($_POST['nome']);
+$bi_numero = $conn->real_escape_string($_POST['bi_numero']);
+$email = $conn->real_escape_string($_POST['email']);
+$numero_matricula = $conn->real_escape_string($_POST['numero_matricula']);
+$id_curso = intval($_POST['id_curso']);
+$id_turma = intval($_POST['id_turma']);
+$ano_letivo = intval($_POST['ano_letivo']);
+
 try {
-    $dados = $_POST;
+    $conn->begin_transaction();
     
-    // Validações básicas
-    if (empty($dados['nome']) {
-        throw new Exception('Nome é obrigatório');
-    }
-    
-    if (!preg_match('/^[0-9]{9}[A-Z]{2}[0-9]{3}$/', $dados['bi_numero'])) {
-        throw new Exception('Número de BI inválido');
-    }
-    
-    if (empty($dados['email']) {
-        throw new Exception('Email é obrigatório');
-    }
-    
-    if (empty($dados['id_curso'])) {
-        throw new Exception('Curso é obrigatório');
-    }
-    
-    // Iniciar transação
-    $pdo->beginTransaction();
-    
-    if (empty($dados['alunoId'])) {
-        // Inserir novo aluno
-        // 1. Primeiro inserir o usuário
-        $stmtUsuario = $pdo->prepare("INSERT INTO usuario (nome, email, bi_numero, tipo) VALUES (?, ?, ?, 'aluno')");
-        $stmtUsuario->execute([$dados['nome'], $dados['email'], $dados['bi_numero']]);
-        $id_usuario = $pdo->lastInsertId();
+    if ($alunoId) {
+        // Atualização de aluno existente
+        // Primeiro atualiza o usuário
+        $sql = "UPDATE usuario u 
+                JOIN aluno a ON u.id_usuario = a.usuario_id_usuario
+                SET u.nome = '$nome', u.email = '$email', u.bi_numero = '$bi_numero'
+                WHERE a.id_aluno = $alunoId";
         
-        // 2. Inserir o aluno
-        $stmtAluno = $pdo->prepare("INSERT INTO aluno 
-            (id_usuario, numero_matricula, id_curso, id_turma, ano_letivo) 
-            VALUES (?, ?, ?, ?, ?)");
-        $stmtAluno->execute([
-            $id_usuario,
-            $dados['numero_matricula'],
-            $dados['id_curso'],
-            $dados['id_turma'] ?: null,
-            $dados['ano_letivo']
-        ]);
+        if (!$conn->query($sql)) {
+            throw new Exception("Erro ao atualizar usuário: " . $conn->error);
+        }
         
-        $mensagem = 'Aluno cadastrado com sucesso';
+        // Depois atualiza o aluno
+        $sql = "UPDATE aluno SET 
+                numero_matricula = '$numero_matricula',
+                turma_id_turma = $id_turma,
+                curso_id_curso = $id_curso,
+                ano_letivo = $ano_letivo
+                WHERE id_aluno = $alunoId";
     } else {
-        // Atualizar aluno existente
-        // 1. Primeiro atualizar o usuário
-        $stmtUsuario = $pdo->prepare("UPDATE usuario SET nome = ?, email = ?, bi_numero = ? WHERE id_usuario = (SELECT id_usuario FROM aluno WHERE id_aluno = ?)");
-        $stmtUsuario->execute([$dados['nome'], $dados['email'], $dados['bi_numero'], $dados['alunoId']]);
+        // Inserção de novo aluno
+        // Primeiro insere o usuário
+        $sql = "INSERT INTO usuario (nome, email, senha, bi_numero, tipo, status) 
+                VALUES ('$nome', '$email', 'senha_temp', '$bi_numero', 'aluno', 'ativo')";
         
-        // 2. Atualizar o aluno
-        $stmtAluno = $pdo->prepare("UPDATE aluno SET 
-            numero_matricula = ?,
-            id_curso = ?,
-            id_turma = ?,
-            ano_letivo = ?
-            WHERE id_aluno = ?");
-        $stmtAluno->execute([
-            $dados['numero_matricula'],
-            $dados['id_curso'],
-            $dados['id_turma'] ?: null,
-            $dados['ano_letivo'],
-            $dados['alunoId']
-        ]);
+        if (!$conn->query($sql)) {
+            throw new Exception("Erro ao inserir usuário: " . $conn->error);
+        }
         
-        $mensagem = 'Aluno atualizado com sucesso';
+        $usuario_id = $conn->insert_id;
+        
+        // Depois insere o aluno
+        $sql = "INSERT INTO aluno (numero_matricula, ano_letivo, usuario_id_usuario, turma_id_turma, curso_id_curso) 
+                VALUES ('$numero_matricula', $ano_letivo, $usuario_id, $id_turma, $id_curso)";
     }
     
-    $pdo->commit();
+    if (!$conn->query($sql)) {
+        throw new Exception("Erro ao salvar aluno: " . $conn->error);
+    }
     
-    echo json_encode([
-        'success' => true,
-        'message' => $mensagem
-    ]);
-    
+    $conn->commit();
+    echo json_encode(['success' => true, 'message' => 'Aluno salvo com sucesso']);
 } catch (Exception $e) {
-    $pdo->rollBack();
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    $conn->rollback();
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 ?>

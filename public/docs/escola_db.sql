@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`disciplina` (
   `id_disciplina` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(50) NOT NULL,
   `curso_id_curso` INT NOT NULL,
-  `professor_id_professor` INT NOT NULL,
-  PRIMARY KEY (`id_disciplina`, `curso_id_curso`, `professor_id_professor`),
+  `professor_id_professor` INT NULL, -- AGORA PODE SER NULL
+  PRIMARY KEY (`id_disciplina`, `curso_id_curso`),
   UNIQUE INDEX `id_disciplina_UNIQUE` (`id_disciplina` ASC) VISIBLE,
   INDEX `fk_curso5_idx` (`curso_id_curso` ASC) VISIBLE,
   INDEX `fk_professor5_idx` (`professor_id_professor` ASC) VISIBLE,
@@ -184,9 +184,10 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`disciplina` (
   CONSTRAINT `fk_professor5`
     FOREIGN KEY (`professor_id_professor`)
     REFERENCES `escoladb`.`professor` (`id_professor`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON DELETE SET NULL -- SE O PROFESSOR FOR DELETADO, A DISCIPLINA FICA SEM PROFESSOR
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
 
 
 -- -----------------------------------------------------

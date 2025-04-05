@@ -1,16 +1,16 @@
 <?php
-session_start();
-
-// Verifica se o usuário está logado
-if (!isset($_SESSION['tipo_usuario'])) {
-    header("Location: /auth/auth-normal-sign-in.php"); // Redireciona para login
-    exit();
-}
-
-// Função para verificar permissões
 function verificarPermissao($permissoesPermitidas) {
+    session_start();
+    
+    // Se não estiver logado, redireciona para login
+    if (!isset($_SESSION['tipo_usuario'])) {
+        header("Location: login.php");
+        exit();
+    }
+    
+    // Se não tiver permissão, redireciona para página de acesso negado
     if (!in_array($_SESSION['tipo_usuario'], $permissoesPermitidas)) {
-        header("Location: /erro403.php"); // Página de acesso negado
+        header("Location: /erro403.htm");
         exit();
     }
 }
