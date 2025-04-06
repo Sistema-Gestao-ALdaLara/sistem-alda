@@ -1,15 +1,91 @@
 <?php
 require_once 'conexao.php';
+session_start();
+
+// Processar formulário de nova matrícula
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_matricula'])) {
+    // Validar e sanitizar dados
+    $nome = $conn->real_escape_string($_POST['nome']);
+    $bi_numero = $conn->real_escape_string($_POST['bi_numero']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
+    $data_nascimento = $_POST['data_nascimento'];
+    $genero = $_POST['genero'];
+    $naturalidade = $conn->real_escape_string($_POST['naturalidade']);
+    $nacionalidade = $conn->real_escape_string($_POST['nacionalidade']);
+    $municipio = $conn->real_escape_string($_POST['municipio']);
+    $nome_encarregado = $conn->real_escape_string($_POST['nome_encarregado']);
+    $contacto_encarregado = $conn->real_escape_string($_POST['contacto_encarregado']);
+    $id_curso = intval($_POST['id_curso']);
+    $id_turma = intval($_POST['id_turma']);
+    $ano_letivo = intval($_POST['ano_letivo']);
+    $classe = $_POST['classe'];
+    $turno = $_POST['turno'];
+    
+    // Iniciar transação
+    $conn->begin_transaction();
+    
+    try {
+        // 1. Criar usuário
+        $stmt = $conn->prepare("INSERT INTO usuario 
+            (nome, email, senha, bi_numero, tipo, status) 
+            VALUES (?, ?, ?, ?, 'aluno', 'ativo')");
+        $stmt->bind_param("ssss", $nome, $email, $senha, $bi_numero);
+        $stmt->execute();
+        $id_usuario = $conn->insert_id;
+        
+        // 2. Criar aluno
+        $stmt = $conn->prepare("INSERT INTO aluno 
+            (data_nascimento, genero, naturalidade, nacionalidade, municipio, 
+             nome_encarregado, contacto_encarregado, usuario_id_usuario, 
+             turma_id_turma, curso_id_curso) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssssiii", $data_nascimento, $genero, $naturalidade, 
+            $nacionalidade, $municipio, $nome_encarregado, $contacto_encarregado, 
+            $id_usuario, $id_turma, $id_curso);
+        $stmt->execute();
+        $id_aluno = $conn->insert_id;
+        
+        // 3. Gerar número de matrícula automático
+        $stmt = $conn->prepare("SELECT MAX(id_matricula) as ultimo_id FROM matricula WHERE ano_letivo = ?");
+        $stmt->bind_param("i", $ano_letivo);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $sequencial = $row['ultimo_id'] ? $row['ultimo_id'] + 1 : 1;
+        $numero_matricula = 'AL-' . $ano_letivo . '-' . str_pad($sequencial, 4, '0', STR_PAD_LEFT);
+        
+        // 4. Criar matrícula
+        $stmt = $conn->prepare("INSERT INTO matricula 
+        (ano_letivo, classe, turno, numero_matricula, data_matricula, 
+         turma_id_turma, aluno_id_aluno, curso_id_curso, status_matricula, comprovativo_pagamento) 
+        VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, 'ativa', 'confirmado')");
+        $stmt->bind_param("isssiii", 
+            $ano_letivo, $classe, $turno, $numero_matricula, $id_turma, $id_aluno, $id_curso);
+        $stmt->execute();
+    
+        
+        $conn->commit();
+        $_SESSION['sucesso'] = "Matrícula registrada com sucesso! Número: $numero_matricula";
+    } catch (Exception $e) {
+        $conn->rollback();
+        $_SESSION['erro'] = "Erro ao registrar matrícula: " . $e->getMessage();
+    }
+    
+    header('Location: matriculas.php');
+    exit();
+}
 
 // Filtros
-$status = isset($_GET['status']) ? $_GET['status'] : 'pendente';
+$status = isset($_GET['status']) ? $_GET['status'] : 'ativa';
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
 $ano_letivo = isset($_GET['ano_letivo']) ? intval($_GET['ano_letivo']) : date('Y');
 
 // Obter matrículas com filtros
-$query = "SELECT m.id_matricula, a.id_aluno, u.nome, 
+$query = "SELECT m.id_matricula, a.id_aluno, u.nome, u.bi_numero, 
           c.nome AS curso, t.nome AS turma, m.data_matricula, 
-          m.ano_letivo
+          m.ano_letivo, m.classe, m.turno, m.numero_matricula,
+          m.status_matricula
           FROM matricula m
           JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
           JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
@@ -18,17 +94,22 @@ $query = "SELECT m.id_matricula, a.id_aluno, u.nome,
           WHERE m.ano_letivo = ?";
 
 $params = [$ano_letivo];
-$types = "i"; // Ano letivo é inteiro
+$types = "i";
+
+if ($status != 'todos') {
+    $query .= " AND m.status_matricula = ?";
+    $params[] = $status;
+    $types .= "s";
+}
 
 if ($id_curso) {
     $query .= " AND m.curso_id_curso = ?";
     $params[] = $id_curso;
-    $types .= "i"; // ID curso é inteiro
+    $types .= "i";
 }
 
 $query .= " ORDER BY m.data_matricula DESC";
 
-// Preparar e executar a consulta
 $stmt = $conn->prepare($query);
 
 if ($params) {
@@ -43,64 +124,17 @@ $matriculas = $result->fetch_all(MYSQLI_ASSOC);
 $result_cursos = $conn->query("SELECT id_curso, nome FROM curso ORDER BY nome");
 $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
 
-// Obter alunos não matriculados no ano letivo
-$stmt_nao_matriculados = $conn->prepare("SELECT a.id_aluno, u.nome 
-                                       FROM aluno a
-                                       JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
-                                       WHERE a.id_aluno NOT IN 
-                                       (SELECT aluno_id_aluno FROM matricula WHERE ano_letivo = ?)");
-$stmt_nao_matriculados->bind_param("i", $ano_letivo);
-$stmt_nao_matriculados->execute();
-$result_nao_matriculados = $stmt_nao_matriculados->get_result();
-$alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
+// Obter turmas para select
+$turmas = [];
+if ($result_turmas = $conn->query("SELECT id_turma, nome, curso_id_curso FROM turma")) {
+    $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
+}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="pt">
-<!--<head>
-    <title>SECRETARIA - Gestão de Matrículas | Alda Lara</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Sistema de Gestão Escolar - Escola Alda Lara">
-    <meta name="keywords" content="Escola, Alda Lara, Angola, Luanda, Secretaria, Matrículas">
-    <meta name="author" content="Escola Alda Lara">
-    <link rel="icon" href="../libraries/assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="../libraries/bower_components/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="../libraries/assets/icon/feather/css/feather.css">
-    <link rel="stylesheet" type="text/css" href="../libraries/assets/css/style.css">
-    <link rel="stylesheet" type="text/css" href="../libraries/assets/css/jquery.mCustomScrollbar.css">
-    <style>
-        .card-matricula {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .badge-pendente { background-color: #ffc107; color: #000; }
-        .badge-aprovada { background-color: #28a745; color: #fff; }
-        .badge-rejeitada { background-color: #dc3545; color: #fff; }
-        .badge-transferencia { background-color: #17a2b8; color: #fff; }
-        .filtros-container {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        @media (max-width: 768px) {
-            .btn-action {
-                margin-bottom: 5px;
-                width: 100%;
-            }
-        }
-    </style>
-</head>-->
 <head>
-    <title>SECRETARIA</title>
+    <title>SECRETARIA - Gestão de Matrículas | Alda Lara</title>
     <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 10]>
@@ -127,33 +161,73 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
     <link rel="stylesheet" type="text/css" href="libraries\assets\css\jquery.mCustomScrollbar.css">
 
     <style>
-        .card-matricula {
-            background: rgba(255, 255, 255, 0.9);
+        .bg-img {
+          width: 100%;
+          height: auto;
+          background-image: url('../public/img/bg.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        }
+
+        .table-custom {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
             border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .table-custom th,
+        .table-custom td {
+            padding: 12px;
+            color: #ffffff;
+        }
+
+        .table-custom thead {
+            background: rgba(7, 200, 206, 0.55);
+            color: white;
+            font-weight: bold;
+        }
+
+        .table-custom tbody tr:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        /* Estilo específico para os cards que contêm tabelas */
+        .card-table {
+            background: rgba(19, 125, 171, 0.082);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white !important;
         }
-        .badge-pendente { background-color: #ffc107; color: #000; }
-        .badge-aprovada { background-color: #28a745; color: #fff; }
-        .badge-rejeitada { background-color: #dc3545; color: #fff; }
-        .badge-transferencia { background-color: #17a2b8; color: #fff; }
-        .filtros-container {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
+
+        /* Ajuste no cabeçalho do card */
+        .card-table .card-header {
+            background: rgba(7, 200, 206, 0.836);
+            color: white !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .table-responsive {
-            overflow-x: auto;
+
+        /* Estilo da tabela dentro do card */
+        .card-table .table {
+            background: transparent;
         }
-        @media (max-width: 768px) {
-            .btn-action {
-                margin-bottom: 5px;
-                width: 100%;
-            }
+        
+        .badge-ativa { background-color: #28a745; }
+        .badge-cancelada { background-color: #dc3545; }
+        .badge-trancada { background-color: #ffc107; color: #000; }
+        
+        .numero-matricula {
+            font-family: monospace;
+            font-weight: bold;
         }
     </style>
-      
 </head>
+
 <body>
     <!-- Pre-loader -->
     <div class="theme-loader">
@@ -176,216 +250,53 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
     <div id="pcoded" class="pcoded">
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
-            <!-- Cabeçalho (igual ao da página alunos) -->
-            <!-- Sidebar (igual ao da página alunos) -->
-
-            <nav class="navbar header-navbar pcoded-header">
-                <div class="navbar-wrapper">
-
-                    <div class="navbar-logo">
-                        <a class="mobile-menu" id="mobile-collapse" href="#!">
-                            <i class="feather icon-menu"></i>
-                        </a>
-                        <a href="dashboard.htm">
-                            <img class="img-fluid" src="libraries\assets\images\logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">SECRETARIA|Alda Lara</span>
-                        </a>
-                        <a class="mobile-options">
-                            <i class="feather icon-more-horizontal"></i>
-                        </a>
-                    </div>
-
-                    <div class="navbar-container container-fluid">
-                        <ul class="nav-left">
-                            <li class="header-search">
-                                <div class="main-search morphsearch-search">
-                                    <div class="input-group">
-                                        <span class="input-group-addon search-close"><i class="feather icon-x"></i></span>
-                                        <input type="text" class="form-control">
-                                        <span class="input-group-addon search-btn"><i class="feather icon-search"></i></span>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <a href="#!" onclick="javascript:toggleFullScreen()">
-                                    <i class="feather icon-maximize full-screen"></i>
-                                </a>
-                            </li>
-                        </ul>
-                        <ul class="nav-right">
-                            <li class="header-notification">
-                                <div class="dropdown-primary dropdown">
-                                    <div class="dropdown-toggle" data-toggle="dropdown">
-                                        <i class="feather icon-bell"></i>
-                                        <span class="badge bg-c-pink">5</span>
-                                    </div>
-                                    <ul class="show-notification notification-view dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                        <li>
-                                            <h6>Notifications</h6>
-                                            <label class="label label-danger">New</label>
-                                        </li>
-                                        <li>
-                                            <div class="media">
-                                                <img class="d-flex align-self-center img-radius" src="libraries\assets\images\avatar-4.jpg" alt="Generic placeholder image">
-                                                <div class="media-body">
-                                                    <h5 class="notification-user">Flavio Garcia</h5>
-                                                    <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
-                                                    <span class="notification-time">30 minutes ago</span>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="media">
-                                                <img class="d-flex align-self-center img-radius" src="libraries\assets\images\avatar-3.jpg" alt="Generic placeholder image">
-                                                <div class="media-body">
-                                                    <h5 class="notification-user">Jucelmo Pereira</h5>
-                                                    <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
-                                                    <span class="notification-time">30 minutes ago</span>
-                                                </div>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="media">
-                                                <img class="d-flex align-self-center img-radius" src="libraries\assets\images\avatar-4.jpg" alt="Generic placeholder image">
-                                                <div class="media-body">
-                                                    <h5 class="notification-user">Ariel Patricio</h5>
-                                                    <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
-                                                    <span class="notification-time">30 minutes ago</span>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li class="user-profile header-notification">
-                                <div class="dropdown-primary dropdown">
-                                    <div class="dropdown-toggle" data-toggle="dropdown">
-                                        <img src="libraries\assets\images\avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                                        <span>Flavio Garcia</span>
-                                        <i class="feather icon-chevron-down"></i>
-                                    </div>
-                                    <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                        <li>
-                                            <a href="#!">
-                                                <i class="feather icon-settings"></i> Settings
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="user-profile.htm">
-                                                <i class="feather icon-user"></i> Profile
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="email-inbox.htm">
-                                                <i class="feather icon-mail"></i> My Messages
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="auth-lock-screen.htm">
-                                                <i class="feather icon-lock"></i> Lock Screen
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="login.htm">
-                                                <i class="feather icon-log-out"></i> Logout
-                                            </a>
-                                        </li>
-                                    </ul>
-
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
-            <!--sidebar-->
+            <?php include 'navbar.php'; ?>
+            
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
-                    <nav class="pcoded-navbar">
-                        <div class="pcoded-inner-navbar main-menu">
-                            <div class="pcoded-navigatio-lavel">Navegacao</div>
-                            <ul class="pcoded-item pcoded-left-item">
-                                <li class="pcoded-hasmenu active pcoded-trigger">
-                                    <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-home"></i></span>
-                                        <span class="pcoded-mtext">Dashboard</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
-                                        <span class="pcoded-mtext">Matrículas</span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Matrículas</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Transferências</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/alunos.php">
-                                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                                        <span class="pcoded-mtext">Gerenciar Alunos</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/turmas.php">
-                                        <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                                        <span class="pcoded-mtext">Gerenciar Turmas</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/documentos.php">
-                                        <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
-                                        <span class="pcoded-mtext">Documentos Admins.</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/comunicados.php">
-                                        <span class="pcoded-micon"><i class="feather icon-mail"></i></span>
-                                        <span class="pcoded-mtext">Envio de Comunicados</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/relatorios.php">
-                                        <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
-                                        <span class="pcoded-mtext">Relatórios Acadêmicos</span>
-                                    </a>
-                                </li>
-                                
-                            </ul>
-                        </div>
-                    </nav>
-                    <!-- Conteúdo Principal -->
+                    <?php include 'sidebar.php'; ?>
+                    
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
-                            <div class="main-body">
+                            <div class="main-body bg-img">
                                 <div class="page-wrapper">
                                     <div class="page-body">
+                                        <!-- Mensagens de feedback -->
+                                        <?php if (isset($_SESSION['sucesso'])): ?>
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <?= $_SESSION['sucesso'] ?>
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <?php unset($_SESSION['sucesso']); endif; ?>
+                                        
+                                        <?php if (isset($_SESSION['erro'])): ?>
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <?= $_SESSION['erro'] ?>
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <?php unset($_SESSION['erro']); endif; ?>
+                                        
                                         <div class="row">
                                             <div class="col-12 mt-4">
                                                 <!-- Filtros -->
-                                                <div class="card card-matricula mb-3">
+                                                <div class="card card-table mb-3">
                                                     <div class="card-header">
                                                         <h5>Filtrar Matrículas</h5>
                                                     </div>
-                                                    <div class="card-body">
+                                                    <div class="card-block">
                                                         <form id="formFiltros" method="GET" action="">
                                                             <div class="row">
                                                                 <div class="col-md-3">
                                                                     <div class="form-group">
                                                                         <label for="status">Status</label>
                                                                         <select class="form-control" id="status" name="status">
-                                                                            <option value="pendente" <?= $status == 'pendente' ? 'selected' : '' ?>>Pendentes</option>
-                                                                            <option value="aprovada" <?= $status == 'aprovada' ? 'selected' : '' ?>>Aprovadas</option>
-                                                                            <option value="rejeitada" <?= $status == 'rejeitada' ? 'selected' : '' ?>>Rejeitadas</option>
+                                                                            <option value="ativa" <?= $status == 'ativa' ? 'selected' : '' ?>>Ativas</option>
+                                                                            <option value="cancelada" <?= $status == 'cancelada' ? 'selected' : '' ?>>Canceladas</option>
+                                                                            <option value="trancada" <?= $status == 'trancada' ? 'selected' : '' ?>>Trancadas</option>
                                                                             <option value="todos" <?= $status == 'todos' ? 'selected' : '' ?>>Todos</option>
                                                                         </select>
                                                                     </div>
@@ -424,28 +335,27 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                                                 </div>
 
                                                 <!-- Tabela de Matrículas -->
-                                                <div class="card card-matricula">
+                                                <div class="card card-table">
                                                     <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h5 class="mb-0">Gestão de Matrículas</h5>
+                                                        <h5 class="text-white mb-0">Gestão de Matrículas - Ano Letivo <?= $ano_letivo ?></h5>
                                                         <div>
                                                             <button class="btn btn-primary" data-toggle="modal" data-target="#modalNovaMatricula">
                                                                 <i class="feather icon-plus"></i> Nova Matrícula
-                                                            </button>
-                                                            <button class="btn btn-success" data-toggle="modal" data-target="#modalTransferencia">
-                                                                <i class="feather icon-repeat"></i> Transferência
                                                             </button>
                                                         </div>
                                                     </div>
                                                     <div class="card-block">
                                                         <div class="table-responsive">
-                                                            <table class="table table-hover">
+                                                            <table class="table table-custom">
                                                                 <thead>
                                                                     <tr>
+                                                                        <th>Nº Matrícula</th>
                                                                         <th>Aluno</th>
                                                                         <th>BI</th>
                                                                         <th>Curso</th>
                                                                         <th>Turma</th>
-                                                                        <th>Tipo</th>
+                                                                        <th>Classe</th>
+                                                                        <th>Turno</th>
                                                                         <th>Data</th>
                                                                         <th>Status</th>
                                                                         <th>Ações</th>
@@ -454,25 +364,25 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                                                                 <tbody>
                                                                     <?php if (empty($matriculas)): ?>
                                                                     <tr>
-                                                                        <td colspan="8" class="text-center">Nenhuma matrícula encontrada com os filtros selecionados</td>
+                                                                        <td colspan="10" class="text-center">Nenhuma matrícula encontrada com os filtros selecionados</td>
                                                                     </tr>
                                                                     <?php else: ?>
                                                                     <?php foreach ($matriculas as $matricula): ?>
                                                                     <tr>
+                                                                        <td class="numero-matricula"><?= htmlspecialchars($matricula['numero_matricula']) ?></td>
                                                                         <td><?= htmlspecialchars($matricula['nome']) ?></td>
                                                                         <td><?= htmlspecialchars($matricula['bi_numero']) ?></td>
                                                                         <td><?= htmlspecialchars($matricula['curso'] ?? 'N/D') ?></td>
                                                                         <td><?= htmlspecialchars($matricula['turma'] ?? 'N/D') ?></td>
-                                                                        <td>
-                                                                            <?= $matricula['tipo_matricula'] == 'regular' ? 'Regular' : 'Transferência' ?>
-                                                                        </td>
+                                                                        <td><?= htmlspecialchars($matricula['classe'] ?? 'N/D') ?></td>
+                                                                        <td><?= htmlspecialchars($matricula['turno'] ?? 'N/D') ?></td>
                                                                         <td><?= date('d/m/Y', strtotime($matricula['data_matricula'])) ?></td>
                                                                         <td>
                                                                             <?php 
                                                                             $badge_class = '';
-                                                                            if ($matricula['status_matricula'] == 'pendente') $badge_class = 'badge-pendente';
-                                                                            elseif ($matricula['status_matricula'] == 'aprovada') $badge_class = 'badge-aprovada';
-                                                                            else $badge_class = 'badge-rejeitada';
+                                                                            if ($matricula['status_matricula'] == 'ativa') $badge_class = 'badge-ativa';
+                                                                            elseif ($matricula['status_matricula'] == 'cancelada') $badge_class = 'badge-cancelada';
+                                                                            else $badge_class = 'badge-trancada';
                                                                             ?>
                                                                             <span class="badge <?= $badge_class ?>">
                                                                                 <?= ucfirst($matricula['status_matricula']) ?>
@@ -480,19 +390,14 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                                                                         </td>
                                                                         <td>
                                                                             <div class="btn-group btn-group-sm">
-                                                                                <?php if ($matricula['status_matricula'] == 'pendente'): ?>
-                                                                                <button class="btn btn-success btn-action" onclick="aprovarMatricula(<?= $matricula['id_matricula'] ?>)">
-                                                                                    <i class="feather icon-check"></i>
-                                                                                </button>
-                                                                                <button class="btn btn-danger btn-action" onclick="rejeitarMatricula(<?= $matricula['id_matricula'] ?>)">
-                                                                                    <i class="feather icon-x"></i>
-                                                                                </button>
-                                                                                <?php endif; ?>
-                                                                                <button class="btn btn-info btn-action" onclick="editarMatricula(<?= $matricula['id_matricula'] ?>)">
+                                                                                <button class="btn btn-info btn-sm" onclick="editarMatricula(<?= $matricula['id_matricula'] ?>)">
                                                                                     <i class="feather icon-edit"></i>
                                                                                 </button>
-                                                                                <button class="btn btn-secondary btn-action" onclick="emitirComprovante(<?= $matricula['id_matricula'] ?>)">
+                                                                                <button class="btn btn-secondary btn-sm" onclick="emitirComprovante(<?= $matricula['id_matricula'] ?>)">
                                                                                     <i class="feather icon-printer"></i>
+                                                                                </button>
+                                                                                <button class="btn btn-danger btn-sm" onclick="cancelarMatricula(<?= $matricula['id_matricula'] ?>)">
+                                                                                    <i class="feather icon-x"></i>
                                                                                 </button>
                                                                             </div>
                                                                         </td>
@@ -501,116 +406,6 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                                                                     <?php endif; ?>
                                                                 </tbody>
                                                             </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Modal Histórico do Aluno -->
-                                                <div class="modal fade" id="modalHistorico" tabindex="-1" role="dialog" aria-labelledby="modalHistoricoLabel" aria-hidden="true">
-                                                    <div class="modal-dialog modal-lg" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header bg-primary text-white">
-                                                                <h5 class="modal-title" id="modalHistoricoLabel">Histórico Escolar</h5>
-                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                                    <span aria-hidden="true">&times;</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <div class="row mb-3">
-                                                                    <div class="col-md-6">
-                                                                        <h6><strong>Aluno:</strong> <span id="nomeAlunoHistorico"></span></h6>
-                                                                        <h6><strong>BI:</strong> <span id="biAlunoHistorico"></span></h6>
-                                                                    </div>
-                                                                    <div class="col-md-6 text-right">
-                                                                        <button class="btn btn-sm btn-success" onclick="imprimirHistorico()">
-                                                                            <i class="feather icon-printer"></i> Imprimir Histórico
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                <div class="table-responsive">
-                                                                    <table class="table table-bordered" id="tabelaHistorico">
-                                                                        <thead class="thead-light">
-                                                                            <tr>
-                                                                                <th>Ano Letivo</th>
-                                                                                <th>Curso</th>
-                                                                                <th>Turma</th>
-                                                                                <th>Status</th>
-                                                                                <th>Tipo</th>
-                                                                                <th>Data</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody id="corpoHistorico">
-                                                                            <!-- Dados serão carregados via AJAX -->
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-                                                                
-                                                                <div class="mt-3" id="documentosAluno">
-                                                                    <h5>Documentos Associados</h5>
-                                                                    <div class="list-group" id="listaDocumentos">
-                                                                        <!-- Documentos serão carregados via AJAX -->
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Modal Relatórios -->
-                                                <div class="modal fade" id="modalRelatorios" tabindex="-1" role="dialog" aria-labelledby="modalRelatoriosLabel" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header bg-info text-white">
-                                                                <h5 class="modal-title" id="modalRelatoriosLabel">Gerar Relatório</h5>
-                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                                    <span aria-hidden="true">&times;</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <form id="formRelatorio" action="gerar_relatorio_matriculas.php" method="GET" target="_blank">
-                                                                    <div class="form-group">
-                                                                        <label for="tipoRelatorio">Tipo de Relatório</label>
-                                                                        <select class="form-control" id="tipoRelatorio" name="tipo" required>
-                                                                            <option value="matriculas_por_curso">Matrículas por Curso</option>
-                                                                            <option value="matriculas_por_periodo">Matrículas por Período</option>
-                                                                            <option value="transferencias">Transferências</option>
-                                                                            <option value="status_matriculas">Status das Matrículas</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    
-                                                                    <div class="row">
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label for="dataInicio">Data Início</label>
-                                                                                <input type="date" class="form-control" id="dataInicio" name="data_inicio">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label for="dataFim">Data Fim</label>
-                                                                                <input type="date" class="form-control" id="dataFim" name="data_fim">
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    
-                                                                    <div class="form-group">
-                                                                        <label for="formatoRelatorio">Formato</label>
-                                                                        <select class="form-control" id="formatoRelatorio" name="formato" required>
-                                                                            <option value="pdf">PDF</option>
-                                                                            <option value="excel">Excel</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    
-                                                                    <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                                                        <button type="submit" class="btn btn-info">Gerar Relatório</button>
-                                                                    </div>
-                                                                </form>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -637,22 +432,79 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="formMatricula" method="POST" action="salvar_matricula.php">
-                        <input type="hidden" name="tipo_matricula" value="regular">
+                    <form id="formMatricula" method="POST" action="">
+                        <input type="hidden" name="nova_matricula" value="1">
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="id_aluno">Aluno *</label>
-                                    <select class="form-control" id="id_aluno" name="id_aluno" required>
-                                        <option value="">Selecione um aluno</option>
-                                        <?php foreach ($alunos_nao_matriculados as $aluno): ?>
-                                        <option value="<?= $aluno['id_aluno'] ?>"><?= htmlspecialchars($aluno['nome']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <label for="nome">Nome Completo *</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="bi_numero">Nº do BI *</label>
+                                    <input type="text" class="form-control" id="bi_numero" name="bi_numero" 
+                                        pattern="[0-9]{9}[A-Z]{2}[0-9]{3}" required>
+                                    <small class="form-text text-muted">Formato: 123456789LA123</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email">Email *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="senha">Senha *</label>
+                                    <input type="password" class="form-control" id="senha" name="senha" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="data_nascimento">Data de Nascimento *</label>
+                                    <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="genero">Gênero *</label>
+                                    <select class="form-control" id="genero" name="genero" required>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Feminino">Feminino</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="naturalidade">Naturalidade *</label>
+                                    <input type="text" class="form-control" id="naturalidade" name="naturalidade" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="nacionalidade">Nacionalidade *</label>
+                                    <input type="text" class="form-control" id="nacionalidade" name="nacionalidade" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="municipio">Município *</label>
+                                    <input type="text" class="form-control" id="municipio" name="municipio" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="ano_letivo_matricula">Ano Letivo *</label>
                                     <select class="form-control" id="ano_letivo_matricula" name="ano_letivo" required>
@@ -664,7 +516,19 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="nome_encarregado">Nome do Encarregado *</label>
+                                    <input type="text" class="form-control" id="nome_encarregado" name="nome_encarregado" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="contacto_encarregado">Contacto do Encarregado *</label>
+                                    <input type="text" class="form-control" id="contacto_encarregado" name="contacto_encarregado" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="curso_matricula">Curso *</label>
                                     <select class="form-control" id="curso_matricula" name="id_curso" required>
@@ -675,11 +539,35 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="turma_matricula">Turma</label>
-                                    <select class="form-control" id="turma_matricula" name="id_turma">
+                                    <label for="turma_matricula">Turma *</label>
+                                    <select class="form-control" id="turma_matricula" name="id_turma" required>
                                         <option value="">Selecione um curso primeiro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="classe_matricula">Classe *</label>
+                                    <select class="form-control" id="classe_matricula" name="classe" required>
+                                        <option value="10ª">10ª Classe</option>
+                                        <option value="11ª">11ª Classe</option>
+                                        <option value="12ª">12ª Classe</option>
+                                        <option value="13ª">13ª Classe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="turno_matricula">Turno *</label>
+                                    <select class="form-control" id="turno_matricula" name="turno" required>
+                                        <option value="Manhã">Manhã</option>
+                                        <option value="Tarde">Tarde</option>
+                                        <option value="Noite">Noite</option>
                                     </select>
                                 </div>
                             </div>
@@ -687,93 +575,7 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
                         
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Matrícula</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Transferência -->
-    <div class="modal fade" id="modalTransferencia" tabindex="-1" role="dialog" aria-labelledby="modalTransferenciaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="modalTransferenciaLabel">Registrar Transferência</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="formTransferencia" method="POST" action="salvar_matricula.php">
-                        <input type="hidden" name="tipo_matricula" value="transferencia">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="aluno_transferencia">Aluno *</label>
-                                    <select class="form-control" id="aluno_transferencia" name="id_aluno" required>
-                                        <option value="">Selecione um aluno</option>
-                                        <!-- Lista de alunos já matriculados -->
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="ano_letivo_transferencia">Ano Letivo *</label>
-                                    <select class="form-control" id="ano_letivo_transferencia" name="ano_letivo" required>
-                                        <option value="<?= date('Y') ?>" selected><?= date('Y') ?></option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="curso_origem">Curso de Origem</label>
-                                    <input type="text" class="form-control" id="curso_origem" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="turma_origem">Turma de Origem</label>
-                                    <input type="text" class="form-control" id="turma_origem" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="curso_destino">Novo Curso *</label>
-                                    <select class="form-control" id="curso_destino" name="id_curso" required>
-                                        <option value="">Selecione o novo curso</option>
-                                        <?php foreach ($cursos as $curso): ?>
-                                        <option value="<?= $curso['id_curso'] ?>"><?= htmlspecialchars($curso['nome']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="turma_destino">Nova Turma</label>
-                                    <select class="form-control" id="turma_destino" name="id_turma">
-                                        <option value="">Selecione um curso primeiro</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="motivo_transferencia">Motivo da Transferência *</label>
-                            <textarea class="form-control" id="motivo_transferencia" name="observacoes" rows="3" required></textarea>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-info">Registrar Transferência</button>
+                            <button type="submit" class="btn btn-primary">Registrar Matrícula</button>
                         </div>
                     </form>
                 </div>
@@ -782,242 +584,100 @@ $alunos_nao_matriculados = $result_nao_matriculados->fetch_all(MYSQLI_ASSOC);
     </div>
 
     <!-- Scripts -->
-    <script src="../libraries/bower_components/jquery/js/jquery.min.js"></script>
-    <script src="../libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
-    <script src="../libraries/bower_components/popper.js/js/popper.min.js"></script>
-    <script src="../libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
-    <script src="../libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
-    <script src="../libraries/bower_components/modernizr/js/modernizr.js"></script>
-    <script src="../libraries/assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <script src="../libraries/assets/js/pcoded.min.js"></script>
-    <script src="../libraries/assets/js/vartical-layout.min.js"></script>
-    <script src="../libraries/assets/js/script.min.js"></script>
-
-    <!-- Warning Section Ends -->
-    <!-- Required Jquery -->
-    <script data-cfasync="false" src="..\..\..\cdn-cgi\scripts\5c5dd728\cloudflare-static\email-decode.min.js"></script><script type="text/javascript" src="libraries\bower_components\jquery\js\jquery.min.js"></script>
-    <script type="text/javascript" src="libraries\bower_components\jquery-ui\js\jquery-ui.min.js"></script>
-    <script type="text/javascript" src="libraries\bower_components\popper.js\js\popper.min.js"></script>
-    <script type="text/javascript" src="libraries\bower_components\bootstrap\js\bootstrap.min.js"></script>
-    <!-- jquery slimscroll js -->
-    <script type="text/javascript" src="libraries\bower_components\jquery-slimscroll\js\jquery.slimscroll.js"></script>
-    <!-- modernizr js -->
-    <script type="text/javascript" src="libraries\bower_components\modernizr\js\modernizr.js"></script>
-    <!-- Chart js -->
-    <script type="text/javascript" src="libraries\bower_components\chart.js\js\Chart.js"></script>
-    <!-- amchart js -->
-    <script src="libraries\assets\pages\widget\amchart\amcharts.js"></script>
-    <script src="libraries\assets\pages\widget\amchart\serial.js"></script>
-    <script src="libraries\assets\pages\widget\amchart\light.js"></script>
-    <script src="libraries\assets\js\jquery.mCustomScrollbar.concat.min.js"></script>
-    <script type="text/javascript" src="libraries\assets\js\SmoothScroll.js"></script>
-    <script src="libraries\assets\js\pcoded.min.js"></script>
-    <!-- custom js -->
-    <script src="libraries\assets\js\vartical-layout.min.js"></script>
-    <script type="text/javascript" src="libraries\assets\js\script.min.js"></script>
+    <script src="libraries/bower_components/jquery/js/jquery.min.js"></script>
+    <script src="libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
+    <script src="libraries/bower_components/popper.js/js/popper.min.js"></script>
+    <script src="libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
+    <script src="libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
+    <script src="libraries/bower_components/modernizr/js/modernizr.js"></script>
+    <script src="libraries/assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <script src="libraries/assets/js/pcoded.min.js"></script>
+    <script src="libraries/assets/js/vartical-layout.min.js"></script>
+    <script src="libraries/assets/js/script.min.js"></script>
 
     <script>
-        // Funções do Sistema
-        function carregarTurmas(id_curso, elemento) {
-            if(id_curso) {
-                $.ajax({
-                    url: 'getTurma.php',
-                    method: 'GET',
-                    data: { id_curso: id_curso },
-                    success: function(response) {
-                        $(elemento).html(response);
-                    },
-                    error: function() {
-                        $(elemento).html('<option value="">Erro ao carregar turmas</option>');
-                    }
-                });
-            } else {
-                $(elemento).html('<option value="">Selecione um curso primeiro</option>');
-            }
-        }
-        
-        function aprovarMatricula(id) {
-            if(confirm('Deseja aprovar esta matrícula?')) {
-                $.ajax({
-                    url: 'alterar_status_matricula.php',
-                    method: 'POST',
-                    data: { id: id, status: 'aprovada' },
-                    dataType: 'json',
-                    success: function(response) {
-                        if(response.success) {
-                            alert('Matrícula aprovada com sucesso');
-                            location.reload();
-                        } else {
-                            alert('Erro: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Erro na comunicação com o servidor');
-                    }
-                });
-            }
-        }
-        
-        function rejeitarMatricula(id) {
-            if(confirm('Deseja rejeitar esta matrícula?')) {
-                $.ajax({
-                    url: 'alterar_status_matricula.php',
-                    method: 'POST',
-                    data: { id: id, status: 'rejeitada' },
-                    dataType: 'json',
-                    success: function(response) {
-                        if(response.success) {
-                            alert('Matrícula rejeitada com sucesso');
-                            location.reload();
-                        } else {
-                            alert('Erro: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Erro na comunicação com o servidor');
-                    }
-                });
-            }
-        }
-        
-        function editarMatricula(id) {
-            // Implementar lógica para edição
-            alert('Editar matrícula ID: ' + id);
-        }
-        
-        function emitirComprovante(id) {
-            window.open('comprovante_matricula.php?id=' + id, '_blank');
-        }
-        
-        // Carregar turmas quando um curso é selecionado
-        $(document).ready(function() {
-            $('#curso_matricula').change(function() {
-                carregarTurmas($(this).val(), '#turma_matricula');
-            });
-            
-            $('#curso_destino').change(function() {
-                carregarTurmas($(this).val(), '#turma_destino');
-            });
-            
-            // Carregar alunos matriculados para transferência
+    // Funções do Sistema
+    function carregarTurmas(id_curso, elemento) {
+        if(id_curso) {
             $.ajax({
-                url: 'get_alunos_matriculados.php',
+                url: 'getTurma.php',
                 method: 'GET',
-                data: { ano_letivo: $('#ano_letivo_transferencia').val() },
+                data: { id_curso: id_curso },
                 success: function(response) {
-                    $('#aluno_transferencia').html(response);
+                    $(elemento).html(response);
+                },
+                error: function() {
+                    $(elemento).html('<option value="">Erro ao carregar turmas</option>');
                 }
             });
-            
-            // Carregar dados do aluno selecionado para transferência
-            $('#aluno_transferencia').change(function() {
-                const id_aluno = $(this).val();
-                if(id_aluno) {
-                    $.ajax({
-                        url: 'get_dados_aluno.php',
-                        method: 'GET',
-                        data: { id_aluno: id_aluno },
-                        dataType: 'json',
-                        success: function(aluno) {
-                            $('#curso_origem').val(aluno.curso || 'N/D');
-                            $('#turma_origem').val(aluno.turma || 'N/D');
-                        }
-                    });
-                }
-            });
+        } else {
+            $(elemento).html('<option value="">Selecione um curso primeiro</option>');
+        }
+    }
+    
+    function editarMatricula(id) {
+        $.ajax({
+            url: 'get_matricula.php',
+            method: 'GET',
+            data: { id: id },
+            dataType: 'json',
+            success: function(matricula) {
+                // Implementar lógica para edição
+                alert('Editar matrícula ID: ' + id);
+            },
+            error: function() {
+                alert('Erro ao carregar dados da matrícula');
+            }
         });
-        </script>
-
-        <script>
-            // Visualizar histórico completo do aluno
-            function visualizarHistorico(id_aluno, nome, bi) {
-                $('#nomeAlunoHistorico').text(nome);
-                $('#biAlunoHistorico').text(bi);
-                
-                $.ajax({
-                    url: 'get_historico_aluno.php',
-                    method: 'GET',
-                    data: { id_aluno: id_aluno },
-                    dataType: 'json',
-                    success: function(response) {
-                        let html = '';
-                        response.matriculas.forEach(function(matricula) {
-                            html += `
-                            <tr>
-                                <td>${matricula.ano_letivo}</td>
-                                <td>${matricula.curso || 'N/D'}</td>
-                                <td>${matricula.turma || 'N/D'}</td>
-                                <td>
-                                    <span class="badge ${matricula.status === 'aprovada' ? 'badge-success' : 
-                                                    matricula.status === 'rejeitada' ? 'badge-danger' : 'badge-warning'}">
-                                        ${matricula.status}
-                                    </span>
-                                </td>
-                                <td>${matricula.tipo === 'regular' ? 'Regular' : 'Transferência'}</td>
-                                <td>${matricula.data}</td>
-                            </tr>
-                            `;
-                        });
-                        $('#corpoHistorico').html(html);
-                        
-                        // Carregar documentos
-                        let docsHtml = '';
-                        if (response.documentos && response.documentos.length > 0) {
-                            response.documentos.forEach(function(doc) {
-                                docsHtml += `
-                                <a href="../documentos/${doc.arquivo}" target="_blank" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">${doc.tipo}</h6>
-                                        <small>${doc.data}</small>
-                                    </div>
-                                    <p class="mb-1">${doc.descricao || 'Sem descrição'}</p>
-                                </a>
-                                `;
-                            });
-                        } else {
-                            docsHtml = '<div class="alert alert-info">Nenhum documento associado</div>';
-                        }
-                        $('#listaDocumentos').html(docsHtml);
-                        
-                        $('#modalHistorico').modal('show');
-                    },
-                    error: function() {
-                        alert('Erro ao carregar histórico do aluno');
-                    }
-                });
-            }
-
-            // Imprimir histórico escolar
-            function imprimirHistorico() {
-                const nome = $('#nomeAlunoHistorico').text();
-                const bi = $('#biAlunoHistorico').text();
-                
-                window.open(`historico_escolar.php?nome=${encodeURIComponent(nome)}&bi=${bi}`, '_blank');
-            }
-
-            // Gerar relatório de matrículas
-            function gerarRelatorio() {
-                $('#modalRelatorios').modal('show');
-            }
-
-            // Atualizar datas padrão no modal de relatórios
-            $(document).ready(function() {
-                const hoje = new Date();
-                const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                
-                $('#dataInicio').val(primeiroDiaMes.toISOString().split('T')[0]);
-                $('#dataFim').val(hoje.toISOString().split('T')[0]);
-                
-                // Atualizar campos conforme tipo de relatório
-                $('#tipoRelatorio').change(function() {
-                    const tipo = $(this).val();
-                    if (tipo === 'matriculas_por_periodo' || tipo === 'transferencias') {
-                        $('#dataInicio, #dataFim').prop('required', true);
+    }
+    
+    function cancelarMatricula(id) {
+        if(confirm('Tem certeza que deseja cancelar esta matrícula?\nEsta ação não pode ser desfeita.')) {
+            $.ajax({
+                url: 'cancelar_matricula.php',
+                method: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function(response) {
+                    if(response.success) {
+                        alert(response.message);
+                        location.reload();
                     } else {
-                        $('#dataInicio, #dataFim').prop('required', false);
+                        alert('Erro: ' + response.message);
                     }
-                });
+                },
+                error: function() {
+                    alert('Erro na comunicação com o servidor');
+                }
             });
+        }
+    }
+    
+    function emitirComprovante(id) {
+        window.open('comprovante_matricula.php?id=' + id, '_blank');
+    }
+    
+    // Carregar turmas quando um curso é selecionado
+    $(document).ready(function() {
+        $('#curso_matricula').change(function() {
+            carregarTurmas($(this).val(), '#turma_matricula');
+        });
+        
+        // Validação do formulário
+        $('#formMatricula').submit(function(e) {
+            // Validar BI
+            const bi = $('#bi_numero').val();
+            const regex = /^[0-9]{9}[A-Z]{2}[0-9]{3}$/;
+            if(!regex.test(bi)) {
+                alert('Número de BI inválido. Formato correto: 123456789LA123');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Outras validações podem ser adicionadas aqui
+            return true;
+        });
+    });
     </script>
 </body>
 </html>
