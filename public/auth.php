@@ -34,12 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Redireciona conforme o tipo de usuário (CAMINHOS CORRIGIDOS)
                     $redirect = match($usuario['tipo']) {
-                        'diretor_geral' => 'dashboard-dg.htm',
-                        'diretor_pedagogico' => 'dashboard-dp.htm',
+                        'diretor_geral' => 'dashboard-dg.php',
+                        'diretor_pedagogico' => 'dashboard-dp.php',
                         'coordenador' => 'dashboard-cc.htm',
                         'professor' => 'dashboard-prf.htm', // Alterado para .php
-                        'secretaria' => 'dashboard-sc.htm',
-                        'aluno' => 'dashboard-aln.htm',
+                        'secretaria' => 'dashboard-sc.php',
+                        'aluno' => 'dashboard-aln.php',
                         default => 'index.php'
                     };
                     

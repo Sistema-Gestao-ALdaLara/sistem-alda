@@ -1,13 +1,13 @@
-﻿<!--<?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['aluno']);
+<?php
+    require_once "permissoes.php";
+    verificarPermissao(['aluno']);
+    require_once 'verificar_sessao.php';
 ?>
--->
 <!DOCTYPE html>
 <html lang="pt">
 
 <head>
-    <title>ALUNO</title>
+    <title>COORDENADOR| CURSO</title>
     <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 10]>
@@ -46,7 +46,7 @@ verificarPermissao(['aluno']);
         .table-custom {
             background: rgba(255, 255, 255, 0.2); /* Branco bem transparente */
             backdrop-filter: blur(8px); /* Efeito vidro fosco */
-            border-radius: 10px;
+            border-radius: 10px; /* Bordas arredondadas */
             border: 1px solid rgba(255, 255, 255, 0.3); /* Borda branca fraca */
             color: white; /* Texto branco para contraste */
         }
@@ -54,7 +54,7 @@ verificarPermissao(['aluno']);
         .table-custom th,
         .table-custom td {
             padding: 12px;
-            color: #ffffff;
+            color: #ffffff; /* Texto branco */
         }
 
         .table-custom thead {
@@ -70,9 +70,9 @@ verificarPermissao(['aluno']);
 
         /* Estilo específico para os cards que contêm tabelas */
         .card-table {
-            background: rgba(19, 125, 171, 0.082);
+            background: rgba(19, 125, 171, 0.082); /* Fundo branco com transparência */
             backdrop-filter: blur(10px); /* Efeito vidro fosco */
-            border-radius: 10px;
+            border-radius: 10px; /* Bordas arredondadas */
             border: 1px solid rgba(255, 255, 255, 0.3); /* Borda sutil */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra leve */
             color: white !important;
@@ -144,7 +144,7 @@ verificarPermissao(['aluno']);
                             <i class="feather icon-menu"></i>
                         </a>
                         <a href="dashboard.htm">
-                            <img class="img-fluid" src="libraries\assets\images\logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">ALUNO |Alda Lara</span>
+                            <img class="img-fluid" src="libraries\assets\images\logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">COORDENADOR |Alda Lara</span>
                         </a>
                         <a class="mobile-options">
                             <i class="feather icon-more-horizontal"></i>
@@ -265,65 +265,41 @@ verificarPermissao(['aluno']);
                     
                                 <!-- Dashboard -->
                                 <li class="pcoded-hasmenu active pcoded-trigger">
-                                    <a href="/aluno/dashboard.php">
+                                    <a href="/coordenador/dashboard.php">
                                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                                         <span class="pcoded-mtext">Dashboard</span>
                                     </a>
                                 </li>
                     
-                                <!-- Minhas Disciplinas -->
+                                <!-- Supervisão de Professores -->
                                 <li>
-                                    <a href="/aluno/disciplinas.php">
-                                        <span class="pcoded-micon"><i class="feather icon-book"></i></span>
-                                        <span class="pcoded-mtext">Minhas Disciplinas</span>
+                                    <a href="/coordenador/professores.php">
+                                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                                        <span class="pcoded-mtext">Supervisão de Professores</span>
                                     </a>
                                 </li>
                     
-                                <!-- Minhas Notas -->
+                                <!-- Desempenho dos Alunos -->
                                 <li>
-                                    <a href="/aluno/notas.php">
-                                        <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
-                                        <span class="pcoded-mtext">Minhas Notas</span>
+                                    <a href="/coordenador/desempenho.php">
+                                        <span class="pcoded-micon"><i class="feather icon-bar-chart-2"></i></span>
+                                        <span class="pcoded-mtext">Desempenho dos Alunos</span>
                                     </a>
                                 </li>
                     
-                                <!-- Horários e Calendário -->
+                                <!-- Planos de Ensino -->
                                 <li>
-                                    <a href="/aluno/calendario.php">
-                                        <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
-                                        <span class="pcoded-mtext">Horários e Calendário</span>
+                                    <a href="/coordenador/planos.php">
+                                        <span class="pcoded-micon"><i class="feather icon-book-open"></i></span>
+                                        <span class="pcoded-mtext">Planos de Ensino</span>
                                     </a>
                                 </li>
                     
-                                <!-- Materiais de Apoio -->
+                                <!-- Ajustes de Turmas e Disciplinas -->
                                 <li>
-                                    <a href="/aluno/materiais.php">
-                                        <span class="pcoded-micon"><i class="feather icon-folder"></i></span>
-                                        <span class="pcoded-mtext">Materiais de Apoio</span>
-                                    </a>
-                                </li>
-                    
-                                <!-- Notificações -->
-                                <li>
-                                    <a href="/aluno/notificacoes.php">
-                                        <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
-                                        <span class="pcoded-mtext">Notificações</span>
-                                    </a>
-                                </li>
-                    
-                                <!-- Atualizar Perfil -->
-                                <li>
-                                    <a href="/aluno/perfil.php">
-                                        <span class="pcoded-micon"><i class="feather icon-user"></i></span>
-                                        <span class="pcoded-mtext">Atualizar Perfil</span>
-                                    </a>
-                                </li>
-                    
-                                <!-- Contato com a Escola -->
-                                <li>
-                                    <a href="/aluno/contato.php">
-                                        <span class="pcoded-micon"><i class="feather icon-mail"></i></span>
-                                        <span class="pcoded-mtext">Contato com a Escola</span>
+                                    <a href="/coordenador/ajustes.php">
+                                        <span class="pcoded-micon"><i class="feather icon-settings"></i></span>
+                                        <span class="pcoded-mtext">Ajustes de Turmas</span>
                                     </a>
                                 </li>
                     
@@ -338,87 +314,43 @@ verificarPermissao(['aluno']);
 
                                     <div class="page-body">
                                         <div class="row">
-                                            <!-- Card de Perfil -->
-                                            <div class="col-xl-4 col-md-6">
-                                                <div class="card user-card">
-                                                    <div class="card-block text-center">
-                                                        <div class="user-image">
-                                                            <img src="libraries/assets/images/avatar-4.jpg" class="img-radius" id="profile-pic" width="100" height="100" alt="Foto do Aluno">
-                                                        </div>
-                                                        <h4 class="m-t-15 text-uppercase">João Silva</h4>
-                                                        <p class="text-muted">Curso: Tecnico Informatica</p>
-                                                        <p class="text-muted">Turma: I10AM</p>
-                                                        <button class="btn btn-light btn-sm" onclick="document.getElementById('file-input').click();">
-                                                            <i class="feather icon-camera"></i> Alterar Foto
-                                                        </button>
-                                                        <input type="file" id="file-input" class="d-none" accept="image/*" onchange="validateImage()">
-                                                    </div>
-                                                    <div class="card-footer">
-                                                        <p class="text-muted m-b-0">
-                                                            <i class="feather icon-clock f-14 m-r-10"></i> Última atualização: Hoje
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        
-                                            <!-- Acesso Rápido -->
-                                            <div class="col-xl-8 col-md-6">
-                                                <div class="row">
-                                                    <a href="/aluno/disciplinas.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
-                                                        <div class="card bg-c-yellow">
-                                                            <div class="card-block text-center">
-                                                                <i class="feather icon-book f-30 text-white"></i>
-                                                                <h6 class="text-white m-t-10">Minhas Disciplinas</h6>
-                                                            </div>
-                                                            <div class="card-footer bg-c-blue">
-                                                                <p class="text-white m-b-0">
-                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Acessar Disciplinas
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                    <a href="/aluno/notas.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
-                                                        <div class="card bg-c-green">
-                                                            <div class="card-block text-center">
-                                                                <i class="feather icon-bar-chart f-30 text-white"></i>
-                                                                <h6 class="text-white m-t-10">Minhas Notas</h6>
-                                                            </div>
-                                                            <div class="card-footer bg-c-yellow">
-                                                                <p class="text-white m-b-0">
-                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Ver Notas Recentes
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                    <a href="/aluno/calendario.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
-                                                        <div class="card bg-c-blue">
-                                                            <div class="card-block text-center">
-                                                                <i class="feather icon-calendar f-30 text-white"></i>
-                                                                <h6 class="text-white m-t-10">Calendário Escolar</h6>
-                                                            </div>
-                                                            <div class="card-footer bg-c-green">
-                                                                <p class="text-white m-b-0">
-                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Ver Eventos
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        
-                                            <!-- Notas e Frequência -->
-                                            <div class="col-xl-3 col-md-6">
+                                            <!-- Supervisão de Professores -->
+                                            <a href="/coordenador/professores.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
                                                 <div class="card bg-c-yellow update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
                                                             <div class="col-8">
-                                                                <h4 class="text-white">85%</h4>
+                                                                <h4 class="text-white">12</h4>
                                                                 <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-star"></i> Média Geral
+                                                                    <i class="feather icon-users"></i> Professores Supervisionados
                                                                 </h6>
                                                             </div>
                                                             <div class="col-4 text-right">
-                                                                <i class="feather icon-star text-white" style="font-size: 40px;"></i>
+                                                                <i class="feather icon-users text-white" style="font-size: 40px;"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado agora
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        
+                                            <!-- Desempenho Acadêmico -->
+                                            <a href="/coordenador/desempenho.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                                <div class="card bg-c-green update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white">78%</h4>
+                                                                <h6 class="text-white m-b-0">
+                                                                    <i class="feather icon-bar-chart-2"></i> Taxa de Aprovação
+                                                                </h6>
+                                                            </div>
+                                                            <div class="col-4 text-right">
+                                                                <i class="feather icon-bar-chart-2 text-white" style="font-size: 40px;"></i>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -428,69 +360,155 @@ verificarPermissao(['aluno']);
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </a>
                                         
-                                            <div class="col-xl-3 col-md-6">
-                                                <div class="card bg-c-green update-card">
+                                            <!-- Planos de Ensino -->
+                                            <a href="/coordenador/planos.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                                <div class="card bg-c-blue update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
                                                             <div class="col-8">
-                                                                <h4 class="text-white">92%</h4>
+                                                                <h4 class="text-white">9</h4>
                                                                 <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-check-circle"></i> Presença
+                                                                    <i class="feather icon-book-open"></i> Planos de Ensino Ativos
                                                                 </h6>
                                                             </div>
                                                             <div class="col-4 text-right">
-                                                                <i class="feather icon-check-circle text-white" style="font-size: 40px;"></i>
+                                                                <i class="feather icon-book-open text-white" style="font-size: 40px;"></i>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="card-footer">
                                                         <p class="text-white m-b-0">
-                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado ontem
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Última revisão: 2 dias atrás
                                                         </p>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </a>
                                         
-                                            <!-- Últimas Notas -->
-                                            <div class="col-xl-6">
-                                                <div class="card card-table">
-                                                    <div class="card-header">
-                                                        <h5><i class="feather icon-award"></i> Últimas Notas</h5>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <table class="table table-hover">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Disciplina</th>
-                                                                    <th>Nota</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td>Matemática</td>
-                                                                    <td><span class="badge badge-success">15.0</span></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>Português</td>
-                                                                    <td><span class="badge badge-warning">17.5</span></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>Fisica</td>
-                                                                    <td><span class="badge badge-danger">13.0</span></td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                            <!-- Ajustes de Turmas -->
+                                            <a href="/coordenador/ajustes.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                                <div class="card bg-c-pink update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white">4</h4>
+                                                                <h6 class="text-white m-b-0">
+                                                                    <i class="feather icon-settings"></i> Ajustes Pendentes
+                                                                </h6>
+                                                            </div>
+                                                            <div class="col-4 text-right">
+                                                                <i class="feather icon-settings text-white" style="font-size: 40px;"></i>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                     <div class="card-footer">
-                                                        <p class="text-muted m-b-0">
-                                                            <i class="feather icon-clock f-14 m-r-10"></i> Atualizado recentemente
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Verificar ajustes
                                                         </p>
                                                     </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        
+                                        
+                                        <div class="card mb-4 card-table">
+                                            <div class="card-header">
+                                                <h5 class="text-white">Últimos Lançamentos de Notas</h5>
+                                            </div>
+                                            <div class="card-block table-border-style">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-custom">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Aluno</th>
+                                                                <th>Turma</th>
+                                                                <th>Disciplina</th>
+                                                                <th>Nota</th>
+                                                                <th>Data</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>João Silva</td>
+                                                                <td>9º A</td>
+                                                                <td>Matemática</td>
+                                                                <td>8.5</td>
+                                                                <td>20/03/2025</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Maria Santos</td>
+                                                                <td>8º B</td>
+                                                                <td>História</td>
+                                                                <td>7.0</td>
+                                                                <td>18/03/2025</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Carlos Oliveira</td>
+                                                                <td>7º C</td>
+                                                                <td>Física</td>
+                                                                <td>9.2</td>
+                                                                <td>17/03/2025</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <div class="card mb-4 card-table">
+                                            <div class="card-header">
+                                                <h5>Últimos Avisos Enviados</h5>
+                                            </div>
+                                            <div class="card-block">
+                                                <ul class="list-group">
+                                                    <li class="list-group-item text-white card-table">
+                                                        <i class="feather icon-bell text-danger"></i> <span>Prova de Matemática adiada para 25/03.</span>
+                                                    </li>
+                                                    <li class="list-group-item text-white card-table">
+                                                        <i class="feather icon-bell text-danger"></i> <span>Entrega do trabalho de História até sexta-feira.</span>
+                                                    </li>
+                                                    <li class="list-group-item text-white card-table">
+                                                        <i class="feather icon-bell text-danger"></i> <span>Revisão para a avaliação de Ciências amanhã.</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="card mb-4 card-table">
+                                            <div class="card-header">
+                                                <h5>Ajustes Acadêmicos Pendentes</h5>
+                                            </div>
+                                            <div class="card-block table-border-style">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-custom">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Solicitação</th>
+                                                                <th>Turma</th>
+                                                                <th>Data</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Alteração de horário</td>
+                                                                <td>11º B</td>
+                                                                <td>20/03/2025</td>
+                                                                <td><span class="badge badge-warning">Pendente</span></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Fusão de turmas</td>
+                                                                <td>10º C</td>
+                                                                <td>18/03/2025</td>
+                                                                <td><span class="badge badge-danger">Em Análise</span></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -534,61 +552,6 @@ verificarPermissao(['aluno']);
 
   gtag('config', 'UA-23581568-13');
 </script>
-
-
-<script>
-    function validateImage() {
-        let fileInput = document.getElementById('file-input');
-        let profilePic = document.getElementById('profile-pic');
-    
-        if (fileInput.files.length > 0) {
-            let file = fileInput.files[0];
-    
-            // Verifica o tipo de arquivo
-            if (!file.type.startsWith('image/')) {
-                alert("Por favor, envie uma imagem válida.");
-                return;
-            }
-    
-            // Simulando uma IA que valida rostos (apenas uma verificação básica)
-            let fileName = file.name.toLowerCase();
-            if (!fileName.includes("face") && !fileName.includes("selfie")) {
-                alert("A foto precisa ser do seu rosto!");
-                return;
-            }
-    
-            // Atualiza a imagem do perfil (simulação)
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                profilePic.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    </script>
-
-    <!-- Script para Validação da Foto -->
-    <script>
-        function validateImage() {
-            let fileInput = document.getElementById('file-input');
-            let profilePic = document.getElementById('profile-pic');
-        
-            if (fileInput.files.length > 0) {
-                let file = fileInput.files[0];
-        
-                if (!file.type.startsWith('image/')) {
-                    alert("Por favor, envie uma imagem válida.");
-                    return;
-                }
-        
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    profilePic.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-    </script>
 </body>
 
 </html>

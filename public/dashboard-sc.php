@@ -1,13 +1,13 @@
-﻿<!--<?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['diretor_pedagogico']);
+﻿<?php
+    require_once "permissoes.php";
+    verificarPermissao(['aluno']);
+    require_once 'verificar_sessao.php';
 ?>
--->
 <!DOCTYPE html>
 <html lang="pt">
 
 <head>
-    <title>D. PEDAGOGICO</title>
+    <title>SECRETARIA</title>
     <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 10]>
@@ -36,11 +36,58 @@ verificarPermissao(['diretor_pedagogico']);
     <style>
         .bg-img {
           width: 100%; /* Ou um valor específico, como 500px */
-          height: 100vh; /* Defina a altura conforme necessário */
+          height: auto; /* Defina a altura conforme necessário */
           background-image: url('../public/img/bg.jpg'); /* Caminho da imagem */
           background-size: cover; /* Faz com que a imagem cubra toda a div */
           background-position: center; /* Centraliza a imagem */
           background-repeat: no-repeat; /* Evita repetições da imagem */
+        }
+
+        .table-custom {
+            background: rgba(255, 255, 255, 0.2); /* Branco bem transparente */
+            backdrop-filter: blur(8px); /* Efeito vidro fosco */
+            border-radius: 10px; /* Bordas arredondadas */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Borda branca fraca */
+            color: white; /* Texto branco para contraste */
+        }
+
+        .table-custom th,
+        .table-custom td {
+            padding: 12px;
+            color: #ffffff; /* Texto branco */
+        }
+
+        .table-custom thead {
+            background: rgba(7, 200, 206, 0.55); /* Azul mais transparente */
+            color: white;
+            font-weight: bold;
+        }
+
+        .table-custom tbody tr:hover {
+            background: rgba(255, 255, 255, 0.3); /* Efeito ao passar o mouse */
+            transition: 0.3s;
+        }
+
+        /* Estilo específico para os cards que contêm tabelas */
+        .card-table {
+            background: rgba(19, 125, 171, 0.082); /* Fundo branco com transparência */
+            backdrop-filter: blur(10px); /* Efeito vidro fosco */
+            border-radius: 10px; /* Bordas arredondadas */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Borda sutil */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra leve */
+            color: white !important;
+        }
+
+        /* Ajuste no cabeçalho do card */
+        .card-table .card-header {
+            background: rgba(7, 200, 206, 0.836); /* Azul translúcido */
+            color: white !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Estilo da tabela dentro do card */
+        .card-table .table {
+            background: transparent; /* Mantém a tabela transparente dentro do card */
         }
     </style>
       
@@ -97,7 +144,7 @@ verificarPermissao(['diretor_pedagogico']);
                             <i class="feather icon-menu"></i>
                         </a>
                         <a href="dashboard.htm">
-                            <img class="img-fluid" src="libraries\assets\images\logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">D. PEDAGOGICO|Alda Lara</span>
+                            <img class="img-fluid" src="libraries\assets\images\logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">SECRETARIA|Alda Lara</span>
                         </a>
                         <a class="mobile-options">
                             <i class="feather icon-more-horizontal"></i>
@@ -208,114 +255,6 @@ verificarPermissao(['diretor_pedagogico']);
                 </div>
             </nav>
 
-            <!-- Sidebar chat start 
-            <div id="sidebar" class="users p-chat-user showChat">
-                <div class="had-container">
-                    <div class="card card_main p-fixed users-main">
-                        <div class="user-box">
-                            <div class="chat-inner-header">
-                                <div class="back_chatBox">
-                                    <div class="right-icon-control">
-                                        <input type="text" class="form-control  search-text" placeholder="Search Friend" id="search-friends">
-                                        <div class="form-icon">
-                                            <i class="icofont icofont-search"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="main-friend-list">
-                                <div class="media userlist-box" data-id="1" data-status="online" data-username="Josephin Doe" data-toggle="tooltip" data-placement="left" title="Josephin Doe">
-                                    <a class="media-left" href="#!">
-                                        <img class="media-object img-radius img-radius" src="libraries\assets\images\avatar-3.jpg" alt="Generic placeholder image ">
-                                        <div class="live-status bg-success"></div>
-                                    </a>
-                                    <div class="media-body">
-                                        <div class="f-13 chat-header">Josephin Doe</div>
-                                    </div>
-                                </div>
-                                <div class="media userlist-box" data-id="2" data-status="online" data-username="Lary Doe" data-toggle="tooltip" data-placement="left" title="Lary Doe">
-                                    <a class="media-left" href="#!">
-                                        <img class="media-object img-radius" src="libraries\assets\images\avatar-2.jpg" alt="Generic placeholder image">
-                                        <div class="live-status bg-success"></div>
-                                    </a>
-                                    <div class="media-body">
-                                        <div class="f-13 chat-header">Lary Doe</div>
-                                    </div>
-                                </div>
-                                <div class="media userlist-box" data-id="3" data-status="online" data-username="Alice" data-toggle="tooltip" data-placement="left" title="Alice">
-                                    <a class="media-left" href="#!">
-                                        <img class="media-object img-radius" src="libraries\assets\images\avatar-4.jpg" alt="Generic placeholder image">
-                                        <div class="live-status bg-success"></div>
-                                    </a>
-                                    <div class="media-body">
-                                        <div class="f-13 chat-header">Alice</div>
-                                    </div>
-                                </div>
-                                <div class="media userlist-box" data-id="4" data-status="online" data-username="Alia" data-toggle="tooltip" data-placement="left" title="Alia">
-                                    <a class="media-left" href="#!">
-                                        <img class="media-object img-radius" src="libraries\assets\images\avatar-3.jpg" alt="Generic placeholder image">
-                                        <div class="live-status bg-success"></div>
-                                    </a>
-                                    <div class="media-body">
-                                        <div class="f-13 chat-header">Alia</div>
-                                    </div>
-                                </div>
-                                <div class="media userlist-box" data-id="5" data-status="online" data-username="Suzen" data-toggle="tooltip" data-placement="left" title="Suzen">
-                                    <a class="media-left" href="#!">
-                                        <img class="media-object img-radius" src="libraries\assets\images\avatar-2.jpg" alt="Generic placeholder image">
-                                        <div class="live-status bg-success"></div>
-                                    </a>
-                                    <div class="media-body">
-                                        <div class="f-13 chat-header">Suzen</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>-->
-            <!-- Sidebar inner chat start
-            <div class="showChat_inner">
-                <div class="media chat-inner-header">
-                    <a class="back_chatBox">
-                        <i class="feather icon-chevron-left"></i> Josephin Doe
-                    </a>
-                </div>
-                <div class="media chat-messages">
-                    <a class="media-left photo-table" href="#!">
-                        <img class="media-object img-radius img-radius m-t-5" src="libraries\assets\images\avatar-3.jpg" alt="Generic placeholder image">
-                    </a>
-                    <div class="media-body chat-menu-content">
-                        <div class="">
-                            <p class="chat-cont">I'm just looking around. Will you tell me something about yourself?</p>
-                            <p class="chat-time">8:20 a.m.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="media chat-messages">
-                    <div class="media-body chat-menu-reply">
-                        <div class="">
-                            <p class="chat-cont">I'm just looking around. Will you tell me something about yourself?</p>
-                            <p class="chat-time">8:20 a.m.</p>
-                        </div>
-                    </div>
-                    <div class="media-right photo-table">
-                        <a href="#!">
-                            <img class="media-object img-radius img-radius m-t-5" src="libraries\assets\images\avatar-4.jpg" alt="Generic placeholder image">
-                        </a>
-                    </div>
-                </div>
-                <div class="chat-reply-box p-b-20">
-                    <div class="right-icon-control">
-                        <input type="text" class="form-control search-text" placeholder="Share Your Thoughts">
-                        <div class="form-icon">
-                            <i class="feather icon-navigation"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>-->
-            <!-- Sidebar inner chat end-->
-
             <!--sidebar-->
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
@@ -328,79 +267,15 @@ verificarPermissao(['diretor_pedagogico']);
                                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                                         <span class="pcoded-mtext">Dashboard</span>
                                     </a>
-                                    <ul class="pcoded-submenu">
-                                        <li class="active">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task1</span>
-                                            </a>
-                                        </li>
-                                        <li class="">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task2</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task3</span>
-                                            </a>
-                                        </li>
-                                    </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">
                                     <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
-                                        <span class="pcoded-mtext">Relatórios Academs.</span>
+                                        <span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
+                                        <span class="pcoded-mtext">Matrículas</span>
                                     </a>
                                     <ul class="pcoded-submenu">
                                         <li class=" ">
-                                            <a href="javascript:void(0)">
-                                                <span class="pcoded-mtext">Task1</span>
-                                            </a>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task2</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task3</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                                        <span class="pcoded-mtext">Gerenciar Profs.</span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task1</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task2</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task3</span>
-                                            </a>
-                                        </li>
-
-                                    </ul>
-                                </li>
-
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                                        <span class="pcoded-mtext">Supervisao de ensino</span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li class=" ">
-                                            <a href="#">
+                                            <a href="matricula.php">
                                                 <span class="pcoded-mtext">Matrículas</span>
                                             </a>
                                         </li>
@@ -411,31 +286,37 @@ verificarPermissao(['diretor_pedagogico']);
                                         </li>
                                     </ul>
                                 </li>
-
                                 <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)">
-                                        <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                                        <span class="pcoded-mtext">Comunicados Academs.</span>
+                                    <a href="/secretaria/alunos.php">
+                                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                                        <span class="pcoded-mtext">Gerenciar Alunos</span>
                                     </a>
-                                    <ul class="pcoded-submenu">
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task1</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task2</span>
-                                            </a>
-                                        </li>
-                                        <li class=" ">
-                                            <a href="#">
-                                                <span class="pcoded-mtext">Task3</span>
-                                            </a>
-                                        </li>
-
-                                    </ul>
                                 </li>
+                                <li class="pcoded-hasmenu">
+                                    <a href="/secretaria/turmas.php">
+                                        <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
+                                        <span class="pcoded-mtext">Gerenciar Turmas</span>
+                                    </a>
+                                </li>
+                                <li class="pcoded-hasmenu">
+                                    <a href="/secretaria/documentos.php">
+                                        <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
+                                        <span class="pcoded-mtext">Documentos Admins.</span>
+                                    </a>
+                                </li>
+                                <li class="pcoded-hasmenu">
+                                    <a href="/secretaria/comunicados.php">
+                                        <span class="pcoded-micon"><i class="feather icon-mail"></i></span>
+                                        <span class="pcoded-mtext">Envio de Comunicados</span>
+                                    </a>
+                                </li>
+                                <li class="pcoded-hasmenu">
+                                    <a href="/secretaria/relatorios.php">
+                                        <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
+                                        <span class="pcoded-mtext">Relatórios Acadêmicos</span>
+                                    </a>
+                                </li>
+                                
                             </ul>
                         </div>
                     </nav>
@@ -446,16 +327,15 @@ verificarPermissao(['diretor_pedagogico']);
 
                                     <div class="page-body">
                                         <div class="row">
-                                            <!-- task start -->
-                                            <!-- Total de Alunos Matriculados -->
-                                            <a href="/diretor-pedagogico/relatorios.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                            <!-- Total de Alunos Ativos -->
+                                            <a href="/secretaria/alunos.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
                                                 <div class="card bg-c-yellow update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
                                                             <div class="col-8">
-                                                                <h4 class="text-white">4.235</h4>
+                                                                <h4 class="text-white">850</h4>
                                                                 <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-users"></i> Total de Alunos Matriculados
+                                                                    <i class="feather icon-users"></i> Alunos Ativos
                                                                 </h6>
                                                             </div>
                                                             <div class="col-4 text-right">
@@ -464,78 +344,105 @@ verificarPermissao(['diretor_pedagogico']);
                                                         </div>
                                                     </div>
                                                     <div class="card-footer">
-                                                        <p class="text-white m-b-0"><i class="feather icon-clock text-white f-14 m-r-10"></i>update : 2:15 am</p>
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado: Hoje
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </a>
-
-                                            <!-- Total de Professores Cadastrados -->
-                                            <a href="/diretor-pedagogico/professores.php" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                        
+                                            <!-- Alunos Transferidos Recentemente -->
+                                            <a href="/secretaria/matriculas.php?tipo=transferencias" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
                                                 <div class="card bg-c-green update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
                                                             <div class="col-8">
-                                                                <h4 class="text-white">127</h4>
+                                                                <h4 class="text-white">35</h4>
                                                                 <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-briefcase"></i> Total de Professores
+                                                                    <i class="feather icon-refresh-ccw"></i> Transferências Recentes
                                                                 </h6>
                                                             </div>
                                                             <div class="col-4 text-right">
-                                                                <i class="feather icon-briefcase text-white" style="font-size: 40px;"></i>
+                                                                <i class="feather icon-refresh-ccw text-white" style="font-size: 40px;"></i>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="card-footer">
-                                                        <p class="text-white m-b-0"><i class="feather icon-clock text-white f-14 m-r-10"></i>update : 2:15 am</p>
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado: Hoje
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </a>
-
-                                            <!-- Relatório de Frequência dos Alunos -->
-                                            <a href="/diretor-pedagogico/relatorios.php?tipo=frequencia" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                        
+                                            <!-- Matrículas Pendentes -->
+                                            <a href="/secretaria/matriculas.php?tipo=pendentes" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
                                                 <div class="card bg-c-pink update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
                                                             <div class="col-8">
-                                                                <h4 class="text-white">145</h4>
+                                                                <h4 class="text-white">12</h4>
                                                                 <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-check-square"></i> Relatório de Frequência
+                                                                    <i class="feather icon-edit"></i> Matrículas Pendentes
                                                                 </h6>
                                                             </div>
                                                             <div class="col-4 text-right">
-                                                                <i class="feather icon-check-square text-white" style="font-size: 40px;"></i>
+                                                                <i class="feather icon-edit text-white" style="font-size: 40px;"></i>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="card-footer">
-                                                        <p class="text-white m-b-0"><i class="feather icon-clock text-white f-14 m-r-10"></i>update : 2:15 am</p>
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado: Hoje
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </a>
-
-                                            <!-- Desempenho Acadêmico Geral -->
-                                            <a href="/diretor-pedagogico/relatorios.php?tipo=desempenho" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
-                                                <div class="card bg-c-lite-green update-card">
-                                                    <div class="card-block">
-                                                        <div class="row align-items-end">
-                                                            <div class="col-8">
-                                                                <h4 class="text-white">85% / 15%</h4>
-                                                                <h6 class="text-white m-b-0">
-                                                                    <i class="feather icon-bar-chart"></i> Desempenho Acadêmico
-                                                                </h6>
-                                                            </div>
-                                                            <div class="col-4 text-right">
-                                                                <i class="feather icon-bar-chart text-white" style="font-size: 40px;"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-footer">
-                                                        <p class="text-white m-b-0"><i class="feather icon-clock text-white f-14 m-r-10"></i>update : 2:15 am</p>
-                                                    </div>
+                                        </div>
+                                        
+                                        <!-- Tabela com Últimos Registros (Matrículas e Transferências) -->
+                                        <div class="card card-table">
+                                            <div class="card-header">
+                                                <h5>Últimos Registros (Matrículas e Transferências)</h5>
+                                            </div>
+                                            <div class="card-block table-border-style">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-custom">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>#</th>
+                                                                <th>Aluno</th>
+                                                                <th>Turma</th>
+                                                                <th>Tipo</th>
+                                                                <th>Data</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <th scope="row">1</th>
+                                                                <td>João Silva</td>
+                                                                <td>I11AM</td>
+                                                                <td>Matrícula</td>
+                                                                <td>10/03/2025</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">2</th>
+                                                                <td>Maria Santos</td>
+                                                                <td>I11BM</td>
+                                                                <td>Transferência</td>
+                                                                <td>09/03/2025</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <th scope="row">3</th>
+                                                                <td>Carlos Oliveira</td>
+                                                                <td>I11CM</td>
+                                                                <td>Matrícula</td>
+                                                                <td>08/03/2025</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                            </a>
-
-                                            <!-- task  end -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -569,17 +476,9 @@ verificarPermissao(['diretor_pedagogico']);
     <script src="libraries\assets\js\pcoded.min.js"></script>
     <!-- custom js -->
     <script src="libraries\assets\js\vartical-layout.min.js"></script>
-    <script type="text/javascript" src="libraries\assets\pages\dashboard\custom-dashboard.js"></script>
     <script type="text/javascript" src="libraries\assets\js\script.min.js"></script>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-23581568-13"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-23581568-13');
-</script>
 </body>
 
 </html>

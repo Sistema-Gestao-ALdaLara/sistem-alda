@@ -1,8 +1,8 @@
-﻿<!--<?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['professor']);
+﻿<?php
+    require_once "permissoes.php";
+    verificarPermissao(['aluno']);
+    require_once 'verificar_sessao.php';
 ?>
--->
 <!DOCTYPE html>
 <html lang="pt">
 
