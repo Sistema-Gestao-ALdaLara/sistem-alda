@@ -1,6 +1,8 @@
 <?php
+    require_once '../../includes/common/permissoes.php';
+    verificarPermissao(['secretaria']);
+    require_once '../../process/verificar_sessao.php';
     require_once '../../database/conexao.php';
-    session_start();
 
     // Processar formulário de matrícula (nova ou edição)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -177,133 +179,28 @@
     if ($result_turmas = $conn->query("SELECT id_turma, nome, curso_id_curso FROM turma")) {
         $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
     }
+
+    $title = "Secretaria";
 ?>
 
 <!DOCTYPE html>
 <html lang="pt">
-    <head>
-        <title>SECRETARIA - Gestão de Matrículas | Alda Lara</title>
-        <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
-        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-        <!--[if lt IE 10]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
-        <!-- Meta -->
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="description" content="#">
-        <meta name="keywords" content="Admin , Responsive, Landing, Bootstrap, App, Template, Mobile, iOS, Android, apple, creative app">
-        <meta name="author" content="#">
-        <!-- Favicon icon -->
-        <link rel="icon" href="libraries\assets\images\favicon.ico" type="image/x-icon">
-        <!-- Google font-->
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
-        <!-- Required Fremwork -->
-        <link rel="stylesheet" type="text/css" href="libraries\bower_components\bootstrap\css\bootstrap.min.css">
-        <!-- feather Awesome -->
-        <link rel="stylesheet" type="text/css" href="libraries\assets\icon\feather\css\feather.css">
-        <!-- Style.css -->
-        <link rel="stylesheet" type="text/css" href="libraries\assets\css\style.css">
-        <link rel="stylesheet" type="text/css" href="libraries\assets\css\jquery.mCustomScrollbar.css">
+<?php require_once '../../includes/common//head.php'; ?>
 
-        <style>
-            .bg-img {
-            width: 100%;
-            height: auto;
-            background-image: url('../public/img/bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            }
+<body>
+    <?php require_once '../../includes/common/preloader.php'; ?>
 
-            .table-custom {
-                background: rgba(255, 255, 255, 0.2);
-                backdrop-filter: blur(8px);
-                border-radius: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                color: white;
-            }
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
 
-            .table-custom th,
-            .table-custom td {
-                padding: 12px;
-                color: #ffffff;
-            }
+            <?php require_once '../../includes/secretaria/navbar.php'; ?>
 
-            .table-custom thead {
-                background: rgba(7, 200, 206, 0.55);
-                color: white;
-                font-weight: bold;
-            }
+            <!--sidebar-->
+            <div class="pcoded-main-container">
+                <div class="pcoded-wrapper">
+                    <?php require_once '../../includes/secretaria/sidebar.php'; ?>
 
-            .table-custom tbody tr:hover {
-                background: rgba(255, 255, 255, 0.3);
-                transition: 0.3s;
-            }
-
-            /* Estilo específico para os cards que contêm tabelas */
-            .card-table {
-                background: rgba(19, 125, 171, 0.082);
-                backdrop-filter: blur(10px);
-                border-radius: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                color: white !important;
-            }
-
-            /* Ajuste no cabeçalho do card */
-            .card-table .card-header {
-                background: rgba(7, 200, 206, 0.836);
-                color: white !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            }
-
-            /* Estilo da tabela dentro do card */
-            .card-table .table {
-                background: transparent;
-            }
-            
-            .badge-ativa { background-color: #28a745; }
-            .badge-cancelada { background-color: #dc3545; }
-            .badge-trancada { background-color: #ffc107; color: #000; }
-            
-            .numero-matricula {
-                font-family: monospace;
-                font-weight: bold;
-            }
-        </style>
-    </head>
-
-    <body>
-        <!-- Pre-loader -->
-        <div class="theme-loader">
-            <div class="ball-scale">
-                <div class='contain'>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                    <div class="ring"><div class="frame"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="pcoded" class="pcoded">
-            <div class="pcoded-overlay-box"></div>
-            <div class="pcoded-container navbar-wrapper">
-                <?php include 'navbar.php'; ?>
-                
-                <div class="pcoded-main-container">
-                    <div class="pcoded-wrapper">
-                        <?php include 'sidebar.php'; ?>
-                        
                         <div class="pcoded-content">
                             <div class="pcoded-inner-content">
                                 <div class="main-body bg-img">
@@ -635,23 +532,14 @@
         </div>
 
         <!-- Scripts -->
-        <script src="libraries/bower_components/jquery/js/jquery.min.js"></script>
-        <script src="libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
-        <script src="libraries/bower_components/popper.js/js/popper.min.js"></script>
-        <script src="libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
-        <script src="libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
-        <script src="libraries/bower_components/modernizr/js/modernizr.js"></script>
-        <script src="libraries/assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
-        <script src="libraries/assets/js/pcoded.min.js"></script>
-        <script src="libraries/assets/js/vartical-layout.min.js"></script>
-        <script src="libraries/assets/js/script.min.js"></script>
+        <?php require_once '../../includes/common/js_imports.php'; ?>
 
         <script>
             // Funções do Sistema
             function carregarTurmas(id_curso, elemento) {
                 if(id_curso) {
                     $.ajax({
-                        url: 'getTurma.php',
+                        url: '../../process/consultas/getTurma.php',
                         method: 'GET',
                         data: { id_curso: id_curso },
                         success: function(response) {
@@ -668,7 +556,7 @@
             
             function editarMatricula(id) {
                 $.ajax({
-                    url: 'get_matricula.php',
+                    url: '../../process/consultasget_matricula.php',
                     method: 'GET',
                     data: { id: id },
                     dataType: 'json',
@@ -721,7 +609,7 @@
             function cancelarMatricula(id) {
                 if(confirm('Tem certeza que deseja cancelar esta matrícula?\nEsta ação não pode ser desfeita.')) {
                     $.ajax({
-                        url: 'cancelar_matricula.php',
+                        url: '../../action/secretaria/cancelar_matricula.php',
                         method: 'POST',
                         data: { id: id },
                         dataType: 'json',
@@ -741,7 +629,7 @@
             }
             
             function emitirComprovante(id) {
-                window.open('comprovante_matricula.php?id=' + id, '_blank');
+                window.open('../../process/consultas/comprovante_matricula.php?id=' + id, '_blank');
             }
             
             // Carregar turmas quando um curso é selecionado

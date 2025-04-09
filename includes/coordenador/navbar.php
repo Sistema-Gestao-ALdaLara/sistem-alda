@@ -5,8 +5,8 @@
             <a class="mobile-menu" id="mobile-collapse" href="#!">
                 <i class="feather icon-menu"></i>
             </a>
-            <a href="dashboard.php">
-                <img class="img-fluid" src="../../public/libraries/assets/images/logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">SECRETARIA</span>
+            <a href="dashboard.htm">
+                <img class="img-fluid" src="../../public/libraries/assets/images/logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">COORDENADOR |Alda Lara</span>
             </a>
             <a class="mobile-options">
                 <i class="feather icon-more-horizontal"></i>
@@ -15,6 +15,15 @@
 
         <div class="navbar-container container-fluid">
             <ul class="nav-left">
+                <li class="header-search">
+                    <div class="main-search morphsearch-search">
+                        <div class="input-group">
+                            <span class="input-group-addon search-close"><i class="feather icon-x"></i></span>
+                            <input type="text" class="form-control">
+                            <span class="input-group-addon search-btn"><i class="feather icon-search"></i></span>
+                        </div>
+                    </div>
+                </li>
                 <li>
                     <a href="#!" onclick="javascript:toggleFullScreen()">
                         <i class="feather icon-maximize full-screen"></i>
@@ -35,7 +44,7 @@
                             </li>
                             <li>
                                 <div class="media">
-                                    <img class="d-flex align-self-center img-radius" src="../../public/libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
+                                    <img class="d-flex align-self-center img-radius" src="libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
                                     <div class="media-body">
                                         <h5 class="notification-user">Flavio Garcia</h5>
                                         <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
@@ -45,7 +54,7 @@
                             </li>
                             <li>
                                 <div class="media">
-                                    <img class="d-flex align-self-center img-radius" src="../../public/libraries/assets/images/avatar-3.jpg" alt="Generic placeholder image">
+                                    <img class="d-flex align-self-center img-radius" src="libraries/assets/images/avatar-3.jpg" alt="Generic placeholder image">
                                     <div class="media-body">
                                         <h5 class="notification-user">Jucelmo Pereira</h5>
                                         <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
@@ -55,7 +64,7 @@
                             </li>
                             <li>
                                 <div class="media">
-                                    <img class="d-flex align-self-center img-radius" src="../../public/libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
+                                    <img class="d-flex align-self-center img-radius" src="libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
                                     <div class="media-body">
                                         <h5 class="notification-user">Ariel Patricio</h5>
                                         <p class="notification-msg">Lorem ipsum dolor sit amet, consectetuer elit.</p>
@@ -69,24 +78,40 @@
                 <li class="user-profile header-notification">
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-toggle="dropdown">
-                            <img src="../../public/libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                            <span><?php echo htmlspecialchars($_SESSION['nome_usuario']); ?></span>
+                            <img src="libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
+                            <span>Flavio Garcia</span>
                             <i class="feather icon-chevron-down"></i>
                         </div>
                         <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
                             <li>
+                                <a href="#!">
+                                    <i class="feather icon-settings"></i> Settings
+                                </a>
+                            </li>
+                            <li>
                                 <a href="user-profile.htm">
-                                    <i class="feather icon-user"></i> Perfil
+                                    <i class="feather icon-user"></i> Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a href="email-inbox.htm">
+                                    <i class="feather icon-mail"></i> My Messages
+                                </a>
+                            </li>
+                            <li>
+                                <a href="auth-lock-screen.htm">
+                                    <i class="feather icon-lock"></i> Lock Screen
                                 </a>
                             </li>
                             <li>
                                 <a href="../../process/logout.php">
-                                    <i class="feather icon-log-out"></i> Sair
+                                    <i class="feather icon-log-out"></i> Logout
                                 </a>
                             </li>
                         </ul>
+
                     </div>
-                </li>            
+                </li>
             </ul>
         </div>
     </div>
