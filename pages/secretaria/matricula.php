@@ -4,6 +4,8 @@
     require_once '../../process/verificar_sessao.php';
     require_once '../../database/conexao.php';
 
+    $title = "Secretaria";
+
     // Processar formulário de matrícula (nova ou edição)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validar e sanitizar dados comuns

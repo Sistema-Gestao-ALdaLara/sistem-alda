@@ -143,4 +143,75 @@
                 font-weight: bold;
             }
         </style>
+        <style>
+        
+        .action-buttons .btn {
+            margin: 0 3px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .filtros-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filtros-container label {
+            color: white;
+            font-weight: bold;
+        }
+        .btn-filtrar {
+            margin-top: 28px;
+        }
+        .btn-limpar {
+            margin-top: 28px;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+    </style>
+    
+    <style>
+        /* ... (estilos iguais ao anterior) ... */
+        .badge-diretor-geral {
+            background-color: #4e73df;
+        }
+        .badge-diretor-pedagogico {
+            background-color: #1cc88a;
+        }
+    </style>
+    
+    <style>
+        .action-buttons .btn {
+            margin: 0 3px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .filtros-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filtros-container label {
+            color: white;
+            font-weight: bold;
+        }
+        .btn-filtrar {
+            margin-top: 28px;
+        }
+        .btn-limpar {
+            margin-top: 28px;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+    </style>
+     <style>
+        /* ... (estilos anteriores) ... */
+        .badge-secretaria {
+            background-color: #6f42c1;
+        }
+        .badge-registrador {
+            background-color: #fd7e14;
+        }
+    </style>
     </head>

@@ -7,7 +7,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="pcoded-navigatio-lavel">Navegacao</div>
         <ul class="pcoded-item pcoded-left-item">
             <li class="pcoded-hasmenu <?= ($current_page == 'dashboard.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="javascript:void(0)">
+                <a href="./dashboard.php">
                     <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                     <span class="pcoded-mtext">Dashboard</span>
                 </a>
@@ -30,11 +30,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </li>
                 </ul>
             </li>
-            <li class="pcoded-hasmenu <?= ($current_page == 'alunos.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./alunos.php">
-                    <span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                    <span class="pcoded-mtext">Gerenciar Alunos</span>
+            <li class="pcoded-hasmenu <?= ($current_page == 'matricula.php') ? 'active pcoded-trigger' : '' ?> <?= ($current_page == 'tranferencias.php') ? 'active' : '' ?></li>">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
+                    <span class="pcoded-mtext">Gerenciar Usuarios</span>
                 </a>
+                <ul class="pcoded-submenu">
+                    <li class="<?= ($current_page == 'matricula.php') ? 'active' : '' ?> ">
+                        <a href="./professor.php">
+                            <span class="pcoded-mtext">G. Professor</span>
+                        </a>
+                    </li>
+                    <li class="<?= ($current_page == 'coordenador.php') ? 'active' : '' ?> ">
+                        <a href="./coordenador.php">
+                            <span class="pcoded-mtext">G. Coordenador</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li class="pcoded-hasmenu<?= ($current_page == 'turmas.php') ? 'active pcoded-trigger' : '' ?>">
                 <a href="./turmas.php">

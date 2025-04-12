@@ -2,6 +2,7 @@
     require_once '../../includes/common/permissoes.php';
     verificarPermissao(['diretor_pedagogico']);
     require_once '../../process/verificar_sessao.php';
+    $title = "Pedagogico";
 ?>
 <!DOCTYPE html>
 <html lang="pt">

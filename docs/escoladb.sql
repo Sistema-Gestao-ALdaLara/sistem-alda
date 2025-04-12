@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`usuario` (
   PRIMARY KEY (`id_usuario`))
 ENGINE = InnoDB;
 
+ALTER TABLE `escoladb`.`usuario` ADD UNIQUE (email);
+ALTER TABLE `escoladb`.`usuario` ADD UNIQUE (bi_numero);
+
+-- Conta padrão da Secretaria
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Secretaria Geral', 'secretaria@aldalara.com', 'senha_hash', '0000000000000', 'secretaria', 'ativo');
+
+-- Conta padrão do Diretor Geral
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Diretor Geral', 'diretor@gmail.com', '$2y$10$cJqlwZa/fiGP7b3zfZ0CA.mGxcYJz4QJCMIAyd8h0wZL9TBKQt0hW', '456456789LA123' , 'diretor_geral', 'ativo');
+
+-- Conta padrão do Diretor Pedagógico
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Diretor Pedagógico', 'pedagogico@gmail.com', '$2y$10$cJqlwZa/fiGP7b3zfZ0CA.mGxcYJz4QJCMIAyd8h0wZL9TBKQt0hW', '789456789LA123' ,'diretor_pedagogico', 'ativo');
+
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`curso`
@@ -91,6 +106,26 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`aluno` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+ALTER TABLE `escoladb`.`aluno`
+ADD COLUMN `data_nascimento` DATE AFTER `id_aluno`,
+ADD COLUMN `genero` VARCHAR(10) AFTER `data_nascimento`,
+ADD COLUMN `naturalidade` VARCHAR(100) AFTER `genero`,
+ADD COLUMN `nacionalidade` VARCHAR(100) AFTER `naturalidade`,
+ADD COLUMN `municipio` VARCHAR(100) AFTER `nacionalidade`,
+ADD COLUMN `nome_encarregado` VARCHAR(100) AFTER `municipio`,
+ADD COLUMN `contacto_encarregado` VARCHAR(20) AFTER `nome_encarregado`;
+
+ALTER TABLE `escoladb`.`aluno`
+MODIFY `data_nascimento` DATE NOT NULL,
+MODIFY `genero` VARCHAR(10) NOT NULL,
+MODIFY `naturalidade` VARCHAR(100) NOT NULL,
+MODIFY `nacionalidade` VARCHAR(100) NOT NULL,
+MODIFY `municipio` VARCHAR(100) NOT NULL,
+MODIFY `nome_encarregado` VARCHAR(100) NOT NULL,
+MODIFY `contacto_encarregado` VARCHAR(20) NOT NULL,
+MODIFY `ano_letivo` YEAR NOT NULL;
+
 
 
 -- -----------------------------------------------------
@@ -156,17 +191,30 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`secretaria` (
 ENGINE = InnoDB;
 
 
+ALTER TABLE `escoladb`.`secretaria` 
+ADD COLUMN `pode_registrar` TINYINT(1) NOT NULL DEFAULT 0 AFTER `setor`;
+
+-- Inserir usuário padrão da secretaria
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status) 
+VALUES ('Secretaria Padrão', 'secretaria@gmail.com', 'admin', '123456789LA123', 'secretaria', 'ativo');
+
+-- Inserir registro da secretaria com permissão para registrar outras
+INSERT INTO `escoladb`.`secretaria` (setor, pode_registrar, usuario_id_usuario) 
+VALUES ('Administrativo', 1, LAST_INSERT_ID());
+
+
 -- -----------------------------------------------------
 -- Table `escoladb`.`disciplina`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `escoladb`.`disciplina` (
+CREATE TABLE `escoladb`.`disciplina` (
   `id_disciplina` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(50) NOT NULL,
   `curso_id_curso` INT NOT NULL,
-  `professor_id_professor` INT NOT NULL,
-  PRIMARY KEY (`id_disciplina`),
-  INDEX `fk_curso5_idx` (`curso_id_curso` ASC),
-  INDEX `fk_professor5_idx` (`professor_id_professor` ASC),
+  `professor_id_professor` INT NULL, -- AGORA PODE SER NULL
+  PRIMARY KEY (`id_disciplina`, `curso_id_curso`),
+  UNIQUE INDEX `id_disciplina_UNIQUE` (`id_disciplina`), 
+  INDEX `fk_curso5_idx` (`curso_id_curso`), 
+  INDEX `fk_professor5_idx` (`professor_id_professor`), 
   CONSTRAINT `fk_curso5`
     FOREIGN KEY (`curso_id_curso`)
     REFERENCES `escoladb`.`curso` (`id_curso`)
@@ -175,9 +223,10 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`disciplina` (
   CONSTRAINT `fk_professor5`
     FOREIGN KEY (`professor_id_professor`)
     REFERENCES `escoladb`.`professor` (`id_professor`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON DELETE SET NULL -- SE O PROFESSOR FOR DELETADO, A DISCIPLINA FICA SEM PROFESSOR
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
 
 
 -- -----------------------------------------------------
@@ -378,7 +427,20 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`matricula` (
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
 
+ALTER TABLE `escoladb`.`matricula`
+ADD COLUMN `status_matricula` ENUM('ativa', 'trancada', 'cancelada') NOT NULL DEFAULT 'ativa' AFTER `curso_id_curso`;
 
+ALTER TABLE `escoladb`.`matricula`
+ADD COLUMN `classe` VARCHAR(10) AFTER `ano_letivo`,
+ADD COLUMN `turno` VARCHAR(20) AFTER `classe`,
+ADD COLUMN `numero_matricula` VARCHAR(20) UNIQUE AFTER `turno`,
+ADD COLUMN `comprovativo_pagamento` VARCHAR(100) AFTER `status_matricula`;
+
+ALTER TABLE `escoladb`.`matricula`
+MODIFY `classe` VARCHAR(10) NOT NULL,
+MODIFY `turno` VARCHAR(20) NOT NULL,
+MODIFY `numero_matricula` VARCHAR(20) NOT NULL,
+MODIFY `comprovativo_pagamento` VARCHAR(100) NOT NULL;
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`professor_tem_turma`
@@ -447,7 +509,25 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`professor_tem_turma1` (
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
-
+-- -----------------------------------------------------
+-- Table `escoladb`.`documentos_administrativos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`documentos_administrativos` (
+  `id_documento` INT NOT NULL AUTO_INCREMENT,
+  `titulo` VARCHAR(255) NOT NULL,
+  `descricao` TEXT NULL,
+  `caminho_arquivo` VARCHAR(255) NOT NULL,
+  `tipo` VARCHAR(50) NOT NULL,
+  `data_upload` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_id_usuario` INT NOT NULL,
+  PRIMARY KEY (`id_documento`),
+  INDEX `fk_usuario7_idx` (`usuario_id_usuario` ASC),
+  CONSTRAINT `fk_usuario7`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;

@@ -1,6 +1,6 @@
 <?php
 // Inclui a conexão com o banco de dados
-require_once 'conexao.php';
+require_once '../../database/conexao.php';
 
 // Verifica se o usuário está logado e tem permissão (diretor ou coordenador)
 #session_start();

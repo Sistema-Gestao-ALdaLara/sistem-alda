@@ -1,8 +1,5 @@
 <?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['secretaria']);
-
-require_once "../config/conexao.php";
+require_once '../../database/conexao.php';
 
 header('Content-Type: application/json');
 

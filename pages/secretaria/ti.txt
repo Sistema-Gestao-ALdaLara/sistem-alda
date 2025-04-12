@@ -1,0 +1,195 @@
+.
+├── alunos.php
+├── comuinc.php
+├── comunicados.php
+├── coordenador.php
+├── dashboard.php
+├── diretores.php
+├── documentos.php
+├── js
+│   └── tinymce
+│       ├── icons
+│       │   └── default
+│       │       └── icons.min.js
+│       ├── langs
+│       │   └── README.md
+│       ├── license.md
+│       ├── models
+│       │   └── dom
+│       │       └── model.min.js
+│       ├── n
+│       ├── plugins
+│       │   ├── accordion
+│       │   │   └── plugin.min.js
+│       │   ├── advlist
+│       │   │   └── plugin.min.js
+│       │   ├── anchor
+│       │   │   └── plugin.min.js
+│       │   ├── autolink
+│       │   │   └── plugin.min.js
+│       │   ├── autoresize
+│       │   │   └── plugin.min.js
+│       │   ├── autosave
+│       │   │   └── plugin.min.js
+│       │   ├── charmap
+│       │   │   └── plugin.min.js
+│       │   ├── code
+│       │   │   └── plugin.min.js
+│       │   ├── codesample
+│       │   │   └── plugin.min.js
+│       │   ├── directionality
+│       │   │   └── plugin.min.js
+│       │   ├── emoticons
+│       │   │   ├── js
+│       │   │   │   ├── emojiimages.js
+│       │   │   │   ├── emojiimages.min.js
+│       │   │   │   ├── emojis.js
+│       │   │   │   └── emojis.min.js
+│       │   │   └── plugin.min.js
+│       │   ├── fullscreen
+│       │   │   └── plugin.min.js
+│       │   ├── help
+│       │   │   ├── js
+│       │   │   │   └── i18n
+│       │   │   │       └── keynav
+│       │   │   │           ├── ar.js
+│       │   │   │           ├── bg_BG.js
+│       │   │   │           ├── ca.js
+│       │   │   │           ├── cs.js
+│       │   │   │           ├── da.js
+│       │   │   │           ├── de.js
+│       │   │   │           ├── el.js
+│       │   │   │           ├── en.js
+│       │   │   │           ├── es.js
+│       │   │   │           ├── eu.js
+│       │   │   │           ├── fa.js
+│       │   │   │           ├── fi.js
+│       │   │   │           ├── fr_FR.js
+│       │   │   │           ├── he_IL.js
+│       │   │   │           ├── hi.js
+│       │   │   │           ├── hr.js
+│       │   │   │           ├── hu_HU.js
+│       │   │   │           ├── id.js
+│       │   │   │           ├── it.js
+│       │   │   │           ├── ja.js
+│       │   │   │           ├── kk.js
+│       │   │   │           ├── ko_KR.js
+│       │   │   │           ├── ms.js
+│       │   │   │           ├── nb_NO.js
+│       │   │   │           ├── nl.js
+│       │   │   │           ├── pl.js
+│       │   │   │           ├── pt_BR.js
+│       │   │   │           ├── pt_PT.js
+│       │   │   │           ├── ro.js
+│       │   │   │           ├── ru.js
+│       │   │   │           ├── sk.js
+│       │   │   │           ├── sl_SI.js
+│       │   │   │           ├── sv_SE.js
+│       │   │   │           ├── th_TH.js
+│       │   │   │           ├── tr.js
+│       │   │   │           ├── uk.js
+│       │   │   │           ├── vi.js
+│       │   │   │           ├── zh_CN.js
+│       │   │   │           └── zh_TW.js
+│       │   │   └── plugin.min.js
+│       │   ├── image
+│       │   │   └── plugin.min.js
+│       │   ├── importcss
+│       │   │   └── plugin.min.js
+│       │   ├── insertdatetime
+│       │   │   └── plugin.min.js
+│       │   ├── link
+│       │   │   └── plugin.min.js
+│       │   ├── lists
+│       │   │   └── plugin.min.js
+│       │   ├── media
+│       │   │   └── plugin.min.js
+│       │   ├── nonbreaking
+│       │   │   └── plugin.min.js
+│       │   ├── pagebreak
+│       │   │   └── plugin.min.js
+│       │   ├── preview
+│       │   │   └── plugin.min.js
+│       │   ├── quickbars
+│       │   │   └── plugin.min.js
+│       │   ├── save
+│       │   │   └── plugin.min.js
+│       │   ├── searchreplace
+│       │   │   └── plugin.min.js
+│       │   ├── table
+│       │   │   └── plugin.min.js
+│       │   ├── visualblocks
+│       │   │   └── plugin.min.js
+│       │   ├── visualchars
+│       │   │   └── plugin.min.js
+│       │   └── wordcount
+│       │       └── plugin.min.js
+│       ├── skins
+│       │   ├── content
+│       │   │   ├── dark
+│       │   │   │   ├── content.js
+│       │   │   │   └── content.min.css
+│       │   │   ├── default
+│       │   │   │   ├── content.js
+│       │   │   │   └── content.min.css
+│       │   │   ├── document
+│       │   │   │   ├── content.js
+│       │   │   │   └── content.min.css
+│       │   │   ├── tinymce-5
+│       │   │   │   ├── content.js
+│       │   │   │   └── content.min.css
+│       │   │   ├── tinymce-5-dark
+│       │   │   │   ├── content.js
+│       │   │   │   └── content.min.css
+│       │   │   └── writer
+│       │   │       ├── content.js
+│       │   │       └── content.min.css
+│       │   └── ui
+│       │       ├── oxide
+│       │       │   ├── content.inline.js
+│       │       │   ├── content.inline.min.css
+│       │       │   ├── content.js
+│       │       │   ├── content.min.css
+│       │       │   ├── skin.js
+│       │       │   ├── skin.min.css
+│       │       │   ├── skin.shadowdom.js
+│       │       │   └── skin.shadowdom.min.css
+│       │       ├── oxide-dark
+│       │       │   ├── content.inline.js
+│       │       │   ├── content.inline.min.css
+│       │       │   ├── content.js
+│       │       │   ├── content.min.css
+│       │       │   ├── skin.js
+│       │       │   ├── skin.min.css
+│       │       │   ├── skin.shadowdom.js
+│       │       │   └── skin.shadowdom.min.css
+│       │       ├── tinymce-5
+│       │       │   ├── content.inline.js
+│       │       │   ├── content.inline.min.css
+│       │       │   ├── content.js
+│       │       │   ├── content.min.css
+│       │       │   ├── skin.js
+│       │       │   ├── skin.min.css
+│       │       │   ├── skin.shadowdom.js
+│       │       │   └── skin.shadowdom.min.css
+│       │       └── tinymce-5-dark
+│       │           ├── content.inline.js
+│       │           ├── content.inline.min.css
+│       │           ├── content.js
+│       │           ├── content.min.css
+│       │           ├── skin.js
+│       │           ├── skin.min.css
+│       │           ├── skin.shadowdom.js
+│       │           └── skin.shadowdom.min.css
+│       ├── themes
+│       │   └── silver
+│       │       └── theme.min.js
+│       ├── tinymce.d.ts
+│       └── tinymce.min.js
+├── matricula.php
+├── professor.php
+├── secretaria.php
+├── tinymce
+└── turmas.php
+
+56 directories, 136 files

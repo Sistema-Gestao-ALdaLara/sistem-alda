@@ -1,8 +1,10 @@
 <?php
-// require_once "../auth/permissoes.php";
-// verificarPermissao(['secretaria']);
-
-require_once '../../database/conexao.php';
+    require_once '../../includes/common/permissoes.php';
+    verificarPermissao(['secretaria']);
+    require_once '../../process/verificar_sessao.php';
+    require_once '../../database/conexao.php';
+    
+    $title = "Secretaria";
 
 // Filtros recebidos via GET
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
@@ -55,217 +57,22 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
 
 <!DOCTYPE html>
 <html lang="pt">
-<head>
-    <title>SECRETARIA - Gestão de Coordenadores | Alda Lara</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Sistema de Gestão Escolar - Escola Alda Lara">
-    <meta name="keywords" content="Escola, Alda Lara, Angola, Luanda, Secretaria, Coordenadores">
-    <meta name="author" content="Escola Alda Lara">
-    <link rel="icon" href="libraries/assets/images/favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="libraries/bower_components/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="libraries/assets/icon/feather/css/feather.css">
-    <link rel="stylesheet" type="text/css" href="libraries/assets/css/style.css">
-    <link rel="stylesheet" type="text/css" href="libraries/assets/css/jquery.mCustomScrollbar.css">
-    <style>
-        .bg-img {
-            width: 100%;
-            height: auto;
-            background-image: url('../public/img/bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-        .table-custom {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-        .table-custom th, .table-custom td {
-            padding: 12px;
-            color: #ffffff;
-        }
-        .table-custom thead {
-            background: rgba(7, 200, 206, 0.55);
-            color: white;
-            font-weight: bold;
-        }
-        .table-custom tbody tr:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transition: 0.3s;
-        }
-        .card-table {
-            background: rgba(19, 125, 171, 0.082);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            color: white !important;
-        }
-        .card-table .card-header {
-            background: rgba(7, 200, 206, 0.836);
-            color: white !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .card-table .table {
-            background: transparent;
-        }
-        .action-buttons .btn {
-            margin: 0 3px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-        .filtros-container {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .filtros-container label {
-            color: white;
-            font-weight: bold;
-        }
-        .btn-filtrar {
-            margin-top: 28px;
-        }
-        .btn-limpar {
-            margin-top: 28px;
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-    </style>
-</head>
+
+<?php require_once '../../includes/common//head.php'; ?>
+
 <body>
-    <!-- Pre-loader -->
-    <div class="theme-loader">
-        <div class="ball-scale">
-            <div class='contain'>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-                <div class="ring"><div class="frame"></div></div>
-            </div>
-        </div>
-    </div>
+    <?php require_once '../../includes/common/preloader.php'; ?>
 
     <div id="pcoded" class="pcoded">
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
-            <nav class="navbar header-navbar pcoded-header">
-                <div class="navbar-wrapper">
-                    <div class="navbar-logo">
-                        <a class="mobile-menu" id="mobile-collapse" href="#!"><i class="feather icon-menu"></i></a>
-                        <a href="dashboard.htm">
-                            <img class="img-fluid" src="libraries/assets/images/logo.png" height="50px" width="50px" alt="Theme-Logo">
-                            <span class="font-italic font-weight-bold text-uppercase text-warning text-center">SECRETARIA|Alda Lara</span>
-                        </a>
-                        <a class="mobile-options"><i class="feather icon-more-horizontal"></i></a>
-                    </div>
-                    <div class="navbar-container container-fluid">
-                        <ul class="nav-left">
-                            <li class="header-search">
-                                <div class="main-search morphsearch-search">
-                                    <div class="input-group">
-                                        <span class="input-group-addon search-close"><i class="feather icon-x"></i></span>
-                                        <input type="text" class="form-control" placeholder="Pesquisar coordenador...">
-                                        <span class="input-group-addon search-btn"><i class="feather icon-search"></i></span>
-                                    </div>
-                                </div>
-                            </li>
-                            <li><a href="#!" onclick="javascript:toggleFullScreen()"><i class="feather icon-maximize full-screen"></i></a></li>
-                        </ul>
-                        <ul class="nav-right">
-                            <li class="header-notification">
-                                <div class="dropdown-primary dropdown">
-                                    <div class="dropdown-toggle" data-toggle="dropdown">
-                                        <i class="feather icon-bell"></i>
-                                        <span class="badge bg-c-pink">5</span>
-                                    </div>
-                                    <ul class="show-notification notification-view dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                        <li><h6>Notificações</h6><label class="label label-danger">Novo</label></li>
-                                        <li>
-                                            <div class="media">
-                                                <img class="d-flex align-self-center img-radius" src="libraries/assets/images/avatar-4.jpg" alt="Generic placeholder image">
-                                                <div class="media-body">
-                                                    <h5 class="notification-user">Secretaria</h5>
-                                                    <p class="notification-msg">Novos coordenadores cadastrados</p>
-                                                    <span class="notification-time">Hoje</span>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li class="user-profile header-notification">
-                                <div class="dropdown-primary dropdown">
-                                    <div class="dropdown-toggle" data-toggle="dropdown">
-                                        <img src="libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                                        <span>Usuário Secretaria</span>
-                                        <i class="feather icon-chevron-down"></i>
-                                    </div>
-                                    <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                        <li><a href="user-profile.htm"><i class="feather icon-user"></i> Perfil</a></li>
-                                        <li><a href="login.htm"><i class="feather icon-log-out"></i> Sair</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
 
-            <!-- Sidebar -->
+            <?php require_once '../../includes/secretaria/navbar.php'; ?>
+
+            <!--sidebar-->
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
-                    <nav class="pcoded-navbar">
-                        <div class="pcoded-inner-navbar main-menu">
-                            <div class="pcoded-navigatio-lavel">Navegação</div>
-                            <ul class="pcoded-item pcoded-left-item">
-                                <li class="pcoded-hasmenu active pcoded-trigger">
-                                    <a href="javascript:void(0)"><span class="pcoded-micon"><i class="feather icon-home"></i></span>
-                                    <span class="pcoded-mtext">Dashboard</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/matriculas.php"><span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
-                                    <span class="pcoded-mtext">Matrículas</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/alunos.php"><span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                                    <span class="pcoded-mtext">Gerenciar Alunos</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/professores.php"><span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                                    <span class="pcoded-mtext">Gerenciar Professores</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu active">
-                                    <a href="/secretaria/coordenadores.php"><span class="pcoded-micon"><i class="feather icon-users"></i></span>
-                                    <span class="pcoded-mtext">Gerenciar Coordenadores</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/turmas.php"><span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                                    <span class="pcoded-mtext">Gerenciar Turmas</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/documentos.php"><span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
-                                    <span class="pcoded-mtext">Documentos</span></a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="/secretaria/relatorios.php"><span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
-                                    <span class="pcoded-mtext">Relatórios</span></a>
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
+                    <?php require_once '../../includes/secretaria/sidebar.php'; ?>
 
                     <!-- Conteúdo Principal -->
                     <div class="pcoded-content">
@@ -383,7 +190,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                 </button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <form id="formCoordenador" method="POST" action="salvar_coordenador.php">
+                                                                <form id="formCoordenador" method="POST" action="../../actions/secretaria/salvar_coordenador.php">
                                                                     <input type="hidden" id="coordenadorId" name="coordenadorId">
                                                                     <input type="hidden" name="tipo" value="coordenador">
 
@@ -469,16 +276,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
     </div>
 
     <!-- Scripts -->
-    <script src="libraries/bower_components/jquery/js/jquery.min.js"></script>
-    <script src="libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
-    <script src="libraries/bower_components/popper.js/js/popper.min.js"></script>
-    <script src="libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
-    <script src="libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
-    <script src="libraries/bower_components/modernizr/js/modernizr.js"></script>
-    <script src="libraries/assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <script src="libraries/assets/js/pcoded.min.js"></script>
-    <script src="libraries/assets/js/vartical-layout.min.js"></script>
-    <script src="libraries/assets/js/script.min.js"></script>
+    <?php require_once '../../includes/common/js_imports.php'; ?>
 
     <script>
         // Funções do Sistema
@@ -490,7 +288,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         
         function editarCoordenador(id) {
             $.ajax({
-                url: '../../../process/consultas/getCoordenador.php',
+                url: '../../process/consultas/getCoordenador.php',
                 method: 'GET',
                 data: { id: id },
                 dataType: 'json',
@@ -518,7 +316,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         function confirmarExclusao(id) {
             if(confirm('Tem certeza que deseja excluir este coordenador?')) {
                 $.ajax({
-                    url: '../../../action/secretaria/excluir_coordenador.php',
+                    url: '../../action/secretaria/excluir_coordenador.php',
                     method: 'POST',
                     data: { id: id },
                     success: function(response) {
@@ -538,7 +336,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         
         function exportarCoordenadores() {
             const id_curso = $('#filtro_curso').val() || '';
-            window.open('../../../process/secretaria/exportar_coordenadores.php?id_curso=' + id_curso, '_blank');
+            window.open('../../process/secretaria/exportar_coordenadores.php?id_curso=' + id_curso, '_blank');
         }
         
         // Validação do formulário de coordenador

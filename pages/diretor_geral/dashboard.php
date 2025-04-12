@@ -2,7 +2,7 @@
     require_once '../../includes/common/permissoes.php';
     verificarPermissao(['diretor_geral']);
     require_once '../../process/verificar_sessao.php';
-    $title = "Diretor Geral";
+    $title = "D. Geral";
 ?>
 <!DOCTYPE html>
 <html lang="pt">
