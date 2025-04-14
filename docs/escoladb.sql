@@ -23,17 +23,14 @@ USE `escoladb` ;
 CREATE TABLE IF NOT EXISTS `escoladb`.`usuario` (
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(100) NOT NULL,
-  `email` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) NOT NULL UNIQUE,
   `senha` VARCHAR(255) NOT NULL,
-  `bi_numero` VARCHAR(14) NOT NULL,
+  `bi_numero` VARCHAR(14) NOT NULL UNIQUE,
   `tipo` ENUM('diretor_geral', 'diretor_pedagogico', 'coordenador', 'professor', 'aluno', 'secretaria') NOT NULL,
   `status` ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
   `foto_perfil` VARCHAR(255) NULL,
-  PRIMARY KEY (`id_usuario`))
-ENGINE = InnoDB;
-
-ALTER TABLE `escoladb`.`usuario` ADD UNIQUE (email);
-ALTER TABLE `escoladb`.`usuario` ADD UNIQUE (bi_numero);
+  PRIMARY KEY (`id_usuario`)
+) ENGINE = InnoDB;
 
 -- Conta padrão da Secretaria
 INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
@@ -81,8 +78,14 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`turma` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `escoladb`.`aluno` (
   `id_aluno` INT NOT NULL AUTO_INCREMENT,
-  `numero_matricula` VARCHAR(20) NOT NULL,
-  `ano_letivo` YEAR NULL,
+  `data_nascimento` DATE NOT NULL,
+  `genero` VARCHAR(10) NOT NULL,
+  `naturalidade` VARCHAR(100) NOT NULL,
+  `nacionalidade` VARCHAR(100) NOT NULL,
+  `municipio` VARCHAR(100) NOT NULL,
+  `ano_letivo` YEAR NOT NULL,
+  `nome_encarregado` VARCHAR(100) NOT NULL,
+  `contacto_encarregado` VARCHAR(20) NOT NULL,
   `usuario_id_usuario` INT NOT NULL,
   `turma_id_turma` INT NOT NULL,
   `curso_id_curso` INT NOT NULL,
@@ -104,28 +107,8 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`aluno` (
     FOREIGN KEY (`curso_id_curso`)
     REFERENCES `escoladb`.`curso` (`id_curso`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
-ALTER TABLE `escoladb`.`aluno`
-ADD COLUMN `data_nascimento` DATE AFTER `id_aluno`,
-ADD COLUMN `genero` VARCHAR(10) AFTER `data_nascimento`,
-ADD COLUMN `naturalidade` VARCHAR(100) AFTER `genero`,
-ADD COLUMN `nacionalidade` VARCHAR(100) AFTER `naturalidade`,
-ADD COLUMN `municipio` VARCHAR(100) AFTER `nacionalidade`,
-ADD COLUMN `nome_encarregado` VARCHAR(100) AFTER `municipio`,
-ADD COLUMN `contacto_encarregado` VARCHAR(20) AFTER `nome_encarregado`;
-
-ALTER TABLE `escoladb`.`aluno`
-MODIFY `data_nascimento` DATE NOT NULL,
-MODIFY `genero` VARCHAR(10) NOT NULL,
-MODIFY `naturalidade` VARCHAR(100) NOT NULL,
-MODIFY `nacionalidade` VARCHAR(100) NOT NULL,
-MODIFY `municipio` VARCHAR(100) NOT NULL,
-MODIFY `nome_encarregado` VARCHAR(100) NOT NULL,
-MODIFY `contacto_encarregado` VARCHAR(20) NOT NULL,
-MODIFY `ano_letivo` YEAR NOT NULL;
-
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
@@ -234,8 +217,12 @@ CREATE TABLE `escoladb`.`disciplina` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `escoladb`.`nota` (
   `id_nota` INT NOT NULL AUTO_INCREMENT,
-  `nota` DECIMAL(5,2) NOT NULL, 
+  `nota` DECIMAL(5,2) NOT NULL,
   `data` DATE NOT NULL,
+  `tipo_avaliacao` ENUM('prova', 'avaliacao_continua', 'trabalho', 'recuperacao', 'projeto') NOT NULL DEFAULT 'prova',
+  `trimestre` TINYINT(1) NULL,
+  `descricao` VARCHAR(100) NULL,
+  `peso` DECIMAL(3,2) NOT NULL DEFAULT 1.00,
   `aluno_id_aluno` INT NOT NULL,
   `disciplina_id_disciplina` INT NOT NULL,
   PRIMARY KEY (`id_nota`),
@@ -252,8 +239,6 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`nota` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
-
-
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`comunicado`
@@ -295,6 +280,8 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`frequencia_aluno` (
   `id_frequencia_aluno` INT NOT NULL AUTO_INCREMENT,
   `data_aula` DATE NOT NULL,
   `presenca` ENUM('presente', 'ausente', 'justificado') NOT NULL DEFAULT 'ausente',
+  `tipo_aula` ENUM('normal', 'reposicao', 'atividade_externa') NOT NULL DEFAULT 'normal',
+  `observacao` TEXT NULL,
   `aluno_id_aluno` INT NOT NULL,
   `disciplina_id_disciplina` INT NOT NULL,
   `turma_id_turma` INT NOT NULL,
@@ -318,8 +305,6 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`frequencia_aluno` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
-
-
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`materiais_apoio`
@@ -402,10 +387,15 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`historico_professor` (
 CREATE TABLE IF NOT EXISTS `escoladb`.`matricula` (
   `id_matricula` INT NOT NULL AUTO_INCREMENT,
   `ano_letivo` YEAR NOT NULL,
+  `classe` VARCHAR(10) NOT NULL,
+  `turno` VARCHAR(20) NOT NULL,
+  `numero_matricula` VARCHAR(20) NOT NULL UNIQUE,
   `data_matricula` DATE NOT NULL,
   `turma_id_turma` INT NOT NULL,
   `aluno_id_aluno` INT NOT NULL,
   `curso_id_curso` INT NOT NULL,
+  `status_matricula` ENUM('ativa', 'trancada', 'cancelada') NOT NULL DEFAULT 'ativa',
+  `comprovativo_pagamento` VARCHAR(100) NOT NULL,
   PRIMARY KEY (`id_matricula`),
   INDEX `fk_turma6_idx` (`turma_id_turma` ASC),
   INDEX `fk_aluno3_idx` (`aluno_id_aluno` ASC),
@@ -426,21 +416,6 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`matricula` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
-
-ALTER TABLE `escoladb`.`matricula`
-ADD COLUMN `status_matricula` ENUM('ativa', 'trancada', 'cancelada') NOT NULL DEFAULT 'ativa' AFTER `curso_id_curso`;
-
-ALTER TABLE `escoladb`.`matricula`
-ADD COLUMN `classe` VARCHAR(10) AFTER `ano_letivo`,
-ADD COLUMN `turno` VARCHAR(20) AFTER `classe`,
-ADD COLUMN `numero_matricula` VARCHAR(20) UNIQUE AFTER `turno`,
-ADD COLUMN `comprovativo_pagamento` VARCHAR(100) AFTER `status_matricula`;
-
-ALTER TABLE `escoladb`.`matricula`
-MODIFY `classe` VARCHAR(10) NOT NULL,
-MODIFY `turno` VARCHAR(20) NOT NULL,
-MODIFY `numero_matricula` VARCHAR(20) NOT NULL,
-MODIFY `comprovativo_pagamento` VARCHAR(100) NOT NULL;
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`professor_tem_turma`

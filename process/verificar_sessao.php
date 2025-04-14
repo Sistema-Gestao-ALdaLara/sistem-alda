@@ -2,7 +2,9 @@
     // Verifica se o usuário está logado
     if (!isset($_SESSION['id_usuario'])) {
         // Redireciona para a página de login se não estiver logado
-        header("Location: login.php");
+        $_SESSION['erro'] = "Você não tem permissão para acessar esta página.";
+        echo $_SESSION['erro'];
+        header("Location: ../../process/login.php");
         exit();
     }
 

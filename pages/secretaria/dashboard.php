@@ -3,12 +3,12 @@
     verificarPermissao(['secretaria']);
     require_once '../../process/verificar_sessao.php';
 
-    $titulo = "Secretaria";
+    $title = "Secretaria";
 ?>
 <!DOCTYPE html>
 <html lang="pt">
 
-<?php require_once '../../includes/common//head.php'; ?>
+<?php require_once '../../includes/common/head.php'; ?>
 
 <body>
     <?php require_once '../../includes/common/preloader.php'; ?>

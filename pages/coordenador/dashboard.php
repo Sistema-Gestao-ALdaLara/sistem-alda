@@ -1,7 +1,7 @@
 <?php
-    require_once '../../includes/common/verificar_sessao.php';
     require_once '../../includes/common/permissoes.php';
     verificarPermissao(['coordenador']);
+    require_once '../../process/verificar_sessao.php';
 
     $title = "Coordenador";
 ?>

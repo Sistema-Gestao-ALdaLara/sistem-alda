@@ -40,3 +40,19 @@
     <script type="text/javascript" src="../public/libraries/bower_components/i18next-browser-languagedetector/js/i18nextBrowserLanguageDetector.min.js"></script>
     <script type="text/javascript" src="../public/libraries/bower_components/jquery-i18next/js/jquery-i18next.min.js"></script>
     <script type="text/javascript" src="../public/libraries/assets/js/common-pages.js"></script>
+
+    <script>
+        setInterval(function() {
+            $.ajax({
+                url: '../../api/check_comunicados.php',
+                method: 'GET',
+                success: function(data) {
+                    if (data.novos > 0) {
+                        $('.notification-label').text(data.novos).show();
+                    } else {
+                        $('.notification-label').hide();
+                    }
+                }
+            });
+        }, 300000); // 5 minutos
+    </script>

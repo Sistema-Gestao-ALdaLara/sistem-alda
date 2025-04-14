@@ -1,3 +1,191 @@
 .
+├── README.md
+├── actions
+│   ├── actualizar_perfil.php
+│   ├── diretor_geral
+│   ├── login.php
+│   ├── professor
+│   │   └── excluir_nota.php
+│   ├── registrar.php
+│   └── secretaria
+│       ├── adicionar_aluno_turma.php
+│       ├── aluno
+│       ├── excluir_coordenador.php
+│       ├── excluir_diretor.php
+│       ├── excluir_professer.php
+│       ├── excluir_secretaria.php
+│       ├── excluir_turma.php
+│       ├── matricula
+│       │   ├── alterar_status_matricula.php
+│       │   ├── atualizar_matricula.php
+│       │   ├── cadastro_academico.php
+│       │   ├── cancelar_matricula.php
+│       │   ├── excluir_aluno.php
+│       │   └── salvar_aluno.php
+│       ├── remover_aluno_turma.php
+│       ├── salvar_coordenador.php
+│       ├── salvar_diretor.php
+│       ├── salvar_matricula.php
+│       ├── salvar_professor.php
+│       ├── salvar_professores_turma.php
+│       ├── salvar_secretaria.php
+│       └── salvar_turma.php
+├── arvore.txt
+├── config.php
+├── database
+│   ├── backup.sql
+│   └── conexao.php
+├── gerar_senhaHash.php
+├── includes
+│   ├── aluno
+│   │   ├── navbar.php
+│   │   └── sidebar.php
+│   ├── common
+│   │   ├── auth.php
+│   │   ├── css_imports.php
+│   │   ├── footer.php
+│   │   ├── funcoes.php
+│   │   ├── head.php
+│   │   ├── js_imports.php
+│   │   ├── permissoes.php
+│   │   ├── preloader.php
+│   │   ├── scripts.php
+│   │   ├── session.php
+│   │   └── session_permitida.php
+│   ├── coordenador
+│   │   ├── navbar.php
+│   │   └── sidebar.php
+│   ├── diretor_geral
+│   │   ├── navbar.php
+│   │   └── sidebar.php
+│   ├── diretor_pedagogico
+│   │   ├── navbar.php
+│   │   └── sidebar.php
+│   ├── professor
+│   │   ├── navbar.php
+│   │   └── sidebar.php
+│   └── secretaria
+│       ├── navbar.php
+│       └── sidebar.php
+├── pages
+│   ├── aluno
+│   │   ├── calendario_academico.php
+│   │   ├── comunicados.php
+│   │   ├── dashboard.php
+│   │   └── disciplinas-aln.php
+│   ├── coordenador
+│   │   ├── comunicados.php
+│   │   └── dashboard.php
+│   ├── diretor_geral
+│   │   ├── comunicados.php
+│   │   ├── dashboard.php
+│   │   └── usuarios
+│   │       ├── atualizar_aluno.php
+│   │       ├── atualizar_usuario.php
+│   │       ├── buscar_usuario.php
+│   │       ├── disciplinas-professor.htm
+│   │       ├── editar-aluno.htm
+│   │       ├── editar-coordenador.htm
+│   │       ├── editar-professor.htm
+│   │       ├── fetch_historico.php
+│   │       ├── fetch_usuarios.php
+│   │       ├── gerenciar-users-dg.htm
+│   │       ├── historico-aluno.htm
+│   │       ├── historico-professor.htm
+│   │       ├── usuarios-alunos.htm
+│   │       ├── usuarios-coordenadores.htm
+│   │       ├── usuarios-professores.htm
+│   │       ├── usuarios-profs-dg.htm
+│   │       └── usuarios.htm
+│   ├── diretor_pedagogico
+│   │   ├── comunicados.php
+│   │   └── dashboard.php
+│   ├── email-inbox.htm
+│   ├── index.htm
+│   ├── professor
+│   │   ├── alunos.php
+│   │   ├── comunicado_detalhe.php
+│   │   ├── comunicados.php
+│   │   ├── dashboard.php
+│   │   ├── frequencia.php
+│   │   ├── lista_alunos.php
+│   │   ├── notas.php
+│   │   ├── notas1.php
+│   │   ├── perfil_aluno.php
+│   │   ├── turma_detalhes.php
+│   │   └── turmas.php
+│   └── secretaria
+│       ├── alunos.php
+│       ├── comuinc.php
+│       ├── comunicados.php
+│       ├── coordenador.php
+│       ├── dashboard.php
+│       ├── diretores.php
+│       ├── documentos.php
+│       ├── js
+│       ├── matricula.php
+│       ├── professor.php
+│       ├── secretaria.php
+│       ├── ti.txt
+│       └── turmas.php
+├── process
+│   ├── aluno
+│   │   └── baixar_boletim.php
+│   ├── consultas
+│   │   ├── getAluno.php
+│   │   ├── getCoordenador.php
+│   │   ├── getDiretor.php
+│   │   ├── getProfessor.php
+│   │   ├── getSecretaria.php
+│   │   ├── getTurma.php
+│   │   ├── get_alunos_disponiveis.php
+│   │   ├── get_alunos_matriculados.php
+│   │   ├── get_alunos_turma.php
+│   │   ├── get_dados_aluno.php
+│   │   ├── get_disciplinas.php
+│   │   ├── get_disciplinas_professor.php
+│   │   ├── get_historico_aluno.php
+│   │   ├── get_matricula.php
+│   │   ├── get_professores_disponiveis.php
+│   │   ├── get_professores_turma.php
+│   │   └── get_turma.php
+│   ├── login.php
+│   ├── logout.php
+│   ├── secretaria
+│   │   ├── comprovante_matricula.php
+│   │   ├── exportar_alunos.php
+│   │   ├── exportar_coordenadores.php
+│   │   ├── exportar_diretores.php
+│   │   ├── exportar_professor.php
+│   │   ├── exportar_turmas.php
+│   │   ├── gerar_relatorio_matriculas.php
+│   │   └── historico_escolar.php
+│   └── verificar_sessao.php
+├── public
+│   ├── css
+│   ├── erro403.htm
+│   ├── img
+│   │   ├── IMG_20250113_104838.jpg
+│   │   ├── IMG_20250113_104920.jpg
+│   │   ├── IMG_20250113_104949.jpg
+│   │   ├── bg.jpg
+│   │   ├── favicon.ico
+│   │   ├── logo.png
+│   │   ├── logo1.png
+│   │   └── perfil
+│   ├── index.php
+│   ├── js
+│   ├── login.htm
+│   └── recuperacao
+│       ├── confirmar_codigo.php
+│       ├── esqueci_senha.php
+│       ├── nova_senha.php
+│       └── senha_alterada_sucesso.htm
+├── templates
+├── tree.txt
+└── uploads
+    ├── alunos
+    ├── documentos
+    └── professores
 
-0 directories, 0 files
+39 directories, 149 files
