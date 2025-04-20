@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
     
-    $query = "SELECT t.id_turma, t.nome, t.curso_id_curso 
+    $query = "SELECT t.id_turma, t.nome, turno, t.curso_id_curso 
               FROM turma t
               WHERE t.id_turma = ?";
     

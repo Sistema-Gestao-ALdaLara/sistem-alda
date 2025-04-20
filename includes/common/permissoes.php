@@ -13,7 +13,7 @@ function verificarPermissao($permissoesPermitidas) {
     
     // Se não tiver permissão, redireciona para página de acesso negado
     if (!in_array($_SESSION['tipo_usuario'], $permissoesPermitidas)) {
-        header("Location: /erro403.htm");
+        header("Location: ../../public/erro403.htm");
         exit();
     }
 }

@@ -1,190 +1,184 @@
 <?php
-    require_once '../../includes/common/permissoes.php';
-    verificarPermissao(['secretaria']);
-    require_once '../../process/verificar_sessao.php';
-    require_once '../../database/conexao.php';
+require_once '../../includes/common/permissoes.php';
+verificarPermissao(['secretaria']);
+require_once '../../process/verificar_sessao.php';
+require_once '../../database/conexao.php';
 
-    $title = "Secretaria";
+$title = "Secretaria";
 
-    // Processar formulário de matrícula (nova ou edição)
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Validar e sanitizar dados comuns
-        $nome = $conn->real_escape_string($_POST['nome']);
-        $bi_numero = $conn->real_escape_string($_POST['bi_numero']);
-        $data_nascimento = $_POST['data_nascimento'];
-        $genero = $_POST['genero'];
-        $naturalidade = $conn->real_escape_string($_POST['naturalidade']);
-        $nacionalidade = $conn->real_escape_string($_POST['nacionalidade']);
-        $municipio = $conn->real_escape_string($_POST['municipio']);
-        $nome_encarregado = $conn->real_escape_string($_POST['nome_encarregado']);
-        $contacto_encarregado = $conn->real_escape_string($_POST['contacto_encarregado']);
-        $id_curso = intval($_POST['id_curso']);
-        $id_turma = intval($_POST['id_turma']);
-        $ano_letivo = intval($_POST['ano_letivo']);
-        $classe = $_POST['classe'];
-        $turno = $_POST['turno'];
-        
-        // Verificar se é nova matrícula ou edição
-        $isNovaMatricula = isset($_POST['nova_matricula']) && $_POST['nova_matricula'] == '1';
+// Processar formulário de matrícula (nova ou edição)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validar e sanitizar dados comuns
+    $nome = $conn->real_escape_string($_POST['nome']);
+    $bi_numero = $conn->real_escape_string($_POST['bi_numero']);
+    $data_nascimento = $_POST['data_nascimento'];
+    $genero = $_POST['genero'];
+    $naturalidade = $conn->real_escape_string($_POST['naturalidade']);
+    $nacionalidade = $conn->real_escape_string($_POST['nacionalidade']);
+    $municipio = $conn->real_escape_string($_POST['municipio']);
+    $nome_encarregado = $conn->real_escape_string($_POST['nome_encarregado']);
+    $contacto_encarregado = $conn->real_escape_string($_POST['contacto_encarregado']);
+    $id_curso = intval($_POST['id_curso']);
+    $id_turma = intval($_POST['id_turma']);
+    $ano_letivo = intval($_POST['ano_letivo']);
+    $classe = $conn->real_escape_string($_POST['classe']);
+    
+    // Verificar se é nova matrícula ou edição
+    $isNovaMatricula = isset($_POST['nova_matricula']) && $_POST['nova_matricula'] == '1';
 
-        // Iniciar transação
-        $conn->begin_transaction();
-        
-        try {
-            if ($isNovaMatricula) {
-                // Processamento para NOVA matrícula
-                $email = $conn->real_escape_string($_POST['email']);
-                $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
-                
-                // Verificar se o e-mail já existe (apenas para nova matrícula)
-                $stmt = $conn->prepare("SELECT id_usuario FROM usuario WHERE email = ?");
-                $stmt->bind_param("s", $email);
-                $stmt->execute();
-                $stmt->store_result();
-
-                if ($stmt->num_rows > 0) {
-                    throw new Exception("Este e-mail já está em uso.");
-                }
-
-                // 1. Criar usuário
-                $stmt = $conn->prepare("INSERT INTO usuario 
-                    (nome, email, senha, bi_numero, tipo, status) 
-                    VALUES (?, ?, ?, ?, 'aluno', 'ativo')");
-                $stmt->bind_param("ssss", $nome, $email, $senha, $bi_numero);
-                $stmt->execute();
-                $id_usuario = $conn->insert_id;
-                
-                // 2. Criar aluno
-                $stmt = $conn->prepare("INSERT INTO aluno 
-                    (data_nascimento, genero, naturalidade, nacionalidade, municipio, 
-                    nome_encarregado, contacto_encarregado, usuario_id_usuario, 
-                    turma_id_turma, curso_id_curso) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssssssiii", $data_nascimento, $genero, $naturalidade, 
-                    $nacionalidade, $municipio, $nome_encarregado, $contacto_encarregado, 
-                    $id_usuario, $id_turma, $id_curso);
-                $stmt->execute();
-                $id_aluno = $conn->insert_id;
-                
-                // 3. Gerar número de matrícula automático
-                $stmt = $conn->prepare("SELECT MAX(id_matricula) as ultimo_id FROM matricula WHERE ano_letivo = ?");
-                $stmt->bind_param("i", $ano_letivo);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $row = $result->fetch_assoc();
-                $sequencial = $row['ultimo_id'] ? $row['ultimo_id'] + 1 : 1;
-                $numero_matricula = 'AL-' . $ano_letivo . '-' . str_pad($sequencial, 4, '0', STR_PAD_LEFT);
-                
-                // 4. Criar matrícula
-                $stmt = $conn->prepare("INSERT INTO matricula 
-                    (ano_letivo, classe, turno, numero_matricula, data_matricula, 
-                    turma_id_turma, aluno_id_aluno, curso_id_curso, status_matricula, comprovativo_pagamento) 
-                    VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, 'ativa', 'confirmado')");
-                $stmt->bind_param("isssiii", 
-                    $ano_letivo, $classe, $turno, $numero_matricula, $id_turma, $id_aluno, $id_curso);
-                $stmt->execute();
-                
-                $_SESSION['sucesso'] = "Matrícula registrada com sucesso! Número: $numero_matricula";
-            } else {
-                // Processamento para EDIÇÃO de matrícula
-                $id_matricula = intval($_POST['id_matricula']);
-                $id_aluno = intval($_POST['id_aluno']);
-                $id_usuario = intval($_POST['id_usuario']);
-                
-                // 1. Atualizar usuário (SEM email e senha)
-                $stmt = $conn->prepare("UPDATE usuario SET nome = ?, bi_numero = ? WHERE id_usuario = ?");
-                $stmt->bind_param("ssi", $nome, $bi_numero, $id_usuario);
-                $stmt->execute();
-                
-                // 2. Atualizar aluno
-                $stmt = $conn->prepare("UPDATE aluno SET 
-                    data_nascimento = ?, genero = ?, naturalidade = ?, nacionalidade = ?, municipio = ?,
-                    nome_encarregado = ?, contacto_encarregado = ?, turma_id_turma = ?, curso_id_curso = ?
-                    WHERE id_aluno = ?");
-                $stmt->bind_param("sssssssiii", $data_nascimento, $genero, $naturalidade, 
-                    $nacionalidade, $municipio, $nome_encarregado, $contacto_encarregado, 
-                    $id_turma, $id_curso, $id_aluno);
-                $stmt->execute();
-                
-                // 3. Atualizar matrícula
-                $stmt = $conn->prepare("UPDATE matricula SET 
-                    curso_id_curso = ?, turma_id_turma = ?, classe = ?, turno = ?, ano_letivo = ?
-                    WHERE id_matricula = ?");
-                    
-                // Agora com 6 tipos correspondentes aos 6 parâmetros
-                $stmt->bind_param("iissii", $id_curso, $id_turma, $classe, $turno, $ano_letivo, $id_matricula);
-                $stmt->execute();
-                
-                $_SESSION['sucesso'] = "Matrícula atualizada com sucesso!";
-            }
+    // Iniciar transação
+    $conn->begin_transaction();
+    
+    try {
+        if ($isNovaMatricula) {
+            // Processamento para NOVA matrícula
+            $email = $conn->real_escape_string($_POST['email']);
+            $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT);
             
-            $conn->commit();
-        } catch (Exception $e) {
-            $conn->rollback();
-            $_SESSION['erro'] = "Erro ao " . ($isNovaMatricula ? "registrar" : "atualizar") . " matrícula: " . $e->getMessage();
+            // Verificar se o e-mail já existe (apenas para nova matrícula)
+            $stmt = $conn->prepare("SELECT id_usuario FROM usuario WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if ($stmt->num_rows > 0) {
+                throw new Exception("Este e-mail já está em uso.");
+            }
+
+            // 1. Criar usuário
+            $stmt = $conn->prepare("INSERT INTO usuario 
+                (nome, email, senha, bi_numero, tipo, status) 
+                VALUES (?, ?, ?, ?, 'aluno', 'ativo')");
+            $stmt->bind_param("ssss", $nome, $email, $senha, $bi_numero);
+            $stmt->execute();
+            $id_usuario = $conn->insert_id;
+            
+            // 2. Criar aluno
+            $stmt = $conn->prepare("INSERT INTO aluno 
+                (data_nascimento, genero, naturalidade, nacionalidade, municipio, 
+                nome_encarregado, contacto_encarregado, usuario_id_usuario, 
+                turma_id_turma, curso_id_curso) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssssiii", $data_nascimento, $genero, $naturalidade, 
+                $nacionalidade, $municipio, $nome_encarregado, $contacto_encarregado, 
+                $id_usuario, $id_turma, $id_curso);
+            $stmt->execute();
+            $id_aluno = $conn->insert_id;
+            
+            // 3. Gerar número de matrícula automático
+            $stmt = $conn->prepare("SELECT MAX(id_matricula) as ultimo_id FROM matricula WHERE ano_letivo = ?");
+            $stmt->bind_param("i", $ano_letivo);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $sequencial = $row['ultimo_id'] ? $row['ultimo_id'] + 1 : 1;
+            $numero_matricula = 'AL-' . $ano_letivo . '-' . str_pad($sequencial, 4, '0', STR_PAD_LEFT);
+            
+            // 4. Criar matrícula (incluindo a classe)
+            $stmt = $conn->prepare("INSERT INTO matricula 
+                (ano_letivo, classe, numero_matricula, data_matricula, 
+                turma_id_turma, aluno_id_aluno, curso_id_curso, status_matricula, comprovativo_pagamento) 
+                VALUES (?, ?, ?, NOW(), ?, ?, ?, 'ativa', 'confirmado')");
+            $stmt->bind_param("issiii", 
+                $ano_letivo, $classe, $numero_matricula, $id_turma, $id_aluno, $id_curso);
+            $stmt->execute();
+            
+            $_SESSION['sucesso'] = "Matrícula registrada com sucesso! Número: $numero_matricula";
+        } else {
+            // Processamento para EDIÇÃO de matrícula
+            $id_matricula = intval($_POST['id_matricula']);
+            $id_aluno = intval($_POST['id_aluno']);
+            $id_usuario = intval($_POST['id_usuario']);
+            
+            // 1. Atualizar usuário (SEM email e senha)
+            $stmt = $conn->prepare("UPDATE usuario SET nome = ?, bi_numero = ? WHERE id_usuario = ?");
+            $stmt->bind_param("ssi", $nome, $bi_numero, $id_usuario);
+            $stmt->execute();
+            
+            // 2. Atualizar aluno
+            $stmt = $conn->prepare("UPDATE aluno SET 
+                data_nascimento = ?, genero = ?, naturalidade = ?, nacionalidade = ?, municipio = ?,
+                nome_encarregado = ?, contacto_encarregado = ?, turma_id_turma = ?, curso_id_curso = ?
+                WHERE id_aluno = ?");
+            $stmt->bind_param("sssssssiii", $data_nascimento, $genero, $naturalidade, 
+                $nacionalidade, $municipio, $nome_encarregado, $contacto_encarregado, 
+                $id_turma, $id_curso, $id_aluno);
+            $stmt->execute();
+            
+            // 3. Atualizar matrícula (incluindo a classe)
+            $stmt = $conn->prepare("UPDATE matricula SET 
+                curso_id_curso = ?, turma_id_turma = ?, classe = ?, ano_letivo = ?
+                WHERE id_matricula = ?");
+            $stmt->bind_param("iisi", $id_curso, $id_turma, $classe, $ano_letivo, $id_matricula);
+            $stmt->execute();
+            
+            $_SESSION['sucesso'] = "Matrícula atualizada com sucesso!";
         }
         
-        header('Location: matricula.php');
-        exit();
+        $conn->commit();
+    } catch (Exception $e) {
+        $conn->rollback();
+        $_SESSION['erro'] = "Erro ao " . ($isNovaMatricula ? "registrar" : "atualizar") . " matrícula: " . $e->getMessage();
     }
+    
+    header('Location: matricula.php');
+    exit();
+}
 
-    // Filtros
-    $status = isset($_GET['status']) ? $_GET['status'] : 'ativa';
-    $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
-    $ano_letivo = isset($_GET['ano_letivo']) ? intval($_GET['ano_letivo']) : date('Y');
+// Filtros
+$status = isset($_GET['status']) ? $_GET['status'] : 'ativa';
+$id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
+$ano_letivo = isset($_GET['ano_letivo']) ? intval($_GET['ano_letivo']) : date('Y');
 
-    // Obter matrículas com filtros
-    $query = "SELECT m.id_matricula, a.id_aluno, u.nome, u.bi_numero, 
-            c.nome AS curso, t.nome AS turma, m.data_matricula, 
-            m.ano_letivo, m.classe, m.turno, m.numero_matricula,
-            m.status_matricula
-            FROM matricula m
-            JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
-            JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
-            LEFT JOIN curso c ON m.curso_id_curso = c.id_curso
-            LEFT JOIN turma t ON m.turma_id_turma = t.id_turma
-            WHERE m.ano_letivo = ?";
+// Obter matrículas com filtros (incluindo classe)
+$query = "SELECT m.id_matricula, a.id_aluno, u.nome, u.bi_numero, 
+        c.nome AS curso, t.nome AS turma, t.turno, m.data_matricula, 
+        m.ano_letivo, m.classe, m.numero_matricula,
+        m.status_matricula
+        FROM matricula m
+        JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
+        JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
+        LEFT JOIN curso c ON m.curso_id_curso = c.id_curso
+        LEFT JOIN turma t ON m.turma_id_turma = t.id_turma
+        WHERE m.ano_letivo = ?";
 
-    $params = [$ano_letivo];
-    $types = "i";
+$params = [$ano_letivo];
+$types = "i";
 
-    if ($status != 'todos') {
-        $query .= " AND m.status_matricula = ?";
-        $params[] = $status;
-        $types .= "s";
-    }
+if ($status != 'todos') {
+    $query .= " AND m.status_matricula = ?";
+    $params[] = $status;
+    $types .= "s";
+}
 
-    if ($id_curso) {
-        $query .= " AND m.curso_id_curso = ?";
-        $params[] = $id_curso;
-        $types .= "i";
-    }
+if ($id_curso) {
+    $query .= " AND m.curso_id_curso = ?";
+    $params[] = $id_curso;
+    $types .= "i";
+}
 
-    $query .= " ORDER BY m.data_matricula DESC";
+$query .= " ORDER BY m.data_matricula DESC";
 
-    $stmt = $conn->prepare($query);
+$stmt = $conn->prepare($query);
 
-    if ($params) {
-        $stmt->bind_param($types, ...$params);
-    }
+if ($params) {
+    $stmt->bind_param($types, ...$params);
+}
 
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $matriculas = $result->fetch_all(MYSQLI_ASSOC);
+$stmt->execute();
+$result = $stmt->get_result();
+$matriculas = $result->fetch_all(MYSQLI_ASSOC);
 
-    // Obter cursos para filtros
-    $result_cursos = $conn->query("SELECT id_curso, nome FROM curso ORDER BY nome");
-    $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
+// Obter cursos para filtros
+$result_cursos = $conn->query("SELECT id_curso, nome FROM curso ORDER BY nome");
+$cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
 
-    // Obter turmas para select
-    $turmas = [];
-    if ($result_turmas = $conn->query("SELECT id_turma, nome, curso_id_curso FROM turma")) {
-        $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
-    }
-
-    $title = "Secretaria";
+// Obter turmas para select (incluindo classe)
+$turmas = [];
+if ($result_turmas = $conn->query("SELECT id_turma, nome, classe, turno, curso_id_curso FROM turma")) {
+    $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
+}
 ?>
-
 <!DOCTYPE html>
 <html lang="pt">
 <?php require_once '../../includes/common//head.php'; ?>
@@ -230,51 +224,87 @@
                                             <div class="row">
                                                 <div class="col-12 mt-4">
                                                     <!-- Filtros -->
+                                                    <!-- Filtros Atualizados -->
                                                     <div class="card card-table mb-3">
-                                                        <div class="card-header">
-                                                            <h5>Filtrar Matrículas</h5>
+                                                        <div class="card-header bg-primary text-white">
+                                                            <h5 class="mb-0"><i class="feather icon-filter"></i> Filtrar Matrículas</h5>
                                                         </div>
-                                                        <div class="card-block">
+                                                        <div class="card-body">
                                                             <form id="formFiltros" method="GET" action="">
                                                                 <div class="row">
-                                                                    <div class="col-md-3">
-                                                                        <div class="form-group">
-                                                                            <label for="status">Status</label>
-                                                                            <select class="form-control" id="status" name="status">
-                                                                                <option value="ativa" <?= $status == 'ativa' ? 'selected' : '' ?>>Ativas</option>
-                                                                                <option value="cancelada" <?= $status == 'cancelada' ? 'selected' : '' ?>>Canceladas</option>
-                                                                                <option value="trancada" <?= $status == 'trancada' ? 'selected' : '' ?>>Trancadas</option>
-                                                                                <option value="todos" <?= $status == 'todos' ? 'selected' : '' ?>>Todos</option>
-                                                                            </select>
+                                                                    <!-- Status -->
+                                                                    <div class="col-md-3 mb-3">
+                                                                        <label for="status" class="form-label">Status da Matrícula</label>
+                                                                        <select class="form-select" id="status" name="status">
+                                                                            <option value="ativa" <?= $status == 'ativa' ? 'selected' : '' ?>>Ativas</option>
+                                                                            <option value="cancelada" <?= $status == 'cancelada' ? 'selected' : '' ?>>Canceladas</option>
+                                                                            <option value="trancada" <?= $status == 'trancada' ? 'selected' : '' ?>>Trancadas</option>
+                                                                            <option value="todos" <?= $status == 'todos' ? 'selected' : '' ?>>Todos os Status</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    
+                                                                    <!-- Curso -->
+                                                                    <div class="col-md-3 mb-3">
+                                                                        <label for="id_curso" class="form-label">Curso</label>
+                                                                        <select class="form-select" id="id_curso" name="id_curso">
+                                                                            <option value="">Todos os Cursos</option>
+                                                                            <?php foreach ($cursos as $curso): ?>
+                                                                            <option value="<?= $curso['id_curso'] ?>" <?= $id_curso == $curso['id_curso'] ? 'selected' : '' ?>>
+                                                                                <?= htmlspecialchars($curso['nome']) ?>
+                                                                            </option>
+                                                                            <?php endforeach; ?>
+                                                                        </select>
+                                                                    </div>
+                                                                    
+                                                                    <!-- Ano Letivo -->
+                                                                    <div class="col-md-3 mb-3">
+                                                                        <label for="ano_letivo" class="form-label">Ano Letivo</label>
+                                                                        <select class="form-select" id="ano_letivo" name="ano_letivo">
+                                                                            <option value="<?= date('Y')-1 ?>"><?= date('Y')-1 ?></option>
+                                                                            <option value="<?= date('Y') ?>" selected><?= date('Y') ?></option>
+                                                                            <option value="<?= date('Y')+1 ?>"><?= date('Y')+1 ?></option>
+                                                                        </select>
+                                                                    </div>
+                                                                    
+                                                                    <!-- Botão Filtrar -->
+                                                                    <div class="col-md-3 mb-3 d-flex align-items-end">
+                                                                        <div class="d-grid gap-2">
+                                                                            <button type="submit" class="btn btn-primary">
+                                                                                <i class="feather icon-filter"></i> Aplicar Filtros
+                                                                            </button>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="col-md-3">
-                                                                        <div class="form-group">
-                                                                            <label for="id_curso">Curso</label>
-                                                                            <select class="form-control" id="id_curso" name="id_curso">
-                                                                                <option value="">Todos os cursos</option>
-                                                                                <?php foreach ($cursos as $curso): ?>
-                                                                                <option value="<?= $curso['id_curso'] ?>" <?= $id_curso == $curso['id_curso'] ? 'selected' : '' ?>>
-                                                                                    <?= htmlspecialchars($curso['nome']) ?>
-                                                                                </option>
-                                                                                <?php endforeach; ?>
-                                                                            </select>
+                                                                </div>
+                                                                
+                                                                <!-- Filtros Adicionais (Opcional) - Bootstrap 4.0.0 -->
+                                                                <div class="row">
+                                                                    <div class="col-12">
+                                                                        <a class="btn btn-sm btn-link text-decoration-none" data-toggle="collapse" href="#filtrosAvancados" role="button" aria-expanded="false" aria-controls="filtrosAvancados">
+                                                                            <i class="feather icon-plus"></i> Filtros Adicionais
+                                                                        </a>
+                                                                        <div class="collapse mt-2" id="filtrosAvancados">
+                                                                            <div class="row">
+                                                                                <div class="col-md-4 mb-3">
+                                                                                    <label for="classe" class="form-label">Classe</label>
+                                                                                    <select class="form-control" id="classe" name="classe">
+                                                                                        <option value="">Todas as Classes</option>
+                                                                                        <option value="10ª">10ª Classe</option>
+                                                                                        <option value="11ª">11ª Classe</option>
+                                                                                        <option value="12ª">12ª Classe</option>
+                                                                                        <option value="13ª">13ª Classe</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div class="col-md-4 mb-3">
+                                                                                    <label for="turno" class="form-label">Turno</label>
+                                                                                    <select class="form-control" id="turno" name="turno">
+                                                                                        <option value="">Todos os Turnos</option>
+                                                                                        <option value="Manhã">Manhã</option>
+                                                                                        <option value="Tarde">Tarde</option>
+                                                                                        <option value="Noite">Noite</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div class="col-md-3">
-                                                                        <div class="form-group">
-                                                                            <label for="ano_letivo">Ano Letivo</label>
-                                                                            <select class="form-control" id="ano_letivo" name="ano_letivo">
-                                                                                <option value="<?= date('Y')-1 ?>"><?= date('Y')-1 ?></option>
-                                                                                <option value="<?= date('Y') ?>" selected><?= date('Y') ?></option>
-                                                                                <option value="<?= date('Y')+1 ?>"><?= date('Y')+1 ?></option>
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-3 d-flex align-items-end">
-                                                                        <button type="submit" class="btn btn-primary btn-block">
-                                                                            <i class="feather icon-filter"></i> Filtrar
-                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </form>
@@ -282,19 +312,20 @@
                                                     </div>
 
                                                     <!-- Tabela de Matrículas -->
+                                                    <!-- Tabela de Matrículas Atualizada -->
                                                     <div class="card card-table">
-                                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                                            <h5 class="text-white mb-0">Gestão de Matrículas - Ano Letivo <?= $ano_letivo ?></h5>
+                                                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                                            <h5 class="mb-0">Gestão de Matrículas - Ano Letivo <?= $ano_letivo ?></h5>
                                                             <div>
-                                                                <button class="btn btn-primary" data-toggle="modal" data-target="#modalMatricula">
+                                                                <button class="btn btn-light" data-toggle="modal" data-target="#modalMatricula">
                                                                     <i class="feather icon-plus"></i> Nova Matrícula
                                                                 </button>
                                                             </div>
                                                         </div>
-                                                        <div class="card-block">
+                                                        <div class="card-body">
                                                             <div class="table-responsive">
-                                                                <table class="table table-custom">
-                                                                    <thead>
+                                                                <table class="table table-hover">
+                                                                    <thead class="table-dark">
                                                                         <tr>
                                                                             <th>Nº Matrícula</th>
                                                                             <th>Aluno</th>
@@ -305,18 +336,24 @@
                                                                             <th>Turno</th>
                                                                             <th>Data</th>
                                                                             <th>Status</th>
-                                                                            <th>Ações</th>
+                                                                            <th class="text-end">Ações</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
                                                                         <?php if (empty($matriculas)): ?>
                                                                         <tr>
-                                                                            <td colspan="10" class="text-center">Nenhuma matrícula encontrada com os filtros selecionados</td>
+                                                                            <td colspan="10" class="text-center py-4">
+                                                                                <div class="d-flex flex-column align-items-center">
+                                                                                    <i class="feather icon-search mb-2" style="font-size: 2rem;"></i>
+                                                                                    <p class="mb-0">Nenhuma matrícula encontrada com os filtros selecionados</p>
+                                                                                    <a href="?status=todos" class="btn btn-sm btn-link mt-2">Limpar filtros</a>
+                                                                                </div>
+                                                                            </td>
                                                                         </tr>
                                                                         <?php else: ?>
                                                                         <?php foreach ($matriculas as $matricula): ?>
                                                                         <tr>
-                                                                            <td class="numero-matricula"><?= htmlspecialchars($matricula['numero_matricula']) ?></td>
+                                                                            <td class="fw-bold"><?= htmlspecialchars($matricula['numero_matricula']) ?></td>
                                                                             <td><?= htmlspecialchars($matricula['nome']) ?></td>
                                                                             <td><?= htmlspecialchars($matricula['bi_numero']) ?></td>
                                                                             <td><?= htmlspecialchars($matricula['curso'] ?? 'N/D') ?></td>
@@ -326,26 +363,33 @@
                                                                             <td><?= date('d/m/Y', strtotime($matricula['data_matricula'])) ?></td>
                                                                             <td>
                                                                                 <?php 
-                                                                                $badge_class = '';
-                                                                                if ($matricula['status_matricula'] == 'ativa') $badge_class = 'badge-ativa';
-                                                                                elseif ($matricula['status_matricula'] == 'cancelada') $badge_class = 'badge-cancelada';
-                                                                                else $badge_class = 'badge-trancada';
+                                                                                $badge_class = [
+                                                                                    'ativa' => 'bg-success',
+                                                                                    'cancelada' => 'bg-danger',
+                                                                                    'trancada' => 'bg-warning'
+                                                                                ][$matricula['status_matricula'] ?? 'ativa'];
                                                                                 ?>
                                                                                 <span class="badge <?= $badge_class ?>">
                                                                                     <?= ucfirst($matricula['status_matricula']) ?>
                                                                                 </span>
                                                                             </td>
-                                                                            <td>
-                                                                                <div class="btn-group btn-group-sm">
-                                                                                    <button class="btn btn-info btn-sm" onclick="editarMatricula(<?= $matricula['id_matricula'] ?>)">
+                                                                            <td class="text-end">
+                                                                                <div class="btn-group btn-group-sm" role="group">
+                                                                                    <button class="btn btn-outline-primary" onclick="editarMatricula(<?= $matricula['id_matricula'] ?>)">
                                                                                         <i class="feather icon-edit"></i>
                                                                                     </button>
-                                                                                    <button class="btn btn-secondary btn-sm" onclick="emitirComprovante(<?= $matricula['id_matricula'] ?>)">
+                                                                                    <button class="btn btn-outline-secondary" onclick="emitirComprovante(<?= $matricula['id_matricula'] ?>)">
                                                                                         <i class="feather icon-printer"></i>
                                                                                     </button>
-                                                                                    <button class="btn btn-danger btn-sm" onclick="cancelarMatricula(<?= $matricula['id_matricula'] ?>)">
+                                                                                    <?php if ($matricula['status_matricula'] == 'ativa'): ?>
+                                                                                    <button class="btn btn-outline-danger" onclick="cancelarMatricula(<?= $matricula['id_matricula'] ?>)">
                                                                                         <i class="feather icon-x"></i>
                                                                                     </button>
+                                                                                    <?php else: ?>
+                                                                                    <button class="btn btn-outline-success" onclick="reativarMatricula(<?= $matricula['id_matricula'] ?>)">
+                                                                                        <i class="feather icon-check"></i>
+                                                                                    </button>
+                                                                                    <?php endif; ?>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
@@ -353,6 +397,26 @@
                                                                         <?php endif; ?>
                                                                     </tbody>
                                                                 </table>
+                                                            </div>
+                                                            
+                                                            <!-- Paginação (opcional) -->
+                                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                                                <div class="text-muted">
+                                                                    Mostrando <?= count($matriculas) ?> registros
+                                                                </div>
+                                                                <nav aria-label="Page navigation">
+                                                                    <ul class="pagination pagination-sm">
+                                                                        <li class="page-item disabled">
+                                                                            <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                                                                        </li>
+                                                                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                                                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                                                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                                                        <li class="page-item">
+                                                                            <a class="page-link" href="#">Próxima</a>
+                                                                        </li>
+                                                                    </ul>
+                                                                </nav>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -514,10 +578,8 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="turno_matricula">Turno *</label>
-                                        <select class="form-control" id="turno_matricula" name="turno" required>
-                                            <option value="Manhã">Manhã</option>
-                                            <option value="Tarde">Tarde</option>
-                                            <option value="Noite">Noite</option>
+                                        <select class="form-control" id="turno_matricula" name="turno" disabled>
+                                            <option value="">Selecione a turma primeiro</option>
                                         </select>
                                     </div>
                                 </div>
@@ -537,8 +599,8 @@
         <?php require_once '../../includes/common/js_imports.php'; ?>
 
         <script>
-            // Funções do Sistema
-            function carregarTurmas(id_curso, elemento) {
+                // Funções do Sistema
+                function carregarTurmas(id_curso, elemento) {
                 if(id_curso) {
                     $.ajax({
                         url: '../../process/consultas/getTurma.php',
@@ -546,6 +608,8 @@
                         data: { id_curso: id_curso },
                         success: function(response) {
                             $(elemento).html(response);
+                            // Habilitar o campo de turno
+                            $('#turno_matricula').prop('disabled', false);
                         },
                         error: function() {
                             $(elemento).html('<option value="">Erro ao carregar turmas</option>');
@@ -553,8 +617,15 @@
                     });
                 } else {
                     $(elemento).html('<option value="">Selecione um curso primeiro</option>');
+                    $('#turno_matricula').prop('disabled', true);
                 }
             }
+
+            // Adicionar este evento para atualizar o turno quando selecionar uma turma
+            $(document).on('change', '#turma_matricula', function() {
+                const turno = $(this).find(':selected').data('turno');
+                $('#turno_matricula').val(turno);
+            });
             
             function editarMatricula(id) {
                 $.ajax({
@@ -631,7 +702,7 @@
             }
             
             function emitirComprovante(id) {
-                window.open('../../process/consultas/comprovante_matricula.php?id=' + id, '_blank');
+                window.open('../../process/secretaria/comprovante_matricula.php?id=' + id, '_blank');
             }
             
             // Carregar turmas quando um curso é selecionado

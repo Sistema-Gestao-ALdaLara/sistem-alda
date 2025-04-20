@@ -71,7 +71,19 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`turma` (
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
+ALTER TABLE `escoladb`.`turma` 
+ADD COLUMN `classe` VARCHAR(10) NOT NULL AFTER `curso_id_curso`;
 
+-- 1. Primeiro, adicionar a coluna turno na tabela turma
+ALTER TABLE `escoladb`.`turma`
+ADD COLUMN `turno` VARCHAR(20) NOT NULL DEFAULT 'Manhã' COMMENT 'Turno da turma (Manhã, Tarde, Noite, Integral)';
+
+-- 4. Remover a coluna turno da tabela matricula (opcional, se quiser manter histórico)
+-- ALTER TABLE matricula DROP COLUMN turno;
+
+-- 5. Se decidir remover definitivamente da matricula:
+ALTER TABLE `escoladb`.`matricula` 
+DROP COLUMN turno;
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`aluno`
@@ -193,23 +205,47 @@ CREATE TABLE `escoladb`.`disciplina` (
   `id_disciplina` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(50) NOT NULL,
   `curso_id_curso` INT NOT NULL,
-  `professor_id_professor` INT NULL, -- AGORA PODE SER NULL
+  `classe` VARCHAR(10) NOT NULL,  -- Adicionado para vincular disciplina a uma classe específica
   PRIMARY KEY (`id_disciplina`, `curso_id_curso`),
-  UNIQUE INDEX `id_disciplina_UNIQUE` (`id_disciplina`), 
-  INDEX `fk_curso5_idx` (`curso_id_curso`), 
-  INDEX `fk_professor5_idx` (`professor_id_professor`), 
+  UNIQUE INDEX `id_disciplina_UNIQUE` (`id_disciplina`),
+  INDEX `fk_curso5_idx` (`curso_id_curso`),
   CONSTRAINT `fk_curso5`
     FOREIGN KEY (`curso_id_curso`)
     REFERENCES `escoladb`.`curso` (`id_curso`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_professor5`
-    FOREIGN KEY (`professor_id_professor`)
-    REFERENCES `escoladb`.`professor` (`id_professor`)
-    ON DELETE SET NULL -- SE O PROFESSOR FOR DELETADO, A DISCIPLINA FICA SEM PROFESSOR
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
+ALTER TABLE `escoladb`.`disciplina` 
+ADD COLUMN `classe` VARCHAR(10) NOT NULL AFTER `curso_id_curso`;
+
+ALTER TABLE `escoladb`.`disciplina` 
+DROP FOREIGN KEY `fk_professor5`;
+
+ALTER TABLE `escoladb`.`disciplina` 
+DROP COLUMN `professor_id_professor`;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`professor_tem_turma`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `escoladb`.`professor_tem_disciplina` (
+  `professor_id_professor` INT NOT NULL,
+  `disciplina_id_disciplina` INT NOT NULL,
+  `classe` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`professor_id_professor`, `disciplina_id_disciplina`, `classe`),
+  INDEX `fk_disciplina_idx` (`disciplina_id_disciplina` ASC),
+  CONSTRAINT `fk_professor_disciplina_professor`
+    FOREIGN KEY (`professor_id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_professor_disciplina_disciplina`
+    FOREIGN KEY (`disciplina_id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
@@ -325,6 +361,8 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`materiais_apoio` (
 ) ENGINE = InnoDB;
 
 
+ALTER TABLE `escoladb`.`materiais_apoio` 
+ADD COLUMN `data_upload` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `id_disciplina`;
 
 -- -----------------------------------------------------
 -- Table `escoladb`.`cronograma_aula`
@@ -388,7 +426,6 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`matricula` (
   `id_matricula` INT NOT NULL AUTO_INCREMENT,
   `ano_letivo` YEAR NOT NULL,
   `classe` VARCHAR(10) NOT NULL,
-  `turno` VARCHAR(20) NOT NULL,
   `numero_matricula` VARCHAR(20) NOT NULL UNIQUE,
   `data_matricula` DATE NOT NULL,
   `turma_id_turma` INT NOT NULL,
@@ -504,6 +541,45 @@ CREATE TABLE IF NOT EXISTS `escoladb`.`documentos_administrativos` (
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`planos_ensino`
+-- -----------------------------------------------------
+CREATE TABLE `escoladb`.`plano_ensino` (
+  `id_plano` INT NOT NULL AUTO_INCREMENT,
+  `ano_letivo` YEAR NOT NULL,
+  `trimestre` ENUM('1', '2', '3') NOT NULL,
+  `conteudo_programatico` TEXT NOT NULL,
+  `metodologia` TEXT NOT NULL,
+  `criterios_avaliacao` TEXT NOT NULL,
+  `bibliografia` TEXT NOT NULL,
+  `status` ENUM('rascunho', 'submetido', 'aprovado', 'rejeitado') NOT NULL DEFAULT 'rascunho',
+  `data_submissao` DATETIME NULL,
+  `data_aprovacao` DATETIME NULL,
+  `id_disciplina` INT NOT NULL,
+  `id_professor` INT NULL,
+  `id_coordenador_aprovador` INT NULL,
+  `caminho_arquivo` VARCHAR(255) NULL,
+  PRIMARY KEY (`id_plano`),
+  INDEX `fk_disciplina_plano_idx` (`id_disciplina` ASC),
+  INDEX `fk_professor_plano_idx` (`id_professor` ASC),
+  INDEX `fk_coordenador_plano_idx` (`id_coordenador_aprovador` ASC),
+  CONSTRAINT `fk_disciplina_plano`
+    FOREIGN KEY (`id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_professor_plano`
+    FOREIGN KEY (`id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_coordenador_plano`
+    FOREIGN KEY (`id_coordenador_aprovador`)
+    REFERENCES `escoladb`.`coordenador` (`id_coordenador`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

@@ -50,7 +50,7 @@
                     
                         <form class="md-float-material form-material" id="loginForm" method="POST" action="../includes/common/auth.php">
                             <div class="text-center">
-                                <img src="libraries\assets\images\logo.png" alt="logo.png">
+                                <img src="../public/libraries/assets/images/logo.png" alt="logo.png">
                             </div>
                             <div class="auth-box card">
                                 <div class="card-block">
@@ -98,7 +98,7 @@
                                             <p class="text-inverse text-left m-b-0">Bem-Vindo de Volta!.</p>                                   
                                         </div>
                                         <div class="col-md-2">
-                                            <img src="libraries\assets\images\auth\Logo-small-bottom.png" alt="small-logo.png">
+                                            <img src="../public/libraries/assets/images/auth/Logo-small-bottom.png" alt="small-logo.png">
                                         </div>
                                     </div>
                                 </div>

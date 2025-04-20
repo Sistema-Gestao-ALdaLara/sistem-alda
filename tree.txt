@@ -67,15 +67,30 @@
 │   └── secretaria
 │       ├── navbar.php
 │       └── sidebar.php
+├── index.php
 ├── pages
 │   ├── aluno
-│   │   ├── calendario_academico.php
+│   │   ├── calendario.php
 │   │   ├── comunicados.php
 │   │   ├── dashboard.php
-│   │   └── disciplinas-aln.php
+│   │   ├── disciplina_detalhes.php
+│   │   ├── disciplinas.php
+│   │   ├── materiais.php
+│   │   └── notas.php
 │   ├── coordenador
+│   │   ├── aprovar_plano.php
 │   │   ├── comunicados.php
-│   │   └── dashboard.php
+│   │   ├── dashboard.php
+│   │   ├── desempenho.php
+│   │   ├── disciplina_detalhes.php
+│   │   ├── excluir_plano.php
+│   │   ├── horarios.php
+│   │   ├── planos.php
+│   │   ├── processar_plano.php
+│   │   ├── professor_detalhes.php
+│   │   ├── professores.php
+│   │   ├── turma_detalhes.php
+│   │   └── turmas.php
 │   ├── diretor_geral
 │   │   ├── comunicados.php
 │   │   ├── dashboard.php
@@ -101,19 +116,22 @@
 │   │   ├── comunicados.php
 │   │   └── dashboard.php
 │   ├── email-inbox.htm
-│   ├── index.htm
+│   ├── index.php
 │   ├── professor
 │   │   ├── alunos.php
 │   │   ├── comunicado_detalhe.php
 │   │   ├── comunicados.php
 │   │   ├── dashboard.php
 │   │   ├── frequencia.php
+│   │   ├── get_alunos_por_turma.php
+│   │   ├── get_disciplinas_por_turma.php
 │   │   ├── lista_alunos.php
 │   │   ├── notas.php
 │   │   ├── notas1.php
 │   │   ├── perfil_aluno.php
 │   │   ├── turma_detalhes.php
-│   │   └── turmas.php
+│   │   ├── turmas.php
+│   │   └── ver_alunos.php
 │   └── secretaria
 │       ├── alunos.php
 │       ├── comuinc.php
@@ -160,6 +178,7 @@
 │   │   ├── exportar_turmas.php
 │   │   ├── gerar_relatorio_matriculas.php
 │   │   └── historico_escolar.php
+│   ├── upload_foto_perfil.php
 │   └── verificar_sessao.php
 ├── public
 │   ├── css
@@ -176,6 +195,7 @@
 │   ├── index.php
 │   ├── js
 │   ├── login.htm
+│   ├── login.php
 │   └── recuperacao
 │       ├── confirmar_codigo.php
 │       ├── esqueci_senha.php
@@ -186,6 +206,7 @@
 └── uploads
     ├── alunos
     ├── documentos
+    ├── planos_ensino
     └── professores
 
-39 directories, 149 files
+40 directories, 169 files

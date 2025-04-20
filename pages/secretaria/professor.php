@@ -1,15 +1,15 @@
 <?php
-    require_once '../../includes/common/permissoes.php';
-    verificarPermissao(['secretaria']);
-    require_once '../../process/verificar_sessao.php';
-    require_once '../../database/conexao.php';
+require_once '../../includes/common/permissoes.php';
+verificarPermissao(['secretaria']);
+require_once '../../process/verificar_sessao.php';
+require_once '../../database/conexao.php';
 
-    $title = "Secretaria";
+$title = "Secretaria";
 
 // Filtros recebidos via GET
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
 
-// Query base para professores
+// Query base para professores (atualizada para usar professor_tem_disciplina)
 $query = "SELECT 
              p.id_professor,
              u.nome, 
@@ -22,13 +22,13 @@ $query = "SELECT
           FROM professor p
           JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
           JOIN curso c ON p.curso_id_curso = c.id_curso
-          LEFT JOIN disciplina d ON d.professor_id_professor = p.id_professor";
-
+          LEFT JOIN professor_tem_disciplina ptd ON p.id_professor = ptd.professor_id_professor
+          LEFT JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina";
 
 // Filtros
 $where = [];
 $params = [];
-$types = ""; // Tipos para bind_param
+$types = "";
 
 if ($id_curso) {
     $where[] = "c.id_curso = ?";
@@ -36,7 +36,6 @@ if ($id_curso) {
     $types .= "i";
 }
 
-// Adicione o GROUP BY no final
 if (!empty($where)) {
     $query .= " WHERE " . implode(" AND ", $where);
 }
@@ -74,12 +73,10 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
 
             <?php require_once '../../includes/secretaria/navbar.php'; ?>
 
-            <!--sidebar-->
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
                     <?php require_once '../../includes/secretaria/sidebar.php'; ?>
 
-                    <!-- Conteúdo Principal -->
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
                             <div class="main-body bg-img">
@@ -87,7 +84,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                     <div class="page-body">
                                         <div class="row">
                                             <div class="col-12 mt-4">
-                                                <!-- Filtros -->
+                                                <!-- Filtros (mantido igual) -->
                                                 <div class="card card-table mb-3">
                                                     <div class="card-header">
                                                         <h5 class="text-white mb-0">Filtrar Professores</h5>
@@ -121,7 +118,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Tabela de Professores -->
+                                                <!-- Tabela de Professores (mantida igual) -->
                                                 <div class="card card-table">
                                                     <div class="card-header d-flex justify-content-between align-items-center">
                                                         <h5 class="text-white mb-0">Lista de Professores</h5>
@@ -167,17 +164,12 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                             </span>
                                                                         </td>
                                                                         <td class="action-buttons">
-                                                                            <!-- Botão Editar -->
                                                                             <button class="btn btn-warning btn-sm" onclick="editarProfessor(<?= $professor['id_professor'] ?>)">
                                                                                 <i class="feather icon-edit"></i>
                                                                             </button>
-                                                                            
-                                                                            <!-- Botão Ver Disciplinas -->
                                                                             <button class="btn btn-info btn-sm" onclick="verDisciplinas(<?= $professor['id_professor'] ?>)">
                                                                                 <i class="feather icon-book"></i>
                                                                             </button>
-                                                                            
-                                                                            <!-- Botão Excluir -->
                                                                             <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $professor['id_professor'] ?>)">
                                                                                 <i class="feather icon-trash"></i>
                                                                             </button>
@@ -191,7 +183,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                     </div>
                                                 </div>
 
-                                                <!-- Modal Professor -->
+                                                <!-- Modal Professor (mantido exatamente igual) -->
                                                 <div class="modal fade" id="modalProfessor" tabindex="-1" role="dialog" aria-labelledby="modalProfessorLabel" aria-hidden="true">
                                                     <div class="modal-dialog modal-lg" role="document">
                                                         <div class="modal-content">
@@ -261,7 +253,6 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                         </div>
                                                                     </div>
                                                                     
-                                                                    <!-- Campo de Disciplinas (Múltipla Seleção) -->
                                                                     <div class="row">
                                                                         <div class="col-md-12">
                                                                             <div class="form-group">
@@ -304,15 +295,15 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         </div>
     </div>
 
-
     <?php require_once '../../includes/common/js_imports.php'; ?>
 
     <script>
-        // Funções do Sistema
+        // Funções do Sistema (mantidas iguais)
         function novoProfessor() {
             $('#formProfessor')[0].reset();
             $('#professorId').val('');
             $('#modalProfessorLabel').text('Novo Professor');
+            $('#disciplinas').val(null);
         }
         
         function editarProfessor(id) {
@@ -329,11 +320,19 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                     $('#id_curso').val(professor.id_curso);
                     $('#status').val(professor.status);
                     
-                    // Não preenche a senha por questões de segurança
-                    $('#senha').val('');
-                    $('#senha').removeAttr('required');
-                    
+                    $('#senha').val('').removeAttr('required');
                     $('#modalProfessorLabel').text('Editar Professor: ' + professor.nome);
+                    
+                    // Carrega disciplinas do professor
+                    $.ajax({
+                        url: '../../process/consultas/get_disciplinas_professor.php',
+                        method: 'GET',
+                        data: { id_professor: id },
+                        success: function(disciplinas) {
+                            $('#disciplinas').val(disciplinas).trigger('change');
+                        }
+                    });
+                    
                     $('#modalProfessor').modal('show');
                 },
                 error: function() {
@@ -372,9 +371,8 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
             window.open('../../process/secretaria/exportar_professores.php?id_curso=' + id_curso, '_blank');
         }
         
-        // Eventos
         $(document).ready(function() {
-            // Validação do formulário de professor
+            // Validação do formulário
             $('#formProfessor').submit(function(e) {
                 e.preventDefault();
                 
@@ -401,145 +399,32 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                     }
                 });
             });
+            
+            // Carregar disciplinas dinamicamente
+            $('#id_curso').change(function() {
+                const cursoId = $(this).val();
+                if (cursoId) {
+                    $.ajax({
+                        url: '../../process/consultas/get_disciplinas.php',
+                        method: 'GET',
+                        data: { id_curso: cursoId },
+                        success: function(data) {
+                            $('#disciplinas').empty();
+                            data.forEach(function(disciplina) {
+                                $('#disciplinas').append(
+                                    `<option value="${disciplina.id_disciplina}">${disciplina.nome}</option>`
+                                );
+                            });
+                        }
+                    });
+                }
+            });
         });
         
         function validarBI(bi) {
             const regex = /^[0-9]{9}[A-Z]{2}[0-9]{3}$/;
             return regex.test(bi);
         }
-
-
-        // carregar disciplinas dinamicamente:
-        $('#id_curso').change(function() {
-            const cursoId = $(this).val();
-            if (cursoId) {
-                $.ajax({
-                    url: '../../process/consultas/get_disciplinas.php',
-                    method: 'GET',
-                    data: { id_curso: cursoId },
-                    success: function(data) {
-                        $('#disciplinas').empty();
-                        data.forEach(function(disciplina) {
-                            $('#disciplinas').append(
-                                `<option value="${disciplina.id_disciplina}">${disciplina.nome}</option>`
-                            );
-                        });
-                    }
-                });
-            }
-        });
-
-        // E na função editarProfessor, adicione:
-        function editarProfessor(id) {
-            $.ajax({
-                url: '../../process/consultas/getProfessor.php',
-                method: 'GET',
-                data: { id: id },
-                dataType: 'json',
-                success: function(professor) {
-                    // ... código existente ...
-                    
-                    // Carrega disciplinas do professor
-                    $.ajax({
-                        url: '../../process/consultas/get_disciplinas_professor.php',
-                        method: 'GET',
-                        data: { id_professor: id },
-                        success: function(disciplinas) {
-                            $('#disciplinas').val(disciplinas).trigger('change');
-                        }
-                    });
-                }
-            });
-        }
     </script>
-
-<!-- JavaScript para as Ações -->
-<script>
-    // Função para editar professor
-    function editarProfessor(id) {
-        $.ajax({
-            url: '../../process/consultas/getProfessor.php',
-            method: 'GET',
-            data: { id: id },
-            dataType: 'json',
-            success: function(professor) {
-                $('#professorId').val(professor.id_professor);
-                $('#nome').val(professor.nome);
-                $('#bi_numero').val(professor.bi_numero);
-                $('#email').val(professor.email);
-                $('#id_curso').val(professor.id_curso);
-                $('#status').val(professor.status);
-                
-                // Carrega as disciplinas do professor
-                $.ajax({
-                    url: '../../process/consultas/get_disciplinas_professor.php',
-                    method: 'GET',
-                    data: { id_professor: id },
-                    success: function(disciplinas) {
-                        $('#disciplinas').val(disciplinas);
-                    }
-                });
-                
-                $('#modalProfessorLabel').text('Editar Professor: ' + professor.nome);
-                $('#modalProfessor').modal('show');
-            }
-        });
-    }
-
-    // Função para ver disciplinas (em página separada)
-    function verDisciplinas(id) {
-        window.location.href = '../../process/consultas/disciplinas_professor.php?id=' + id;
-    }
-
-    // Função para confirmar exclusão
-    function confirmarExclusao(id) {
-        if(confirm('Tem certeza que deseja excluir este professor?')) {
-            $.ajax({
-                url: '../../actions/secretaria/excluir_professor.php',
-                method: 'POST',
-                data: { id: id },
-                success: function(response) {
-                    if(response.success) {
-                        alert('Professor excluído com sucesso');
-                        location.reload();
-                    } else {
-                        alert('Erro ao excluir: ' + response.message);
-                    }
-                }
-            });
-        }
-    }
-
-    // Função para novo professor
-    function novoProfessor() {
-        $('#formProfessor')[0].reset();
-        $('#professorId').val('');
-        $('#modalProfessorLabel').text('Novo Professor');
-        $('#disciplinas').val(null); // Limpa seleção de disciplinas
-    }
-
-    // Atualiza disciplinas quando o curso é alterado
-    $('#id_curso').change(function() {
-        const cursoId = $(this).val();
-        if (cursoId) {
-            $.ajax({
-                url: '../../process/consultas/get_disciplinas.php',
-                method: 'GET',
-                data: { id_curso: cursoId },
-                success: function(data) {
-                    $('#disciplinas').empty();
-                    data.forEach(function(disciplina) {
-                        $('#disciplinas').append(
-                            $('<option>', {
-                                value: disciplina.id_disciplina,
-                                text: disciplina.nome
-                            })
-                        );
-                    });
-                }
-            });
-        }
-    });
-</script>
 </body>
 </html>

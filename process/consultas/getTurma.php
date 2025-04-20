@@ -4,7 +4,8 @@ require_once '../../database/conexao.php';
 if (isset($_GET['id_curso'])) {
     $id_curso = intval($_GET['id_curso']);
     
-    $query = "SELECT id_turma, nome FROM turma WHERE curso_id_curso = ? ORDER BY nome";
+    // Modifique a query para incluir o campo turno
+    $query = "SELECT id_turma, nome, turno FROM turma WHERE curso_id_curso = ? ORDER BY nome";
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $id_curso);
     $stmt->execute();
@@ -13,7 +14,9 @@ if (isset($_GET['id_curso'])) {
     $options = '<option value="">Selecione uma turma</option>';
     
     while ($turma = $result->fetch_assoc()) {
-        $options .= '<option value="' . $turma['id_turma'] . '">' . htmlspecialchars($turma['nome']) . '</option>';
+        // Adicione o data-turno aqui
+        $options .= '<option value="' . $turma['id_turma'] . '" data-turno="' . htmlspecialchars($turma['turno']) . '">' . 
+                   htmlspecialchars($turma['nome']) . '</option>';
     }
     
     echo $options;

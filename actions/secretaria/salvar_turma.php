@@ -7,13 +7,15 @@ $response = ['success' => false, 'message' => 'Erro desconhecido'];
 
 try {
     // Verifica se todos os campos necessários foram enviados
-    if (!isset($_POST['nome']) || !isset($_POST['id_curso'])) {
+    if (!isset($_POST['nome']) || !isset($_POST['id_curso']) || !isset($_POST['turno']) || !isset($_POST['classe'])) {
         throw new Exception('Dados incompletos');
     }
 
     $turmaId = isset($_POST['turmaId']) ? intval($_POST['turmaId']) : null;
     $nome = trim($_POST['nome']);
     $id_curso = intval($_POST['id_curso']);
+    $turno = trim($_POST['turno']);
+    $classe = trim($_POST['classe']);
 
     if (empty($nome) || $id_curso <= 0) {
         throw new Exception('Dados inválidos');
@@ -21,15 +23,15 @@ try {
 
     if ($turmaId) {
         // Atualizar turma existente
-        $query = "UPDATE turma SET nome = ?, curso_id_curso = ? WHERE id_turma = ?";
+        $query = "UPDATE turma SET nome = ?, curso_id_curso = ?, turno = ?, classe = ? WHERE id_turma = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("sii", $nome, $id_curso, $turmaId);
+        $stmt->bind_param("sissi", $nome, $id_curso, $turno, $classe, $turmaId);
         $action = 'atualizada';
     } else {
         // Criar nova turma
-        $query = "INSERT INTO turma (nome, curso_id_curso) VALUES (?, ?)";
+        $query = "INSERT INTO turma (nome, curso_id_curso, turno, classe) VALUES (?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("si", $nome, $id_curso);
+        $stmt->bind_param("siss", $nome, $id_curso, $turno, $classe);
         $action = 'criada';
     }
 

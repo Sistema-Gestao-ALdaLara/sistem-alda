@@ -1,566 +1,351 @@
 <?php
-    require_once '../../includes/common/permissoes.php';
-    verificarPermissao(['professor']);
-    require_once '../../process/verificar_sessao.php';
-    
-    $title = "Lançamento de Notas";
-    require_once '../../database/conexao.php';
+require_once __DIR__ . '/../../includes/common/permissoes.php';
+verificarPermissao(['professor']);
+require_once __DIR__ . '/../../process/verificar_sessao.php';
+require_once __DIR__ . '/../../database/conexao.php';
 
-    // Obter o ID do professor logado
-    $id_usuario = $_SESSION['id_usuario'];
-    $professor_id = 0;
+// Verificação de sessão
+if (!isset($_SESSION['id_usuario'])) {
+    header("Location: /login.php");
+    exit();
+}
 
-    // Buscar o ID do professor
-    $query_professor = "SELECT id_professor FROM professor WHERE usuario_id_usuario = ?";
-    $stmt_professor = $conn->prepare($query_professor);
-    $stmt_professor->bind_param("i", $id_usuario);
-    $stmt_professor->execute();
-    $result_professor = $stmt_professor->get_result();
-    
-    if ($result_professor->num_rows > 0) {
-        $row_professor = $result_professor->fetch_assoc();
-        $professor_id = $row_professor['id_professor'];
+// 1. Obter informações do professor
+$query_professor = "SELECT p.id_professor, c.nome as nome_curso, u.nome as nome_professor
+                    FROM professor p
+                    JOIN curso c ON p.curso_id_curso = c.id_curso
+                    JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
+                    WHERE p.usuario_id_usuario = ?";
+$stmt_professor = $conn->prepare($query_professor);
+$stmt_professor->bind_param("i", $_SESSION['id_usuario']);
+$stmt_professor->execute();
+$professor = $stmt_professor->get_result()->fetch_assoc();
+
+if (!$professor) {
+    header("Location: /professor/dashboard.php");
+    exit();
+}
+
+// 2. Obter disciplinas do professor agrupadas por classe e turma
+$query_disciplinas = "SELECT d.id_disciplina, d.nome as nome_disciplina, ptd.classe,
+                      GROUP_CONCAT(DISTINCT t.nome ORDER BY t.nome SEPARATOR ', ') as turmas
+                      FROM professor_tem_disciplina ptd
+                      JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina
+                      JOIN turma t ON t.classe = ptd.classe
+                      WHERE ptd.professor_id_professor = ?
+                      GROUP BY d.id_disciplina, ptd.classe
+                      ORDER BY ptd.classe, d.nome";
+$stmt_disciplinas = $conn->prepare($query_disciplinas);
+$stmt_disciplinas->bind_param("i", $professor['id_professor']);
+$stmt_disciplinas->execute();
+$disciplinas_result = $stmt_disciplinas->get_result();
+
+$disciplinas_por_classe = [];
+while ($disciplina = $disciplinas_result->fetch_assoc()) {
+    $classe = $disciplina['classe'];
+    if (!isset($disciplinas_por_classe[$classe])) {
+        $disciplinas_por_classe[$classe] = [];
     }
+    $disciplinas_por_classe[$classe][] = $disciplina;
+}
 
-    // Buscar turmas e disciplinas do professor
-    $turmas = [];
-    $disciplinas = [];
-    if ($professor_id > 0) {
-        // Turmas do professor
-        $query_turmas = "SELECT t.id_turma, t.nome, c.nome as curso_nome 
-                        FROM turma t
-                        JOIN curso c ON t.curso_id_curso = c.id_curso
-                        JOIN professor_tem_turma pt ON pt.turma_id_turma = t.id_turma
-                        WHERE pt.professor_id_professor = ?";
-        $stmt_turmas = $conn->prepare($query_turmas);
-        $stmt_turmas->bind_param("i", $professor_id);
-        $stmt_turmas->execute();
-        $result_turmas = $stmt_turmas->get_result();
-        $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
-
-        // Disciplinas do professor
-        $query_disciplinas = "SELECT d.id_disciplina, d.nome, c.nome as curso_nome
-                            FROM disciplina d
-                            JOIN curso c ON d.curso_id_curso = c.id_curso
-                            WHERE d.professor_id_professor = ?";
-        $stmt_disciplinas = $conn->prepare($query_disciplinas);
-        $stmt_disciplinas->bind_param("i", $professor_id);
-        $stmt_disciplinas->execute();
-        $result_disciplinas = $stmt_disciplinas->get_result();
-        $disciplinas = $result_disciplinas->fetch_all(MYSQLI_ASSOC);
-    }
-
-    // Processar o formulário de lançamento de notas
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lancar_notas'])) {
-        $turma_id = intval($_POST['turma_id']);
-        $disciplina_id = intval($_POST['disciplina_id']);
-        $ano_letivo = intval($_POST['ano_letivo']);
-        $data_nota = $_POST['data_nota'];
-        $tipo_avaliacao = $_POST['tipo_avaliacao'];
-        $bimestre = isset($_POST['bimestre']) ? intval($_POST['bimestre']) : null;
-        $descricao = $conn->real_escape_string($_POST['descricao'] ?? '');
-        $peso = isset($_POST['peso']) ? floatval($_POST['peso']) : 1.0;
+// 3. Processar formulário de lançamento de notas
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lancar_nota'])) {
+    $aluno_id = (int)$_POST['aluno_id'];
+    $disciplina_id = (int)$_POST['disciplina_id'];
+    $nota = (float)$_POST['nota'];
+    $tipo_avaliacao = $_POST['tipo_avaliacao'];
+    $trimestre = (int)$_POST['trimestre'];
+    $peso = (float)$_POST['peso'];
+    $descricao = $conn->real_escape_string($_POST['descricao']);
+    $turma_id = (int)$_POST['turma_id'];
+    
+    // Validar dados
+    if ($nota < 0 || $nota > 20) {
+        $mensagem_erro = "A nota deve estar entre 0 e 20";
+    } elseif ($peso <= 0 || $peso > 5) {
+        $mensagem_erro = "O peso deve ser entre 0.1 e 5";
+    } else {
+        // Verificar se o professor tem permissão para lançar nota nesta disciplina/turma
+        $query_verifica = "SELECT 1 FROM professor_tem_disciplina ptd
+                          JOIN turma t ON t.classe = ptd.classe
+                          WHERE ptd.professor_id_professor = ? 
+                          AND ptd.disciplina_id_disciplina = ?
+                          AND t.id_turma = ?";
+        $stmt_verifica = $conn->prepare($query_verifica);
+        $stmt_verifica->bind_param("iii", $professor['id_professor'], $disciplina_id, $turma_id);
+        $stmt_verifica->execute();
         
-        // Verificar permissão na disciplina
-        $disciplina_valida = false;
-        foreach ($disciplinas as $disciplina) {
-            if ($disciplina['id_disciplina'] == $disciplina_id) {
-                $disciplina_valida = true;
-                break;
+        if ($stmt_verifica->get_result()->num_rows > 0) {
+            // Inserir nota no banco de dados
+            $query_insere = "INSERT INTO nota (nota, data, tipo_avaliacao, trimestre, descricao, peso, aluno_id_aluno, disciplina_id_disciplina)
+                             VALUES (?, NOW(), ?, ?, ?, ?, ?, ?)";
+            $stmt_insere = $conn->prepare($query_insere);
+            $stmt_insere->bind_param("dsisdii", $nota, $tipo_avaliacao, $trimestre, $descricao, $peso, $aluno_id, $disciplina_id);
+            
+            if ($stmt_insere->execute()) {
+                $mensagem_sucesso = "Nota lançada com sucesso!";
+                
+                // Registrar na frequência (opcional)
+                $query_frequencia = "INSERT INTO frequencia_aluno 
+                                    (data_aula, presenca, tipo_aula, observacao, aluno_id_aluno, disciplina_id_disciplina, turma_id_turma)
+                                    VALUES (CURDATE(), 'presente', 'normal', 'Avaliação: {$descricao}', ?, ?, ?)";
+                $stmt_frequencia = $conn->prepare($query_frequencia);
+                $stmt_frequencia->bind_param("iii", $aluno_id, $disciplina_id, $turma_id);
+                $stmt_frequencia->execute();
+            } else {
+                $mensagem_erro = "Erro ao lançar nota: " . $conn->error;
             }
-        }
-        
-        if ($disciplina_valida) {
-            $conn->begin_transaction();
-            try {
-                foreach ($_POST['notas'] as $matricula_id => $valor_nota) {
-                    $matricula_id = intval($matricula_id);
-                    $valor_nota = floatval(str_replace(',', '.', $valor_nota));
-                    
-                    if ($valor_nota >= 0 && $valor_nota <= 20) {
-                        // Verificar se o aluno pertence à turma
-                        $query_verifica = "SELECT a.id_aluno FROM matricula m
-                                         JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
-                                         WHERE m.id_matricula = ? AND m.turma_id_turma = ?";
-                        $stmt_verifica = $conn->prepare($query_verifica);
-                        $stmt_verifica->bind_param("ii", $matricula_id, $turma_id);
-                        $stmt_verifica->execute();
-                        $result_verifica = $stmt_verifica->get_result();
-                        
-                        if ($result_verifica->num_rows > 0) {
-                            $aluno_id = $result_verifica->fetch_assoc()['id_aluno'];
-                            
-                            // Inserir a nota com todos os campos
-                            $query_insere = "INSERT INTO nota 
-                                (nota, tipo_avaliacao, bimestre, descricao, peso, data, aluno_id_aluno, disciplina_id_disciplina)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                            $stmt_insere = $conn->prepare($query_insere);
-                            $stmt_insere->bind_param(
-                                "ssisdiii", 
-                                $valor_nota, 
-                                $tipo_avaliacao,
-                                $bimestre,
-                                $descricao,
-                                $peso,
-                                $data_nota, 
-                                $aluno_id, 
-                                $disciplina_id
-                            );
-                            $stmt_insere->execute();
-                        }
-                    }
-                }
-                $conn->commit();
-                $_SESSION['mensagem_sucesso'] = "Notas lançadas com sucesso!";
-            } catch (Exception $e) {
-                $conn->rollback();
-                $_SESSION['mensagem_erro'] = "Erro ao lançar notas: " . $e->getMessage();
-            }
-            header("Location: notas.php?turma_id=$turma_id&disciplina_id=$disciplina_id&ano_letivo=$ano_letivo");
-            exit();
         } else {
-            $_SESSION['mensagem_erro'] = "Você não tem permissão para lançar notas nesta disciplina.";
+            $mensagem_erro = "Você não tem permissão para lançar notas nesta disciplina/turma";
         }
     }
-?>
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <?php require_once '../../includes/common/head.php'; ?>
+}
 
+// 4. Obter turmas do professor (para seleção)
+$query_turmas = "SELECT DISTINCT t.id_turma, t.nome, t.classe, t.turno
+                FROM turma t
+                JOIN professor_tem_disciplina ptd ON t.classe = ptd.classe
+                WHERE ptd.professor_id_professor = ?
+                ORDER BY t.classe, t.turno, t.nome";
+$stmt_turmas = $conn->prepare($query_turmas);
+$stmt_turmas->bind_param("i", $professor['id_professor']);
+$stmt_turmas->execute();
+$turmas = $stmt_turmas->get_result();
+?>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <?php require_once __DIR__ . '/../../includes/common/head.php'; ?>
+    <title>Lançamento de Notas - Área do Professor</title>
+    <style>
+        .card-disciplina {
+            margin-bottom: 20px;
+            border-left: 4px solid #4680ff;
+        }
+        .table-alunos th {
+            background-color: #f8f9fa;
+        }
+        .badge-classe {
+            font-size: 1rem;
+            padding: 5px 10px;
+            background-color: #4680ff;
+        }
+        .form-nota {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+        .disciplina-card {
+            transition: all 0.3s ease;
+            border: 1px solid #eee;
+        }
+        .disciplina-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .turma-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <?php require_once '../../includes/common/preloader.php'; ?>
+    <?php require_once __DIR__ . '/../../includes/common/preloader.php'; ?>
 
     <div id="pcoded" class="pcoded">
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
-            <?php require_once '../../includes/professor/navbar.php'; ?>
+            <?php require_once __DIR__ . '/../../includes/professor/navbar.php'; ?>
 
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
-                    <?php require_once '../../includes/professor/sidebar.php'; ?>
+                    <?php require_once __DIR__ . '/../../includes/professor/sidebar.php'; ?>
                     
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
-                            <div class="main-body bg-img">
+                            <div class="main-body">
                                 <div class="page-wrapper">
-                                    <div class="page-header">
-                                        <div class="row align-items-end">
-                                            <div class="col-lg-8">
-                                                <div class="page-header-title">
-                                                    <h4>Lançamento de Notas</h4>
-                                                    <span> Registre as notas dos alunos por disciplina</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-4">
-                                                <div class="page-header-breadcrumb">
-                                                    <ul class="breadcrumb-title">
-                                                        <li class="breadcrumb-item">
-                                                            <a href="index.php"><i class="feather icon-home"></i></a>
-                                                        </li>
-                                                        <li class="breadcrumb-item"><a href="#!">Professor</a></li>
-                                                        <li class="breadcrumb-item"><a href="#!">Notas</a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div class="page-body">
-                                        <?php if (isset($_SESSION['mensagem_sucesso'])): ?>
-                                            <div class="alert alert-success alert-dismissible fade show">
-                                                <?= $_SESSION['mensagem_sucesso'] ?>
-                                                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                                            </div>
-                                            <?php unset($_SESSION['mensagem_sucesso']); ?>
-                                        <?php endif; ?>
-                                        
-                                        <?php if (isset($_SESSION['mensagem_erro'])): ?>
-                                            <div class="alert alert-danger alert-dismissible fade show">
-                                                <?= $_SESSION['mensagem_erro'] ?>
-                                                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                                            </div>
-                                            <?php unset($_SESSION['mensagem_erro']); ?>
-                                        <?php endif; ?>
-
                                         <div class="row">
-                                            <!-- Cards de Estatísticas -->
-                                            <div class="col-md-4">
-                                                <div class="card card-estatistica card-provas card-table">
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5>
+                                                            <i class="feather icon-edit"></i> Lançamento de Notas
+                                                            <span class="float-right">
+                                                                Curso: <?= htmlspecialchars($professor['nome_curso']) ?> | 
+                                                                Prof. <?= htmlspecialchars($professor['nome_professor']) ?>
+                                                            </span>
+                                                        </h5>
+                                                    </div>
                                                     <div class="card-body">
-                                                        <div class="row">
-                                                            <div class="col-8">
-                                                                <h3 class="mb-1" id="total-alunos">0</h3>
-                                                                <p class="mb-0">Alunos na Turma</p>
-                                                            </div>
-                                                            <div class="col-4 text-right">
-                                                                <i class="feather icon-users f-40"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card card-estatistica card-avaliacoes card-table">
-                                                    <div class="card-body">
-                                                        <div class="row">
-                                                            <div class="col-8">
-                                                                <h3 class="mb-1" id="media-turma">0.00</h3>
-                                                                <p class="mb-0">Média da Turma</p>
-                                                            </div>
-                                                            <div class="col-4 text-right">
-                                                                <i class="feather icon-bar-chart f-40"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card card-estatistica card-trabalhos card-table">
-                                                    <div class="card-body">
-                                                        <div class="row">
-                                                            <div class="col-8">
-                                                                <h3 class="mb-1" id="notas-lancadas">0</h3>
-                                                                <p class="mb-0">Notas Lançadas</p>
-                                                            </div>
-                                                            <div class="col-4 text-right">
-                                                                <i class="feather icon-edit f-40"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="card card-table">
-                                            <div class="card-header">
-                                                <h5>Selecionar Turma e Disciplina</h5>
-                                            </div>
-                                            <div class="card-body">
-                                                <form id="formSelecao" method="GET" action="notas.php">
-                                                    <div class="row">
-                                                        <div class="col-md-4">
-                                                            <div class="form-group">
-                                                                <label>Turma</label>
-                                                                <select class="form-control" name="turma_id" required>
-                                                                    <option value="">Selecione...</option>
-                                                                    <?php foreach ($turmas as $turma): ?>
-                                                                        <option value="<?= $turma['id_turma'] ?>"
-                                                                            <?= isset($_GET['turma_id']) && $_GET['turma_id'] == $turma['id_turma'] ? 'selected' : '' ?>>
-                                                                            <?= $turma['nome'] ?> - <?= $turma['curso_nome'] ?>
-                                                                        </option>
-                                                                    <?php endforeach; ?>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="form-group">
-                                                                <label>Disciplina</label>
-                                                                <select class="form-control" name="disciplina_id" required>
-                                                                    <option value="">Selecione...</option>
-                                                                    <?php foreach ($disciplinas as $disciplina): ?>
-                                                                        <option value="<?= $disciplina['id_disciplina'] ?>"
-                                                                            <?= isset($_GET['disciplina_id']) && $_GET['disciplina_id'] == $disciplina['id_disciplina'] ? 'selected' : '' ?>>
-                                                                            <?= $disciplina['nome'] ?> - <?= $disciplina['curso_nome'] ?>
-                                                                        </option>
-                                                                    <?php endforeach; ?>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-2">
-                                                            <div class="form-group">
-                                                                <label>Ano Letivo</label>
-                                                                <select class="form-control" name="ano_letivo" required>
-                                                                    <?php $ano_atual = date('Y'); ?>
-                                                                    <?php for ($i = $ano_atual - 1; $i <= $ano_atual + 1; $i++): ?>
-                                                                        <option value="<?= $i ?>"
-                                                                            <?= (isset($_GET['ano_letivo']) && $_GET['ano_letivo'] == $i) || (!isset($_GET['ano_letivo']) && $i == $ano_atual) ? 'selected' : '' ?>>
-                                                                            <?= $i ?>
-                                                                        </option>
-                                                                    <?php endfor; ?>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-2 d-flex align-items-end">
-                                                            <button type="submit" class="btn btn-primary btn-block">
-                                                                <i class="feather icon-search"></i> Buscar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-
-                                        <?php if (isset($_GET['turma_id']) && isset($_GET['disciplina_id']) && isset($_GET['ano_letivo'])): ?>
-                                            <?php
-                                                $turma_id = intval($_GET['turma_id']);
-                                                $disciplina_id = intval($_GET['disciplina_id']);
-                                                $ano_letivo = intval($_GET['ano_letivo']);
-                                                
-                                                // Verificar permissão na disciplina
-                                                $disciplina_valida = false;
-                                                foreach ($disciplinas as $disciplina) {
-                                                    if ($disciplina['id_disciplina'] == $disciplina_id) {
-                                                        $disciplina_valida = true;
-                                                        break;
-                                                    }
-                                                }
-                                                
-                                                if ($disciplina_valida) {
-                                                    // Buscar alunos da turma
-                                                    $query_alunos = "SELECT m.id_matricula, u.nome, u.foto_perfil, 
-                                                                    m.numero_matricula, m.classe, m.turno
-                                                                  FROM matricula m
-                                                                  JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
-                                                                  JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
-                                                                  WHERE m.turma_id_turma = ? AND m.ano_letivo = ?
-                                                                  ORDER BY u.nome";
-                                                    $stmt_alunos = $conn->prepare($query_alunos);
-                                                    $stmt_alunos->bind_param("ii", $turma_id, $ano_letivo);
-                                                    $stmt_alunos->execute();
-                                                    $alunos = $stmt_alunos->get_result()->fetch_all(MYSQLI_ASSOC);
-                                                    
-                                                    // Buscar informações da turma e disciplina
-                                                    $stmt_turma = $conn->prepare("SELECT nome FROM turma WHERE id_turma = ?");
-                                                    $stmt_turma->bind_param("i", $turma_id);
-                                                    $stmt_turma->execute();
-                                                    $turma_nome = $stmt_turma->get_result()->fetch_assoc()['nome'];
-                                                    
-                                                    $stmt_disciplina = $conn->prepare("SELECT nome FROM disciplina WHERE id_disciplina = ?");
-                                                    $stmt_disciplina->bind_param("i", $disciplina_id);
-                                                    $stmt_disciplina->execute();
-                                                    $disciplina_nome = $stmt_disciplina->get_result()->fetch_assoc()['nome'];
-                                                    
-                                                    // Buscar estatísticas
-                                                    $query_stats = "SELECT 
-                                                                    COUNT(DISTINCT n.aluno_id_aluno) as total_notas,
-                                                                    AVG(n.nota) as media,
-                                                                    COUNT(DISTINCT CASE WHEN n.tipo_avaliacao = 'prova' THEN n.id_nota END) as total_provas,
-                                                                    COUNT(DISTINCT CASE WHEN n.tipo_avaliacao = 'avaliacao_continua' THEN n.id_nota END) as total_avaliacoes,
-                                                                    COUNT(DISTINCT CASE WHEN n.tipo_avaliacao = 'trabalho' THEN n.id_nota END) as total_trabalhos
-                                                                  FROM nota n
-                                                                  JOIN matricula m ON m.aluno_id_aluno = n.aluno_id_aluno
-                                                                  WHERE n.disciplina_id_disciplina = ? 
-                                                                  AND m.turma_id_turma = ? 
-                                                                  AND m.ano_letivo = ?";
-                                                    $stmt_stats = $conn->prepare($query_stats);
-                                                    $stmt_stats->bind_param("iii", $disciplina_id, $turma_id, $ano_letivo);
-                                                    $stmt_stats->execute();
-                                                    $stats = $stmt_stats->get_result()->fetch_assoc();
-                                                    
-                                                    // Buscar notas para o histórico
-                                                    $query_notas = "SELECT n.id_nota, n.nota, n.data, n.tipo_avaliacao, 
-                                                                  n.bimestre, n.descricao, n.peso,
-                                                                  u.nome as aluno_nome, m.numero_matricula
-                                                                  FROM nota n
-                                                                  JOIN aluno a ON n.aluno_id_aluno = a.id_aluno
-                                                                  JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
-                                                                  JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
-                                                                  WHERE n.disciplina_id_disciplina = ? 
-                                                                  AND m.turma_id_turma = ? 
-                                                                  AND m.ano_letivo = ?
-                                                                  ORDER BY n.data DESC, u.nome";
-                                                    $stmt_notas = $conn->prepare($query_notas);
-                                                    $stmt_notas->bind_param("iii", $disciplina_id, $turma_id, $ano_letivo);
-                                                    $stmt_notas->execute();
-                                                    $notas = $stmt_notas->get_result()->fetch_all(MYSQLI_ASSOC);
-                                            ?>
-                                            
-                                            <div class="card card-table">
-                                                <div class="card-header">
-                                                    <h5>Lançar Notas - <?= $disciplina_nome ?> | <?= $turma_nome ?> (<?= $ano_letivo ?>)</h5>
-                                                </div>
-                                                <div class="card-body">
-                                                    <form id="formLancarNotas" method="POST" action="notas.php">
-                                                        <input type="hidden" name="turma_id" value="<?= $turma_id ?>">
-                                                        <input type="hidden" name="disciplina_id" value="<?= $disciplina_id ?>">
-                                                        <input type="hidden" name="ano_letivo" value="<?= $ano_letivo ?>">
-                                                        
-                                                        <div class="row mb-4">
-                                                            <div class="col-md-3">
-                                                                <div class="form-group">
-                                                                    <label>Data da Avaliação *</label>
-                                                                    <input type="date" class="form-control" name="data_nota" required value="<?= date('Y-m-d') ?>">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-3">
-                                                                <div class="form-group">
-                                                                    <label>Tipo de Avaliação *</label>
-                                                                    <select class="form-control" name="tipo_avaliacao" required>
-                                                                        <option value="prova">Prova</option>
-                                                                        <option value="avaliacao_continua">Avaliação Contínua</option>
-                                                                        <option value="trabalho">Trabalho</option>
-                                                                        <option value="recuperacao">Recuperação</option>
-                                                                        <option value="projeto">Projeto</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="form-group">
-                                                                    <label>Bimestre</label>
-                                                                    <select class="form-control" name="bimestre">
-                                                                        <option value="">N/A</option>
-                                                                        <option value="1">1º Bimestre</option>
-                                                                        <option value="2">2º Bimestre</option>
-                                                                        <option value="3">3º Bimestre</option>
-                                                                        <option value="4">4º Bimestre</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="form-group">
-                                                                    <label>Peso</label>
-                                                                    <input type="number" class="form-control" name="peso" min="0.1" max="5" step="0.1" value="1.0">
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="form-group">
-                                                                    <label>Descrição</label>
-                                                                    <input type="text" class="form-control" name="descricao" placeholder="Ex: Prova Bimestral 1">
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div class="table-responsive">
-                                                            <table class="table table-bordered table-hover">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th width="5%">#</th>
-                                                                        <th width="15%">Foto</th>
-                                                                        <th width="25%">Aluno</th>
-                                                                        <th width="15%">Matrícula</th>
-                                                                        <th width="10%">Classe</th>
-                                                                        <th width="10%">Turno</th>
-                                                                        <th width="20%">Nota (0-20)</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php if (!empty($alunos)): ?>
-                                                                        <?php foreach ($alunos as $i => $aluno): ?>
-                                                                            <tr>
-                                                                                <td><?= $i + 1 ?></td>
-                                                                                <td class="text-center">
-                                                                                    <img src="../../public/uploads/perfil/<?= !empty($aluno['foto_perfil']) ? $aluno['foto_perfil'] : 'default.png' ?>" 
-                                                                                         class="img-radius img-40" alt="Foto">
-                                                                                </td>
-                                                                                <td><?= htmlspecialchars($aluno['nome']) ?></td>
-                                                                                <td><?= htmlspecialchars($aluno['numero_matricula']) ?></td>
-                                                                                <td><?= htmlspecialchars($aluno['classe']) ?></td>
-                                                                                <td><?= htmlspecialchars($aluno['turno']) ?></td>
-                                                                                <td>
-                                                                                    <input type="number" class="form-control nota-input" 
-                                                                                           name="notas[<?= $aluno['id_matricula'] ?>]" 
-                                                                                           min="0" max="20" step="0.1" required>
-                                                                                </td>
-                                                                            </tr>
-                                                                        <?php endforeach; ?>
-                                                                    <?php else: ?>
-                                                                        <tr>
-                                                                            <td colspan="7" class="text-center">Nenhum aluno encontrado</td>
-                                                                        </tr>
-                                                                    <?php endif; ?>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        
-                                                        <?php if (!empty($alunos)): ?>
-                                                            <div class="text-right mt-3">
-                                                                <button type="submit" name="lancar_notas" class="btn btn-primary">
-                                                                    <i class="feather icon-save"></i> Lançar Notas
+                                                        <?php if (isset($mensagem_sucesso)): ?>
+                                                            <div class="alert alert-success icons-alert">
+                                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                    <i class="icofont icofont-close-line-circled"></i>
                                                                 </button>
+                                                                <p><i class="feather icon-check-circle"></i> <?= $mensagem_sucesso ?></p>
                                                             </div>
                                                         <?php endif; ?>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="card card-table">
-                                                <div class="card-header">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <h5>Histórico de Notas</h5>
-                                                        <div>
-                                                            <select class="form-control form-control-sm" id="filtroTipo" style="width: 180px;">
-                                                                <option value="">Todos os tipos</option>
-                                                                <option value="prova">Provas</option>
-                                                                <option value="avaliacao_continua">Aval. Contínuas</option>
-                                                                <option value="trabalho">Trabalhos</option>
-                                                                <option value="recuperacao">Recuperações</option>
-                                                                <option value="projeto">Projetos</option>
-                                                            </select>
-                                                            <select class="form-control form-control-sm" id="filtroBimestre" style="width: 120px;">
-                                                                <option value="">Todos bimestres</option>
-                                                                <option value="1">1º Bimestre</option>
-                                                                <option value="2">2º Bimestre</option>
-                                                                <option value="3">3º Bimestre</option>
-                                                                <option value="4">4º Bimestre</option>
-                                                            </select>
+                                                        
+                                                        <?php if (isset($mensagem_erro)): ?>
+                                                            <div class="alert alert-danger icons-alert">
+                                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                    <i class="icofont icofont-close-line-circled"></i>
+                                                                </button>
+                                                                <p><i class="feather icon-alert-circle"></i> <?= $mensagem_erro ?></p>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        
+                                                        <div class="form-nota">
+                                                            <h5><i class="feather icon-plus"></i> Lançar Nova Nota</h5>
+                                                            <form method="POST">
+                                                                <div class="row">
+                                                                    <div class="col-md-4">
+                                                                        <div class="form-group">
+                                                                            <label for="turma_id">Turma</label>
+                                                                            <select class="form-control" id="turma_id" name="turma_id" required>
+                                                                                <option value="">Selecione uma turma</option>
+                                                                                <?php while ($turma = $turmas->fetch_assoc()): ?>
+                                                                                    <option value="<?= $turma['id_turma'] ?>">
+                                                                                        <?= htmlspecialchars($turma['classe']) ?> - <?= htmlspecialchars($turma['nome']) ?> (<?= htmlspecialchars($turma['turno']) ?>)
+                                                                                    </option>
+                                                                                <?php endwhile; ?>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-4">
+                                                                        <div class="form-group">
+                                                                            <label for="disciplina_id">Disciplina</label>
+                                                                            <select class="form-control" id="disciplina_id" name="disciplina_id" required disabled>
+                                                                                <option value="">Selecione primeiro a turma</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-4">
+                                                                        <div class="form-group">
+                                                                            <label for="aluno_id">Aluno</label>
+                                                                            <select class="form-control" id="aluno_id" name="aluno_id" required disabled>
+                                                                                <option value="">Selecione primeiro a turma</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div class="row">
+                                                                    <div class="col-md-3">
+                                                                        <div class="form-group">
+                                                                            <label for="nota">Nota (0-20)</label>
+                                                                            <input type="number" class="form-control" id="nota" name="nota" min="0" max="20" step="0.01" required>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-3">
+                                                                        <div class="form-group">
+                                                                            <label for="tipo_avaliacao">Tipo de Avaliação</label>
+                                                                            <select class="form-control" id="tipo_avaliacao" name="tipo_avaliacao" required>
+                                                                                <option value="prova">Prova</option>
+                                                                                <option value="avaliacao_continua">Avaliação Contínua</option>
+                                                                                <option value="trabalho">Trabalho</option>
+                                                                                <option value="recuperacao">Recuperação</option>
+                                                                                <option value="projeto">Projeto</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-2">
+                                                                        <div class="form-group">
+                                                                            <label for="trimestre">Trimestre</label>
+                                                                            <select class="form-control" id="trimestre" name="trimestre" required>
+                                                                                <option value="1">1º Trimestre</option>
+                                                                                <option value="2">2º Trimestre</option>
+                                                                                <option value="3">3º Trimestre</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-2">
+                                                                        <div class="form-group">
+                                                                            <label for="peso">Peso (0.1-5)</label>
+                                                                            <input type="number" class="form-control" id="peso" name="peso" min="0.1" max="5" step="0.1" value="1.0" required>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-2">
+                                                                        <div class="form-group">
+                                                                            <label for="data_avaliacao">Data</label>
+                                                                            <input type="date" class="form-control" id="data_avaliacao" name="data_avaliacao" value="<?= date('Y-m-d') ?>" required>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div class="col-md-12">
+                                                                        <div class="form-group">
+                                                                            <label for="descricao">Descrição</label>
+                                                                            <input type="text" class="form-control" id="descricao" name="descricao" placeholder="Ex: Prova escrita sobre..." required>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <button type="submit" name="lancar_nota" class="btn btn-primary">
+                                                                    <i class="feather icon-save"></i> Lançar Nota
+                                                                </button>
+                                                            </form>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-bordered table-hover" id="tabelaHistorico">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Data</th>
-                                                                    <th>Tipo</th>
-                                                                    <th>Bimestre</th>
-                                                                    <th>Descrição</th>
-                                                                    <th>Aluno</th>
-                                                                    <th>Nota</th>
-                                                                    <th>Peso</th>
-                                                                    <th>Ações</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php if (!empty($notas)): ?>
-                                                                    <?php foreach ($notas as $nota): ?>
-                                                                        <tr data-tipo="<?= $nota['tipo_avaliacao'] ?>" data-bimestre="<?= $nota['bimestre'] ?>">
-                                                                            <td><?= date('d/m/Y', strtotime($nota['data'])) ?></td>
-                                                                            <td>
-                                                                                <?php
-                                                                                    $badge_class = '';
-                                                                                    $tipo_text = '';
-                                                                                    switch($nota['tipo_avaliacao']) {
-                                                                                        case 'prova': $badge_class = 'badge-prova'; $tipo_text = 'Prova'; break;
-                                                                                        case 'avaliacao_continua': $badge_class = 'badge-avaliacao_continua'; $tipo_text = 'Aval. Cont.'; break;
-                                                                                        case 'trabalho': $badge_class = 'badge-trabalho'; $tipo_text = 'Trabalho'; break;
-                                                                                        case 'recuperacao': $badge_class = 'badge-recuperacao'; $tipo_text = 'Recup.'; break;
-                                                                                        case 'projeto': $badge_class = 'badge-projeto'; $tipo_text = 'Projeto'; break;
-                                                                                    }
-                                                                                ?>
-                                                                                <span class="badge <?= $badge_class ?>"><?= $tipo_text ?></span>
-                                                                            </td>
-                                                                            <td><?= $nota['bimestre'] ? $nota['bimestre'] . 'º' : '-' ?></td>
-                                                                            <td><?= htmlspecialchars($nota['descricao'] ?? '') ?></td>
-                                                                            <td><?= htmlspecialchars($nota['aluno_nome']) ?></td>
-                                                                            <td><?= number_format($nota['nota'], 2, ',', '.') ?></td>
-                                                                            <td><?= number_format($nota['peso'], 1) ?></td>
-                                                                            <td>
-                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $nota['id_nota'] ?>">
-                                                                                    <i class="feather icon-trash-2"></i>
-                                                                                </button>
-                                                                            </td>
-                                                                        </tr>
-                                                                    <?php endforeach; ?>
-                                                                <?php else: ?>
-                                                                    <tr>
-                                                                        <td colspan="8" class="text-center">Nenhuma nota lançada</td>
-                                                                    </tr>
-                                                                <?php endif; ?>
-                                                            </tbody>
-                                                        </table>
+                                                        
+                                                        <h4 class="mb-4"><i class="feather icon-book"></i> Minhas Disciplinas por Classe</h4>
+                                                        
+                                                        <?php if (empty($disciplinas_por_classe)): ?>
+                                                            <div class="alert alert-info icons-alert">
+                                                                <i class="feather icon-info"></i> 
+                                                                Você não está atribuído a nenhuma disciplina no momento.
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <?php foreach ($disciplinas_por_classe as $classe => $disciplinas): ?>
+                                                                <div class="card card-disciplina">
+                                                                    <div class="card-header">
+                                                                        <h5>
+                                                                            <span class="badge badge-classe">Classe <?= htmlspecialchars($classe) ?></span>
+                                                                        </h5>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <div class="row">
+                                                                            <?php foreach ($disciplinas as $disciplina): ?>
+                                                                                <div class="col-md-4 mb-3">
+                                                                                    <div class="card disciplina-card">
+                                                                                        <div class="card-body">
+                                                                                            <h5><?= htmlspecialchars($disciplina['nome_disciplina']) ?></h5>
+                                                                                            <p class="turma-info">
+                                                                                                <i class="feather icon-users"></i> Turmas: <?= htmlspecialchars($disciplina['turmas']) ?>
+                                                                                            </p>
+                                                                                            <div class="btn-group">
+                                                                                                <a href="ver_alunos.php?disciplina_id=<?= $disciplina['id_disciplina'] ?>&classe=<?= $classe ?>" 
+                                                                                                   class="btn btn-sm btn-outline-primary">
+                                                                                                    <i class="feather icon-users"></i> Alunos
+                                                                                                </a>
+                                                                                                <a href="ver_notas.php?disciplina_id=<?= $disciplina['id_disciplina'] ?>&classe=<?= $classe ?>" 
+                                                                                                   class="btn btn-sm btn-outline-info">
+                                                                                                    <i class="feather icon-list"></i> Notas
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            <?php endforeach; ?>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                            <?php } else { ?>
-                                                <div class="alert alert-danger">
-                                                    Você não tem permissão para acessar esta disciplina.
-                                                </div>
-                                            <?php } ?>
-                                        <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -569,92 +354,57 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <?php require_once '../../includes/common/js_imports.php'; ?>
-        <script>
-            // Atualizar estatísticas
-            document.getElementById('total-alunos').textContent = '<?= count($alunos) ?>';
-            document.getElementById('notas-lancadas').textContent = '<?= $stats['total_notas'] ?? 0 ?>';
-            document.getElementById('media-turma').textContent = '<?= isset($stats['media']) ? number_format($stats['media'], 2, ',', '.') : '0.00' ?>';
-            
-            // Filtros do histórico
-            $(document).ready(function() {
-                $('#filtroTipo, #filtroBimestre').change(function() {
-                    const tipo = $('#filtroTipo').val();
-                    const bimestre = $('#filtroBimestre').val();
+    <?php require_once __DIR__ . '/../../includes/common/js_imports.php'; ?>
+    <script>
+        $(document).ready(function() {
+            // Carregar disciplinas quando selecionar uma turma
+            $('#turma_id').change(function() {
+                var turmaId = $(this).val();
+                var professorId = <?= $professor['id_professor'] ?>;
+                
+                if (turmaId) {
+                    // Obter a classe da turma selecionada
+                    var selectedOption = $(this).find('option:selected');
+                    var classe = selectedOption.text().split(' - ')[0];
                     
-                    $('#tabelaHistorico tbody tr').each(function() {
-                        const rowTipo = $(this).data('tipo');
-                        const rowBimestre = $(this).data('bimestre');
-                        
-                        const showTipo = tipo === '' || rowTipo === tipo;
-                        const showBimestre = bimestre === '' || rowBimestre == bimestre;
-                        
-                        $(this).toggle(showTipo && showBimestre);
-                    });
-                });
-                
-                // Excluir nota
-                $('.btn-excluir').click(function() {
-                    const id = $(this).data('id');
-                    const linha = $(this).closest('tr');
-                    
-                    if (confirm('Tem certeza que deseja excluir esta nota?')) {
-                        $.ajax({
-                            url: '../../process/professor/excluir_nota.php',
-                            method: 'POST',
-                            data: { id_nota: id },
-                            dataType: 'json',
-                            success: function(response) {
-                                if (response.success) {
-                                    linha.fadeOut(function() {
-                                        linha.remove();
-                                        alert('Nota excluída com sucesso!');
-                                    });
-                                } else {
-                                    alert('Erro: ' + response.message);
-                                }
-                            },
-                            error: function() {
-                                alert('Erro ao conectar com o servidor');
-                            }
-                        });
-                    }
-                });
-                
-                // Validação do formulário
-                $('#formLancarNotas').validate({
-                    errorClass: 'text-danger',
-                    rules: {
-                        'data_nota': { required: true },
-                        'tipo_avaliacao': { required: true }
-                    },
-                    messages: {
-                        'data_nota': 'Informe a data',
-                        'tipo_avaliacao': 'Selecione o tipo'
-                    },
-                    highlight: function(element) {
-                        $(element).addClass('is-invalid');
-                    },
-                    unhighlight: function(element) {
-                        $(element).removeClass('is-invalid');
-                    }
-                });
-                
-                $('.nota-input').each(function() {
-                    $(this).rules('add', {
-                        required: true,
-                        min: 0,
-                        max: 20,
-                        messages: {
-                            required: "Informe a nota",
-                            min: "Mínimo 0",
-                            max: "Máximo 20"
+                    // Carregar disciplinas do professor para aquela classe
+                    $.ajax({
+                        url: '/api/get_disciplinas_por_professor.php',
+                        type: 'GET',
+                        data: { 
+                            professor_id: professorId,
+                            classe: classe
+                        },
+                        success: function(data) {
+                            $('#disciplina_id').empty().append('<option value="">Selecione a disciplina</option>');
+                            $.each(data, function(key, value) {
+                                $('#disciplina_id').append('<option value="'+value.id_disciplina+'">'+value.nome_disciplina+'</option>');
+                            });
+                            $('#disciplina_id').prop('disabled', false);
                         }
                     });
-                });
+                    
+                    // Carregar alunos da turma
+                    $.ajax({
+                        url: '/api/get_alunos_por_turma.php',
+                        type: 'GET',
+                        data: { turma_id: turmaId },
+                        success: function(data) {
+                            $('#aluno_id').empty().append('<option value="">Selecione o aluno</option>');
+                            $.each(data, function(key, value) {
+                                $('#aluno_id').append('<option value="'+value.id_aluno+'">'+value.nome_aluno+'</option>');
+                            });
+                            $('#aluno_id').prop('disabled', false);
+                        }
+                    });
+                } else {
+                    $('#disciplina_id').empty().append('<option value="">Selecione primeiro a turma</option>').prop('disabled', true);
+                    $('#aluno_id').empty().append('<option value="">Selecione primeiro a turma</option>').prop('disabled', true);
+                }
             });
-        </script>
-    </body>
+        });
+    </script>
+</body>
 </html>
-<?php $conn->close(); ?>

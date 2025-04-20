@@ -7,11 +7,15 @@ require_once '../../database/conexao.php';
 // Filtros recebidos via GET
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
 $ano_letivo = isset($_GET['ano_letivo']) ? intval($_GET['ano_letivo']) : date('Y');
+$classe = isset($_GET['classe']) ? $_GET['classe'] : '';
+$turno = isset($_GET['turno']) ? $_GET['turno'] : '';
 
 // Query para listar turmas
 $query = "SELECT 
              t.id_turma,
              t.nome AS nome_turma,
+             t.classe,
+             t.turno,
              c.nome AS nome_curso,
              c.id_curso,
              COUNT(DISTINCT m.id_matricula) AS total_alunos,
@@ -34,11 +38,23 @@ if ($id_curso) {
     $types .= "i";
 }
 
+if (!empty($classe)) {
+    $where[] = "t.classe = ?";
+    $params[] = $classe;
+    $types .= "s";
+}
+
+if (!empty($turno)) {
+    $where[] = "t.turno = ?";
+    $params[] = $turno;
+    $types .= "s";
+}
+
 if (!empty($where)) {
     $query .= " WHERE " . implode(" AND ", $where);
 }
 
-$query .= " GROUP BY t.id_turma, t.nome, c.nome, c.id_curso";
+$query .= " GROUP BY t.id_turma, t.nome, t.classe, t.turno, c.nome, c.id_curso";
 $query .= " ORDER BY c.nome, t.nome";
 
 $stmt = $conn->prepare($query);
@@ -82,37 +98,62 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                             <div class="col-12 mt-4">
                                                 <!-- Filtros -->
                                                 <div class="card card-table mb-3">
-                                                    <div class="card-header">
-                                                        <h5 class="text-white mb-0">Filtrar Turmas</h5>
+                                                    <div class="card-header bg-primary text-white">
+                                                        <h5 class="mb-0"><i class="feather icon-filter"></i> Filtrar Turmas</h5>
                                                     </div>
                                                     <div class="card-body">
                                                         <form id="formFiltros" method="GET" action="">
                                                             <div class="row">
-                                                                <div class="col-md-5">
-                                                                    <div class="form-group">
-                                                                        <label for="filtro_curso">Curso</label>
-                                                                        <select class="form-control" id="filtro_curso" name="id_curso">
-                                                                            <option value="">Todos os cursos</option>
-                                                                            <?php foreach ($cursos as $curso): ?>
-                                                                            <option value="<?= $curso['id_curso'] ?>" <?= ($id_curso == $curso['id_curso']) ? 'selected' : '' ?>>
-                                                                                <?= htmlspecialchars($curso['nome']) ?>
-                                                                            </option>
-                                                                            <?php endforeach; ?>
-                                                                        </select>
-                                                                    </div>
+                                                                <!-- Curso -->
+                                                                <div class="col-md-3 mb-3">
+                                                                    <label for="id_curso" class="form-label">Curso</label>
+                                                                    <select class="form-control" id="id_curso" name="id_curso">
+                                                                        <option value="">Todos os cursos</option>
+                                                                        <?php foreach ($cursos as $curso): ?>
+                                                                        <option value="<?= $curso['id_curso'] ?>" <?= $id_curso == $curso['id_curso'] ? 'selected' : '' ?>>
+                                                                            <?= htmlspecialchars($curso['nome']) ?>
+                                                                        </option>
+                                                                        <?php endforeach; ?>
+                                                                    </select>
                                                                 </div>
-                                                                <div class="col-md-5">
-                                                                    <div class="form-group">
-                                                                        <label for="filtro_ano">Ano Letivo</label>
-                                                                        <input type="number" class="form-control" id="filtro_ano" name="ano_letivo" 
-                                                                               min="2000" max="2050" value="<?= $ano_letivo ?>">
-                                                                    </div>
+                                                                
+                                                                <!-- Ano Letivo -->
+                                                                <div class="col-md-3 mb-3">
+                                                                    <label for="ano_letivo" class="form-label">Ano Letivo</label>
+                                                                    <input type="number" class="form-control" id="ano_letivo" name="ano_letivo" 
+                                                                           min="2000" max="2050" value="<?= $ano_letivo ?>">
                                                                 </div>
-                                                                <div class="col-md-2">
-                                                                    <button type="submit" class="btn btn-primary btn-filtrar">
-                                                                        <i class="feather icon-filter"></i> Filtrar
+                                                                
+                                                                <!-- Classe -->
+                                                                <div class="col-md-3 mb-3">
+                                                                    <label for="classe" class="form-label">Classe</label>
+                                                                    <select class="form-control" id="classe" name="classe">
+                                                                        <option value="">Todas as Classes</option>
+                                                                        <option value="10ª" <?= $classe == '10ª' ? 'selected' : '' ?>>10ª Classe</option>
+                                                                        <option value="11ª" <?= $classe == '11ª' ? 'selected' : '' ?>>11ª Classe</option>
+                                                                        <option value="12ª" <?= $classe == '12ª' ? 'selected' : '' ?>>12ª Classe</option>
+                                                                        <option value="13ª" <?= $classe == '13ª' ? 'selected' : '' ?>>13ª Classe</option>
+                                                                    </select>
+                                                                </div>
+                                                                
+                                                                <!-- Turno -->
+                                                                <div class="col-md-3 mb-3">
+                                                                    <label for="turno" class="form-label">Turno</label>
+                                                                    <select class="form-control" id="turno" name="turno">
+                                                                        <option value="">Todos os Turnos</option>
+                                                                        <option value="Manha" <?= $turno == 'Manha' ? 'selected' : '' ?>>Manhã</option>
+                                                                        <option value="Tarde" <?= $turno == 'Tarde' ? 'selected' : '' ?>>Tarde</option>
+                                                                        <option value="Noite" <?= $turno == 'Noite' ? 'selected' : '' ?>>Noite</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="row">
+                                                                <div class="col-md-12 text-right">
+                                                                    <button type="submit" class="btn btn-primary">
+                                                                        <i class="feather icon-filter"></i> Aplicar Filtros
                                                                     </button>
-                                                                    <a href="turmas.php" class="btn btn-limpar btn-secondary">
+                                                                    <a href="turmas.php" class="btn btn-secondary">
                                                                         <i class="feather icon-refresh-ccw"></i> Limpar
                                                                     </a>
                                                                 </div>
@@ -123,56 +164,66 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                 
                                                 <!-- Tabela de Turmas -->
                                                 <div class="card card-table">
-                                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <h5 class="text-white mb-0">Lista de Turmas</h5>
+                                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                                        <h5 class="mb-0">Lista de Turmas - Ano Letivo <?= $ano_letivo ?></h5>
                                                         <div>
-                                                            <button class="btn btn-primary mr-2" onclick="novaTurma()" data-toggle="modal" data-target="#modalTurma">
+                                                            <button class="btn btn-light" onclick="novaTurma()" data-toggle="modal" data-target="#modalTurma">
                                                                 <i class="feather icon-plus"></i> Nova Turma
                                                             </button>
-                                                            <button class="btn btn-info" onclick="exportarTurmas()">
+                                                            <button class="btn btn-info ml-2" onclick="exportarTurmas()">
                                                                 <i class="feather icon-download"></i> Exportar
                                                             </button>
                                                         </div>
                                                     </div>
-                                                    <div class="card-block">
+                                                    <div class="card-body">
                                                         <div class="table-responsive">
-                                                            <table class="table table-custom" id="tabelaTurmas">
-                                                                <thead>
+                                                            <table class="table table-hover">
+                                                                <thead class="table-dark">
                                                                     <tr>
                                                                         <th>Nome</th>
                                                                         <th>Curso</th>
-                                                                        <th>Ano Letivo</th>
+                                                                        <th>Classe</th>
+                                                                        <th>Turno</th>
                                                                         <th>Alunos</th>
                                                                         <th>Professores</th>
-                                                                        <th>Ações</th>
+                                                                        <th class="text-right">Ações</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     <?php if (empty($turmas)): ?>
                                                                     <tr>
-                                                                        <td colspan="6" class="text-center">Nenhuma turma encontrada</td>
+                                                                        <td colspan="7" class="text-center py-4">
+                                                                            <div class="d-flex flex-column align-items-center">
+                                                                                <i class="feather icon-search mb-2" style="font-size: 2rem;"></i>
+                                                                                <p class="mb-0">Nenhuma turma encontrada com os filtros selecionados</p>
+                                                                                <a href="turmas.php" class="btn btn-sm btn-link mt-2">Limpar filtros</a>
+                                                                            </div>
+                                                                        </td>
                                                                     </tr>
                                                                     <?php else: ?>
                                                                     <?php foreach ($turmas as $turma): ?>
                                                                     <tr>
                                                                         <td><?= htmlspecialchars($turma['nome_turma']) ?></td>
                                                                         <td><?= htmlspecialchars($turma['nome_curso']) ?></td>
-                                                                        <td><?= $ano_letivo ?></td>
+                                                                        <td><?= htmlspecialchars($turma['classe']) ?></td>
+                                                                        <td><?= htmlspecialchars($turma['turno']) ?></td>
                                                                         <td><?= $turma['total_alunos'] ?></td>
                                                                         <td><?= $turma['professores_nomes'] ? htmlspecialchars($turma['professores_nomes']) : 'Nenhum' ?></td>
-                                                                        <td class="action-buttons">
-                                                                            <button class="btn btn-warning btn-sm" onclick="editarTurma(<?= $turma['id_turma'] ?>)">
-                                                                                <i class="feather icon-edit"></i>
-                                                                            </button>
-                                                                            <button class="btn btn-info btn-sm" onclick="gerenciarProfessores(<?= $turma['id_turma'] ?>)">
-                                                                                <i class="feather icon-users"></i>
-                                                                            </button>
-                                                                            <button class="btn btn-primary btn-sm" onclick="gerenciarAlunos(<?= $turma['id_turma'] ?>)">
-                                                                                <i class="feather icon-list"></i>
-                                                                            </button>
-                                                                            <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $turma['id_turma'] ?>)">
-                                                                                <i class="feather icon-trash"></i>
-                                                                            </button>
+                                                                        <td class="text-right">
+                                                                            <div class="btn-group btn-group-sm" role="group">
+                                                                                <button class="btn btn-outline-warning" onclick="editarTurma(<?= $turma['id_turma'] ?>)">
+                                                                                    <i class="feather icon-edit"></i>
+                                                                                </button>
+                                                                                <button class="btn btn-outline-info" onclick="gerenciarProfessores(<?= $turma['id_turma'] ?>)">
+                                                                                    <i class="feather icon-users"></i>
+                                                                                </button>
+                                                                                <button class="btn btn-outline-primary" onclick="gerenciarAlunos(<?= $turma['id_turma'] ?>)">
+                                                                                    <i class="feather icon-list"></i>
+                                                                                </button>
+                                                                                <button class="btn btn-outline-danger" onclick="confirmarExclusao(<?= $turma['id_turma'] ?>)">
+                                                                                    <i class="feather icon-trash"></i>
+                                                                                </button>
+                                                                            </div>
                                                                         </td>
                                                                     </tr>
                                                                     <?php endforeach; ?>
@@ -189,7 +240,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-primary text-white">
                                                                 <h5 class="modal-title" id="modalTurmaLabel">Nova Turma</h5>
-                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
@@ -217,6 +268,32 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                         </div>
                                                                     </div>
                                                                     
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="classe">Classe *</label>
+                                                                                <select class="form-control" id="classe" name="classe" required>
+                                                                                    <option value="">Selecione...</option>
+                                                                                    <option value="10ª">10ª Classe</option>
+                                                                                    <option value="11ª">11ª Classe</option>
+                                                                                    <option value="12ª">12ª Classe</option>
+                                                                                    <option value="13ª">13ª Classe</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="turno">Turno *</label>
+                                                                                <select class="form-control" id="turno" name="turno" required>
+                                                                                    <option value="">Selecione...</option>
+                                                                                    <option value="Manha">Manhã</option>
+                                                                                    <option value="Tarde">Tarde</option>
+                                                                                    <option value="Noite">Noite</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
                                                                     <div class="modal-footer">
                                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                                                             <i class="feather icon-x"></i> Cancelar
@@ -237,17 +314,17 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-primary text-white">
                                                                 <h5 class="modal-title" id="modalProfessoresTurmaLabel">Gerenciar Professores</h5>
-                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
-                                                            <div class="modal-body justify-content-center">
+                                                            <div class="modal-body">
                                                                 <form id="formProfessoresTurma" method="POST" action="../../actions/secretaria/salvar_professores_turma.php">
                                                                     <input type="hidden" id="turmaIdProfessores" name="turmaId">
                                                                     
                                                                     <div class="form-group">
                                                                         <label>Professores Disponíveis</label>
-                                                                        <div id="listaProfessores"></div>
+                                                                        <div id="listaProfessores" class="row"></div>
                                                                     </div>
                                                                     
                                                                     <div class="modal-footer">
@@ -270,7 +347,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-primary text-white">
                                                                 <h5 class="modal-title" id="modalAlunosTurmaLabel">Gerenciar Alunos</h5>
-                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
@@ -283,6 +360,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                                 <thead>
                                                                                     <tr>
                                                                                         <th>Nome</th>
+                                                                                        <th>Matrícula</th>
                                                                                         <th>Ações</th>
                                                                                     </tr>
                                                                                 </thead>
@@ -301,6 +379,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                                 <thead>
                                                                                     <tr>
                                                                                         <th>Nome</th>
+                                                                                        <th>Matrícula</th>
                                                                                         <th>Ações</th>
                                                                                     </tr>
                                                                                 </thead>
@@ -351,6 +430,8 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                     $('#turmaId').val(turma.id_turma);
                     $('#nome').val(turma.nome);
                     $('#id_curso').val(turma.curso_id_curso);
+                    $('#classe').val(turma.classe);
+                    $('#turno').val(turma.turno);
                     
                     $('#modalTurmaLabel').text('Editar Turma: ' + turma.nome);
                     $('#modalTurma').modal('show');
@@ -370,26 +451,25 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                 data: { id_turma: id },
                 dataType: 'json',
                 success: function(data) {
-                    let html = '<div class="row">';
+                    let html = '';
                     
                     data.professores.forEach(function(professor) {
                         html += `
-                            <div class="col-md-6 justify-content-center mb-3">
-                                <div class="custom-control custom-checkbox form-check">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
                                     <input class="form-check-input" type="checkbox" 
                                            id="prof_${professor.id_professor}" 
                                            name="professores[]" 
                                            value="${professor.id_professor}"
                                            ${professor.na_turma ? 'checked' : ''}>
                                     <label class="form-check-label" for="prof_${professor.id_professor}">
-                                        ${professor.nome}
+                                        ${professor.nome} (${professor.disciplinas || 'Sem disciplina'})
                                     </label>
                                 </div>
                             </div>
                         `;
                     });
                     
-                    html += '</div>';
                     $('#listaProfessores').html(html);
                     
                     $('#modalProfessoresTurmaLabel').text('Professores da Turma');
@@ -402,7 +482,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         }
         
         function gerenciarAlunos(id) {
-            const ano_letivo = $('#filtro_ano').val();
+            const ano_letivo = $('#ano_letivo').val();
             
             // Carrega alunos na turma
             $.ajax({
@@ -418,6 +498,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                             html += `
                                 <tr>
                                     <td>${aluno.nome}</td>
+                                    <td>${aluno.numero_matricula}</td>
                                     <td>
                                         <button class="btn btn-danger btn-sm" onclick="removerAlunoTurma(${aluno.id_matricula})">
                                             <i class="feather icon-trash"></i>
@@ -427,7 +508,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                             `;
                         });
                     } else {
-                        html = '<tr><td colspan="2">Nenhum aluno nesta turma</td></tr>';
+                        html = '<tr><td colspan="3">Nenhum aluno nesta turma</td></tr>';
                     }
                     
                     $('#listaAlunosTurma').html(html);
@@ -448,6 +529,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                             html += `
                                 <tr>
                                     <td>${aluno.nome}</td>
+                                    <td>${aluno.numero_matricula}</td>
                                     <td>
                                         <button class="btn btn-success btn-sm" onclick="adicionarAlunoTurma(${aluno.id_matricula}, ${id})">
                                             <i class="feather icon-plus"></i>
@@ -457,7 +539,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                             `;
                         });
                     } else {
-                        html = '<tr><td colspan="2">Nenhum aluno disponível</td></tr>';
+                        html = '<tr><td colspan="3">Nenhum aluno disponível</td></tr>';
                     }
                     
                     $('#listaAlunosDisponiveis').html(html);
@@ -469,7 +551,7 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         }
         
         function adicionarAlunoTurma(id_matricula, id_turma) {
-            const ano_letivo = $('#filtro_ano').val();
+            const ano_letivo = $('#ano_letivo').val();
             
             $.ajax({
                 url: '../../actions/secretaria/adicionar_aluno_turma.php',
@@ -532,10 +614,12 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         }
         
         function exportarTurmas() {
-            const id_curso = $('#filtro_curso').val() || '';
-            const ano_letivo = $('#filtro_ano').val() || '';
+            const id_curso = $('#id_curso').val() || '';
+            const ano_letivo = $('#ano_letivo').val() || '';
+            const classe = $('#classe').val() || '';
+            const turno = $('#turno').val() || '';
             
-            window.open('../../process/secretaria/exportar_turmas.php?id_curso=' + id_curso + '&ano_letivo=' + ano_letivo, '_blank');
+            window.open(`../../process/secretaria/exportar_turmas.php?id_curso=${id_curso}&ano_letivo=${ano_letivo}&classe=${classe}&turno=${turno}`, '_blank');
         }
 
         // Filtro de alunos no modal

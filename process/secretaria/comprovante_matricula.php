@@ -4,7 +4,7 @@ require_once '../../database/conexao.php';
 if (isset($_GET['id'])) {
     $id_matricula = intval($_GET['id']);
     
-    $query = "SELECT m.*, u.nome, u.bi_numero, c.nome as curso_nome, t.nome as turma_nome
+    $query = "SELECT m.*, u.nome, u.bi_numero, c.nome as curso_nome, t.turno, t.nome as turma_nome
               FROM matricula m
               JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
               JOIN usuario u ON a.usuario_id_usuario = u.id_usuario

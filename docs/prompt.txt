@@ -1,0 +1,1482 @@
+vamos refazer essa pagina para funcionar 100 offline e com os dados e estilo do sistema <?php
+    require_once '../../includes/common/permissoes.php';
+    verificarPermissao(['aluno']);
+    require_once '../../process/verificar_sessao.php';
+    require_once '../../database/conexao.php';
+
+    // Obter informações do aluno logado
+    $id_usuario = $_SESSION['id_usuario'];
+    $query_aluno = "SELECT a.id_aluno, t.id_turma, t.nome as turma, c.id_curso, c.nome as curso 
+                    FROM aluno a
+                    JOIN turma t ON a.turma_id_turma = t.id_turma
+                    JOIN curso c ON a.curso_id_curso = c.id_curso
+                    WHERE a.usuario_id_usuario = ?";
+    $stmt_aluno = $conn->prepare($query_aluno);
+    $stmt_aluno->bind_param("i", $id_usuario);
+    $stmt_aluno->execute();
+    $result_aluno = $stmt_aluno->get_result();
+    $aluno = $result_aluno->fetch_assoc();
+
+    // Obter horários de aula do aluno
+    $query_horarios = "SELECT ca.dia_semana, ca.horario_inicio, ca.horario_fim, ca.sala,
+                              d.nome as disciplina, u.nome as professor
+                       FROM cronograma_aula ca
+                       JOIN disciplina d ON ca.id_disciplina = d.id_disciplina
+                       JOIN professor p ON ca.id_professor = p.id_professor
+                       JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
+                       WHERE ca.turma_id_turma = ?
+                       ORDER BY FIELD(ca.dia_semana, 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'), 
+                                ca.horario_inicio";
+    $stmt_horarios = $conn->prepare($query_horarios);
+    $stmt_horarios->bind_param("i", $aluno['id_turma']);
+    $stmt_horarios->execute();
+    $horarios = $stmt_horarios->get_result();
+
+    // Organizar horários por dia da semana para exibição
+    $horarios_por_dia = [
+        'segunda' => [],
+        'terca' => [],
+        'quarta' => [],
+        'quinta' => [],
+        'sexta' => [],
+        'sabado' => []
+    ];
+
+    while ($horario = $horarios->fetch_assoc()) {
+        $horarios_por_dia[$horario['dia_semana']][] = $horario;
+    }
+
+    // Obter eventos acadêmicos (poderia ser de outra tabela, mas como não temos, usaremos exemplos)
+    $eventos_academicos = [
+        ['data' => date('Y-m-d', strtotime('+1 week')), 'titulo' => 'Início das Avaliações Bimestrais', 'descricao' => 'Período de avaliações do 1º bimestre'],
+        ['data' => date('Y-m-d', strtotime('+3 weeks')), 'titulo' => 'Reunião de Pais e Mestres', 'descricao' => 'Das 14h às 17h'],
+        ['data' => date('Y-m-d', strtotime('+5 weeks')), 'titulo' => 'Feriado Escolar', 'descricao' => 'Não haverá aula']
+    ];
+?>
+<!DOCTYPE html>
+<html lang="pt">
+
+    <?php require_once '../../includes/common/head.php'; ?>
+
+<body>
+    <?php require_once '../../includes/common/preloader.php'; ?>
+
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+
+            <?php require_once '../../includes/aluno/navbar.php'; ?>
+
+            <!--sidebar-->
+            <div class="pcoded-main-container">
+                <div class="pcoded-wrapper">
+                    <?php require_once '../../includes/aluno/sidebar.php'; ?>
+                    
+                    <div class="pcoded-content">
+                        <div class="pcoded-inner-content">
+                            <div class="main-body bg-img">
+                                <div class="page-wrapper">
+                                    <div class="page-body">
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="card card-calendario">
+                                                    <div class="card-header">
+                                                        <h5><i class="feather icon-calendar"></i> Calendário Acadêmico e Horários</h5>
+                                                        <div class="card-header-right">
+                                                            <span class="badge badge-curso">Curso: <?php echo htmlspecialchars($aluno['curso']); ?></span>
+                                                            <span class="badge badge-turma ml-2">Turma: <?php echo htmlspecialchars($aluno['turma']); ?></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-8">
+                                                                <div id="calendar"></div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="card">
+                                                                    <div class="card-header">
+                                                                        <h5><i class="feather icon-clock"></i> Grade Horária</h5>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <?php 
+                                                                        $dias_semana = [
+                                                                            'segunda' => 'Segunda-feira',
+                                                                            'terca' => 'Terça-feira',
+                                                                            'quarta' => 'Quarta-feira',
+                                                                            'quinta' => 'Quinta-feira',
+                                                                            'sexta' => 'Sexta-feira',
+                                                                            'sabado' => 'Sábado'
+                                                                        ];
+                                                                        
+                                                                        $horarios_existem = false;
+                                                                        
+                                                                        foreach ($dias_semana as $dia => $dia_nome): 
+                                                                            if (!empty($horarios_por_dia[$dia])): 
+                                                                                $horarios_existem = true; ?>
+                                                                                <div class="dia-semana"><?php echo $dia_nome; ?></div>
+                                                                                <?php foreach ($horarios_por_dia[$dia] as $aula): ?>
+                                                                                    <div class="horario-card">
+                                                                                        <h6><?php echo htmlspecialchars($aula['disciplina']); ?></h6>
+                                                                                        <p>
+                                                                                            <i class="feather icon-clock"></i> 
+                                                                                            <?php echo date('H:i', strtotime($aula['horario_inicio'])) . ' - ' . date('H:i', strtotime($aula['horario_fim'])); ?>
+                                                                                        </p>
+                                                                                        <p>
+                                                                                            <i class="feather icon-user"></i> 
+                                                                                            <?php echo htmlspecialchars($aula['professor']); ?>
+                                                                                        </p>
+                                                                                        <p>
+                                                                                            <i class="feather icon-map-pin"></i> 
+                                                                                            Sala <?php echo htmlspecialchars($aula['sala']); ?>
+                                                                                        </p>
+                                                                                    </div>
+                                                                                <?php endforeach; ?>
+                                                                            <?php endif; 
+                                                                        endforeach; 
+                                                                        
+                                                                        if (!$horarios_existem): ?>
+                                                                            <div class="alert alert-info">
+                                                                                <i class="feather icon-info"></i> Nenhum horário cadastrado para sua turma.
+                                                                            </div>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required Jquery -->
+    <script type="text/javascript" src="libraries\bower_components\jquery\js\jquery.min.js"></script>
+    <script type="text/javascript" src="libraries\bower_components\jquery-ui\js\jquery-ui.min.js"></script>
+    <script type="text/javascript" src="libraries\bower_components\popper.js\js\popper.min.js"></script>
+    <script type="text/javascript" src="libraries\bower_components\bootstrap\js\bootstrap.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar calendário
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'pt-br',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: [
+                    <?php foreach ($eventos_academicos as $evento): ?>
+                        {
+                            title: '<?php echo addslashes($evento['titulo']); ?>',
+                            start: '<?php echo $evento['data']; ?>',
+                            description: '<?php echo addslashes($evento['descricao']); ?>',
+                            color: '#07c8ce'
+                        },
+                    <?php endforeach; ?>
+                    
+                    <?php 
+                    // Adicionar aulas recorrentes ao calendário
+                    foreach ($horarios_por_dia as $dia => $aulas): 
+                        if (!empty($aulas)): 
+                            $dias_semana_fc = [
+                                'segunda' => 1,
+                                'terca' => 2,
+                                'quarta' => 3,
+                                'quinta' => 4,
+                                'sexta' => 5,
+                                'sabado' => 6
+                            ];
+                            
+                            foreach ($aulas as $aula): ?>
+                                {
+                                    title: '<?php echo addslashes($aula['disciplina']); ?>',
+                                    daysOfWeek: [<?php echo $dias_semana_fc[$dia]; ?>],
+                                    startTime: '<?php echo $aula['horario_inicio']; ?>',
+                                    endTime: '<?php echo $aula['horario_fim']; ?>',
+                                    description: 'Professor: <?php echo addslashes($aula['professor']); ?>\nSala: <?php echo $aula['sala']; ?>',
+                                    color: '#17a2b8',
+                                    display: 'background',
+                                    textColor: 'white'
+                                },
+                            <?php endforeach; 
+                        endif; 
+                    endforeach; ?>
+                ],
+                eventClick: function(info) {
+                    var eventObj = info.event;
+                    
+                    if (eventObj.extendedProps.description) {
+                        alert(eventObj.title + "\n\n" + eventObj.extendedProps.description);
+                    } else {
+                        alert(eventObj.title);
+                    }
+                }
+            });
+            
+            calendar.render();
+        });
+    </script>
+    
+    <?php require_once '../../includes/common/js_imports.php'; ?>
+</body>
+</html>     <head>
+        <title><?php echo $title . ' | Alda Lara' ?></title>
+        <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 10]>
+          <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+          <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+          <![endif]-->
+        <!-- Meta -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="#">
+        <meta name="keywords" content="Admin , Responsive, Landing, Bootstrap, App, Template, Mobile, iOS, Android, apple, creative app">
+        <meta name="author" content="#">
+        <?php require_once '../../includes/common/css_imports.php'; ?>
+      
+        <style>
+            .bg-img {
+                width: 100%;
+                height: auto;
+                background-image: url('../../public/img/bg.jpg');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+            .table-custom {
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(8px);
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
+            }
+            .table-custom th, .table-custom td {
+                padding: 12px;
+                color: #ffffff;
+            }
+            .table-custom thead {
+                background: rgba(7, 200, 206, 0.55);
+                color: white;
+                font-weight: bold;
+            }
+            .table-custom tbody tr:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transition: 0.3s;
+            }
+            .card-table {
+                background: rgba(19, 125, 171, 0.082);
+                backdrop-filter: blur(10px);
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                color: white !important;
+            }
+            .card-table .card-header {
+                background: rgba(7, 200, 206, 0.836);
+                color: white !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            }
+            .card-table .table {
+                background: transparent;
+            }
+            .action-buttons .btn {
+                margin: 0 3px;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            .filtros-container {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .filtros-container label {
+                color: white;
+                font-weight: bold;
+            }
+            .btn-filtrar {
+                margin-top: 28px;
+            }
+            .btn-limpar {
+                margin-top: 28px;
+                background-color: #6c757d;
+                border-color: #6c757d;
+            }
+
+            .badge-ativa { background-color: #28a745; }
+            .badge-cancelada { background-color: #dc3545; }
+            .badge-trancada { background-color: #ffc107; color: #000; }
+            
+            .numero-matricula {
+                font-family: monospace;
+                font-weight: bold;
+            }
+        </style>
+        <style>
+            .action-buttons .btn {
+                margin: 0 3px;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            .filtros-container {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .filtros-container label {
+                color: white;
+                font-weight: bold;
+            }
+            .btn-filtrar {
+                margin-top: 28px;
+            }
+            .btn-limpar {
+                margin-top: 28px;
+                background-color: #6c757d;
+                border-color: #6c757d;
+            }
+        </style>
+    
+    <style>
+        /* ... (estilos iguais ao anterior) ... */
+        .badge-diretor-geral {
+            background-color: #4e73df;
+        }
+        .badge-diretor-pedagogico {
+            background-color: #1cc88a;
+        }
+    </style>
+    
+    <style>
+        .action-buttons .btn {
+            margin: 0 3px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .filtros-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .filtros-container label {
+            color: white;
+            font-weight: bold;
+        }
+        .btn-filtrar {
+            margin-top: 28px;
+        }
+        .btn-limpar {
+            margin-top: 28px;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+    </style>
+     <style>
+        /* ... (estilos anteriores) ... */
+        .badge-secretaria {
+            background-color: #6f42c1;
+        }
+        .badge-registrador {
+            background-color: #fd7e14;
+        }
+    </style>
+    
+    <style>
+        .badge-prova { background-color: #4680ff; }
+        .badge-avaliacao_continua { background-color: #0e9e4a; }
+        .badge-trabalho { background-color: #ffa21d; }
+        .badge-recuperacao { background-color: #ff5252; }
+        .badge-projeto { background-color: #9c27b0; }
+        .card-estatistica { border-left: 4px solid; }
+        .card-provas { border-left-color: #4680ff; }
+        .card-avaliacoes { border-left-color: #0e9e4a; }
+        .card-trabalhos { border-left-color: #ffa21d; }
+    </style>
+
+<style>
+        .bg-img {
+          width: 100%;
+          height: auto;
+          background-image: url('../public/img/bg.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        }
+
+        .card-calendario {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: rgba(7, 200, 206, 0.8);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .horario-card {
+            background: white;
+            border-left: 4px solid #07c8ce;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .horario-card h6 {
+            color: #07c8ce;
+            font-weight: bold;
+        }
+
+        .dia-semana {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #07c8ce;
+        }
+
+        .fc-event {
+            cursor: pointer;
+        }
+
+        .badge-curso {
+            background-color: #6c757d;
+        }
+
+        .badge-turma {
+            background-color: #17a2b8;
+        }
+
+        #calendar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+
+
+    <style>
+        .bg-img {
+          width: 100%;
+          height: auto;
+          background-image: url('../public/img/bg.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        }
+
+        .card-disciplina {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .card-disciplina:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-disciplina .card-header {
+            background: rgba(7, 200, 206, 0.55);
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+
+        .professor-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .disciplina-info {
+            padding: 15px;
+        }
+
+        .disciplina-nome {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .professor-nome {
+            font-size: 1rem;
+            color: #07c8ce;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            color: #ccc;
+            font-size: 1.2rem;
+        }
+    </style>
+    </head>
+<!-- Required Jquery -->
+<script data-cfasync="false" src="../../public/libraries/bower_components/cloudflare/email-decode.min.js"></script>
+<script type="text/javascript" src="../../public/libraries/bower_components/jquery/js/jquery.min.js"></script>
+<script type="text/javascript" src="../../public/libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../public/libraries/bower_components/popper.js/js/popper.min.js"></script>
+<script type="text/javascript" src="../../public/libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
+<!-- jquery slimscroll js -->
+<script type="text/javascript" src="../../public/libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
+<!-- modernizr js -->
+<script type="text/javascript" src="../../public/libraries/bower_components/modernizr/js/modernizr.js"></script>
+<!-- Chart js -->
+<script type="text/javascript" src="../../public/libraries/bower_components/chart.js/js/Chart.js"></script>
+<!-- amchart js -->
+<script src="../../public/libraries/assets/pages/widget/amchart/amcharts.js"></script>
+<script src="../../public/libraries/assets/pages/widget/amchart/serial.js"></script>
+<script src="../../public/libraries/assets/pages/widget/amchart/light.js"></script>
+<script src="../../public/libraries/assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
+<script type="text/javascript" src="../../public/libraries//assets/js/SmoothScroll.js"></script>
+<script src="../../public/libraries//assets/js/pcoded.min.js"></script>
+<!-- custom js -->
+<script src="../../public/libraries//assets/js/vartical-layout.min.js"></script>
+<script type="text/javascript" src="../../public/libraries/assets/pages/dashboard/custom-dashboard.js"></script>
+<script type="text/javascript" src="../../public/libraries/assets/js/script.min.js"></script>
+
+<!-- Warning Section Ends -->
+    <!-- Required Jquery -->
+    <script type="text/javascript" src="../public/libraries/bower_components/jquery/js/jquery.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/jquery-ui/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/popper.js/js/popper.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/bootstrap/js/bootstrap.min.js"></script>
+    <!-- jquery slimscroll js -->
+    <script type="text/javascript" src="../public/libraries/bower_components/jquery-slimscroll/js/jquery.slimscroll.js"></script>
+    <!-- modernizr js -->
+    <script type="text/javascript" src="../public/libraries/bower_components/modernizr/js/modernizr.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/modernizr/js/css-scrollbars.js"></script>
+    <!-- i18next.min.js -->
+    <script type="text/javascript" src="../public/libraries/bower_components/i18next/js/i18next.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/i18next-xhr-backend/js/i18nextXHRBackend.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/i18next-browser-languagedetector/js/i18nextBrowserLanguageDetector.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/bower_components/jquery-i18next/js/jquery-i18next.min.js"></script>
+    <script type="text/javascript" src="../public/libraries/assets/js/common-pages.js"></script>
+   
+   <script>
+        setInterval(function() {
+            $.ajax({
+                url: '../../api/check_comunicados.php',
+                method: 'GET',
+                success: function(data) {
+                    if (data.novos > 0) {
+                        $('.notification-label').text(data.novos).show();
+                    } else {
+                        $('.notification-label').hide();
+                    }
+                }
+            });
+        }, 300000); // 5 minutos
+    </script>     <!-- Favicon icon -->
+    <link rel="icon" href="../../public/libraries/assets/images/favicon.ico" type="image/x-icon">
+    <!-- Google font-->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600" rel="stylesheet">
+    <!-- Required Fremwork -->
+    <link rel="stylesheet" type="text/css" href="../../public/libraries/bower_components/bootstrap/css/bootstrap.min.css">
+    <!-- feather Awesome -->
+    <link rel="stylesheet" type="text/css" href="../../public/libraries/assets/icon/feather/css/feather.css">
+    <!-- Style.css -->
+    <link rel="stylesheet" type="text/css" href="../../public/libraries/assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="../../public/libraries/assets/css/jquery.mCustomScrollbar.css">
+
+
+    <!-- Favicon icon -->
+    <link rel="icon" href="../public/libraries/assets/images/favicon.ico" type="image/x-icon">
+    <!-- Google font--><link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,800" rel="stylesheet">
+    <!-- Required Fremwork -->
+    <link rel="stylesheet" type="text/css" href="../public/libraries/bower_components/bootstrap/css/bootstrap.min.css">
+    <!-- themify-icons line icon -->
+    <link rel="stylesheet" type="text/css" href="../public/libraries/assets/icon/themify-icons/themify-icons.css">
+    <!-- ico font -->
+    <link rel="stylesheet" type="text/css" href="../public/libraries/assets/icon/icofont/css/icofont.css">
+    <!-- Style.css -->
+    <link rel="stylesheet" type="text/css" href="../public/libraries/assets/css/style.css">
+    <link rel="stylesheet" type="text/css" href="../public/libraries/assets/css/jquery.mCustomScrollbar.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' /> bootstrap4.0.0 e se baseie nessa <?php
+    require_once '../../includes/common/permissoes.php';
+    verificarPermissao(['aluno']);
+    require_once '../../process/verificar_sessao.php';
+    require_once '../../database/conexao.php';
+
+    $title = "Aluno";
+
+    // Obter dados do aluno
+    $id_usuario = $_SESSION['id_usuario'];
+    $dados_aluno = [];
+    $turma_aluno = '';
+    $curso_aluno = '';
+    $ano_letivo = '';
+    $media_geral = 0;
+    $presenca_percentual = 0;
+    $ultimas_notas = [];
+
+    // Dados básicos do aluno
+    $sql = "SELECT a.*, u.nome, u.foto_perfil, u.email, t.nome as nome_turma, c.nome as nome_curso, 
+                   m.ano_letivo as ano_letivo_matricula
+            FROM aluno a 
+            JOIN usuario u ON a.usuario_id_usuario = u.id_usuario 
+            JOIN turma t ON a.turma_id_turma = t.id_turma 
+            JOIN curso c ON a.curso_id_curso = c.id_curso
+            JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
+            WHERE u.id_usuario = ? AND m.status_matricula = 'ativa'";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_usuario);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $dados_aluno = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($dados_aluno) {
+        $turma_aluno = $dados_aluno['nome_turma'];
+        $curso_aluno = $dados_aluno['nome_curso'];
+        $ano_letivo = $dados_aluno['ano_letivo_matricula'] ?? $dados_aluno['ano_letivo'];
+        
+        // Calcular média geral
+        $sql_media = "SELECT AVG(nota) as media 
+                      FROM nota 
+                      WHERE aluno_id_aluno = ?";
+        $stmt_media = $conn->prepare($sql_media);
+        $stmt_media->bind_param("i", $dados_aluno['id_aluno']);
+        $stmt_media->execute();
+        $result_media = $stmt_media->get_result();
+        $media = $result_media->fetch_assoc();
+        $media_geral = $media['media'] ? round($media['media'], 1) : 0;
+        $stmt_media->close();
+        
+        // Calcular percentual de presença
+        $sql_presenca = "SELECT 
+                            (SUM(CASE WHEN presenca = 'presente' THEN 1 ELSE 0 END) / COUNT(*)) * 100 as percentual 
+                         FROM frequencia_aluno 
+                         WHERE aluno_id_aluno = ?";
+        $stmt_presenca = $conn->prepare($sql_presenca);
+        $stmt_presenca->bind_param("i", $dados_aluno['id_aluno']);
+        $stmt_presenca->execute();
+        $result_presenca = $stmt_presenca->get_result();
+        $presenca = $result_presenca->fetch_assoc();
+        $presenca_percentual = $presenca['percentual'] ? round($presenca['percentual'], 0) : 0;
+        $stmt_presenca->close();
+        
+        // Obter últimas notas
+        $sql_notas = "SELECT n.nota, d.nome as disciplina, n.data, n.tipo_avaliacao 
+                      FROM nota n 
+                      JOIN disciplina d ON n.disciplina_id_disciplina = d.id_disciplina 
+                      WHERE n.aluno_id_aluno = ? 
+                      ORDER BY n.data DESC 
+                      LIMIT 5";
+        $stmt_notas = $conn->prepare($sql_notas);
+        $stmt_notas->bind_param("i", $dados_aluno['id_aluno']);
+        $stmt_notas->execute();
+        $result_notas = $stmt_notas->get_result();
+        while ($row = $result_notas->fetch_assoc()) {
+            $ultimas_notas[] = $row;
+        }
+        $stmt_notas->close();
+    }
+?>
+
+<!DOCTYPE html>
+<html lang="pt">
+
+<?php require_once '../../includes/common/head.php'; ?>
+
+<body>
+    <?php require_once '../../includes/common/preloader.php'; ?>
+
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+
+            <?php require_once '../../includes/aluno/navbar.php'; ?>
+
+            <!--sidebar-->
+            <div class="pcoded-main-container">
+                <div class="pcoded-wrapper">
+                    <?php require_once '../../includes/aluno/sidebar.php'; ?>
+                    
+                    <div class="pcoded-content">
+                        <div class="pcoded-inner-content">
+                            <div class="main-body bg-img">
+                                <div class="page-wrapper">
+
+                                    <div class="page-body">
+                                        <div class="row">
+                                            <!-- Card de Perfil -->
+                                            <div class="col-xl-4 col-md-6">
+                                                <div class="card user-card">
+                                                    <div class="card-block text-center">
+                                                        <div class="user-image">
+                                                            <img src="<?php echo $dados_aluno['foto_perfil'] ? '../../uploads/perfil/'.$dados_aluno['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                                 class="img-radius" id="profile-pic" width="100" height="100" alt="Foto do Aluno">
+                                                        </div>
+                                                        <h4 class="m-t-15 text-uppercase"><?php echo htmlspecialchars($dados_aluno['nome'] ?? $_SESSION['nome_usuario']); ?></h4>
+                                                        <p class="text-muted">Curso: <?php echo htmlspecialchars($curso_aluno); ?></p>
+                                                        <p class="text-muted">Turma: <?php echo htmlspecialchars($turma_aluno); ?></p>
+                                                        <p class="text-muted">Ano Letivo: <?php echo htmlspecialchars($dados_aluno['ano_letivo_matricula'] ?? ''); ?></p>
+                                                        <button class="btn btn-light btn-sm" onclick="document.getElementById('file-input').click();">
+                                                            <i class="feather icon-camera"></i> Alterar Foto
+                                                        </button>
+                                                        <input type="file" id="file-input" class="d-none" accept="image/*" onchange="validateImage()">
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <p class="text-muted m-b-0">
+                                                            <i class="feather icon-clock f-14 m-r-10"></i> Última atualização: <?php echo date('d/m/Y'); ?>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        
+                                            <!-- Acesso Rápido -->
+                                            <div class="col-xl-8 col-md-6">
+                                                <div class="row">
+                                                    <a href="disciplinas-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                        <div class="card bg-c-yellow">
+                                                            <div class="card-block text-center">
+                                                                <i class="feather icon-book f-30 text-white"></i>
+                                                                <h6 class="text-white m-t-10">Minhas Disciplinas</h6>
+                                                            </div>
+                                                            <div class="card-footer bg-c-blue">
+                                                                <p class="text-white m-b-0">
+                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Acessar Disciplinas
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                    <a href="notas-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                        <div class="card bg-c-green">
+                                                            <div class="card-block text-center">
+                                                                <i class="feather icon-bar-chart f-30 text-white"></i>
+                                                                <h6 class="text-white m-t-10">Minhas Notas</h6>
+                                                            </div>
+                                                            <div class="card-footer bg-c-yellow">
+                                                                <p class="text-white m-b-0">
+                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Ver Notas Recentes
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                    <a href="calendario-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                        <div class="card bg-c-blue">
+                                                            <div class="card-block text-center">
+                                                                <i class="feather icon-calendar f-30 text-white"></i>
+                                                                <h6 class="text-white m-t-10">Calendário Escolar</h6>
+                                                            </div>
+                                                            <div class="card-footer bg-c-green">
+                                                                <p class="text-white m-b-0">
+                                                                    <i class="feather icon-arrow-right f-14 m-r-10"></i> Ver Eventos
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        
+                                            <!-- Notas e Frequência -->
+                                            <div class="col-xl-3 col-md-6">
+                                                <div class="card bg-c-yellow update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white"><?php echo $media_geral; ?>%</h4>
+                                                                <h6 class="text-white m-b-0">
+                                                                    <i class="feather icon-star"></i> Média Geral
+                                                                </h6>
+                                                            </div>
+                                                            <div class="col-4 text-right">
+                                                                <i class="feather icon-star text-white" style="font-size: 40px;"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado hoje
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        
+                                            <div class="col-xl-3 col-md-6">
+                                                <div class="card bg-c-green update-card">
+                                                    <div class="card-block">
+                                                        <div class="row align-items-end">
+                                                            <div class="col-8">
+                                                                <h4 class="text-white"><?php echo $presenca_percentual; ?>%</h4>
+                                                                <h6 class="text-white m-b-0">
+                                                                    <i class="feather icon-check-circle"></i> Presença
+                                                                </h6>
+                                                            </div>
+                                                            <div class="col-4 text-right">
+                                                                <i class="feather icon-check-circle text-white" style="font-size: 40px;"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <p class="text-white m-b-0">
+                                                            <i class="feather icon-clock text-white f-14 m-r-10"></i> Atualizado hoje
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        
+                                            <!-- Últimas Notas -->
+                                            <div class="col-xl-6">
+                                                <div class="card card-table">
+                                                    <div class="card-header">
+                                                        <h5><i class="feather icon-award"></i> Últimas Notas</h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <table class="table table-hover">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Disciplina</th>
+                                                                    <th>Nota</th>
+                                                                    <th>Tipo</th>
+                                                                    <th>Data</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php if (count($ultimas_notas) > 0): ?>
+                                                                    <?php foreach ($ultimas_notas as $nota): ?>
+                                                                        <tr>
+                                                                            <td><?php echo htmlspecialchars($nota['disciplina']); ?></td>
+                                                                            <td>
+                                                                                <?php 
+                                                                                    $badge_class = '';
+                                                                                    if ($nota['nota'] >= 15) {
+                                                                                        $badge_class = 'badge-success';
+                                                                                    } elseif ($nota['nota'] >= 10) {
+                                                                                        $badge_class = 'badge-warning';
+                                                                                    } else {
+                                                                                        $badge_class = 'badge-danger';
+                                                                                    }
+                                                                                ?>
+                                                                                <span class="badge <?php echo $badge_class; ?>"><?php echo $nota['nota']; ?></span>
+                                                                            </td>
+                                                                            <td><?php echo htmlspecialchars($nota['tipo_avaliacao']); ?></td>
+                                                                            <td><?php echo date('d/m/Y', strtotime($nota['data'])); ?></td>
+                                                                        </tr>
+                                                                    <?php endforeach; ?>
+                                                                <?php else: ?>
+                                                                    <tr>
+                                                                        <td colspan="4" class="text-center">Nenhuma nota registrada ainda</td>
+                                                                    </tr>
+                                                                <?php endif; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <p class="text-muted m-b-0">
+                                                            <i class="feather icon-clock f-14 m-r-10"></i> Atualizado em <?php echo date('d/m/Y H:i'); ?>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php require_once '../../includes/common/js_imports.php'; ?>
+
+    <script>
+        function validateImage() {
+            let fileInput = document.getElementById('file-input');
+            let profilePic = document.getElementById('profile-pic');
+        
+            if (fileInput.files.length > 0) {
+                let file = fileInput.files[0];
+        
+                // Verifica o tipo de arquivo
+                if (!file.type.startsWith('image/')) {
+                    alert("Por favor, envie uma imagem válida.");
+                    return;
+                }
+        
+                // Verifica o tamanho do arquivo (máximo 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert("A imagem deve ter no máximo 2MB.");
+                    return;
+                }
+        
+                // Mostra a imagem selecionada
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePic.src = e.target.result;
+                    
+                    // Aqui você pode adicionar código para enviar a imagem para o servidor
+                    // Exemplo com AJAX:
+                    /*
+                    let formData = new FormData();
+                    formData.append('foto_perfil', file);
+                    formData.append('id_usuario', <?php echo $id_usuario; ?>);
+                    
+                    fetch('../../process/upload_foto_perfil.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Foto atualizada com sucesso!');
+                        } else {
+                            alert('Erro ao atualizar foto: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Erro ao enviar foto');
+                    });
+                    */
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html> todas as informacoes devem vir do banco de dados e se eu tiver que alterar alguma coisa na tabela cronograma aula diga mas se der para fazer um horario no minimo decente com essa tabela o faca sem alterar a db table
+com offline quis dizer nao depender de cdns  -- MySQL Script generated by MySQL Workbench
+-- Mon Mar 31 23:25:51 2025
+-- Model: New Model    Version: 1.0
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema escoladb
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema escoladb
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `escoladb` DEFAULT CHARACTER SET utf8 ;
+USE `escoladb` ;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`usuario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`usuario` (
+  `id_usuario` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) NOT NULL UNIQUE,
+  `senha` VARCHAR(255) NOT NULL,
+  `bi_numero` VARCHAR(14) NOT NULL UNIQUE,
+  `tipo` ENUM('diretor_geral', 'diretor_pedagogico', 'coordenador', 'professor', 'aluno', 'secretaria') NOT NULL,
+  `status` ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+  `foto_perfil` VARCHAR(255) NULL,
+  PRIMARY KEY (`id_usuario`)
+) ENGINE = InnoDB;
+
+-- Conta padrão da Secretaria
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Secretaria Geral', 'secretaria@aldalara.com', 'senha_hash', '0000000000000', 'secretaria', 'ativo');
+
+-- Conta padrão do Diretor Geral
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Diretor Geral', 'diretor@gmail.com', '$2y$10$cJqlwZa/fiGP7b3zfZ0CA.mGxcYJz4QJCMIAyd8h0wZL9TBKQt0hW', '456456789LA123' , 'diretor_geral', 'ativo');
+
+-- Conta padrão do Diretor Pedagógico
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status)
+VALUES ('Diretor Pedagógico', 'pedagogico@gmail.com', '$2y$10$cJqlwZa/fiGP7b3zfZ0CA.mGxcYJz4QJCMIAyd8h0wZL9TBKQt0hW', '789456789LA123' ,'diretor_pedagogico', 'ativo');
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`curso`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`curso` (
+  `id_curso` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_curso`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`turma`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`turma` (
+  `id_turma` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(50) NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  PRIMARY KEY (`id_turma`),
+  INDEX `fk_curso4_idx` (`curso_id_curso` ASC),
+  CONSTRAINT `fk_curso4`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`aluno`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`aluno` (
+  `id_aluno` INT NOT NULL AUTO_INCREMENT,
+  `data_nascimento` DATE NOT NULL,
+  `genero` VARCHAR(10) NOT NULL,
+  `naturalidade` VARCHAR(100) NOT NULL,
+  `nacionalidade` VARCHAR(100) NOT NULL,
+  `municipio` VARCHAR(100) NOT NULL,
+  `ano_letivo` YEAR NOT NULL,
+  `nome_encarregado` VARCHAR(100) NOT NULL,
+  `contacto_encarregado` VARCHAR(20) NOT NULL,
+  `usuario_id_usuario` INT NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  PRIMARY KEY (`id_aluno`),
+  INDEX `fk_usuario1_idx` (`usuario_id_usuario` ASC),
+  INDEX `fk_turma1_idx` (`turma_id_turma` ASC),
+  INDEX `fk_curso1_idx` (`curso_id_curso` ASC),
+  CONSTRAINT `fk_usuario1`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_turma1`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_curso1`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`professor`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`professor` (
+  `id_professor` INT NOT NULL AUTO_INCREMENT,
+  `usuario_id_usuario` INT NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  PRIMARY KEY (`id_professor`),
+  INDEX `fk_usuario3_idx` (`usuario_id_usuario` ASC),
+  INDEX `fk_curso3_idx` (`curso_id_curso` ASC),
+  CONSTRAINT `fk_usuario3`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_curso3`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`coordenador`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`coordenador` (
+  `id_coordenador` INT NOT NULL AUTO_INCREMENT,
+  `usuario_id_usuario` INT NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  PRIMARY KEY (`id_coordenador`),
+  INDEX `fk_usuario2_idx` (`usuario_id_usuario` ASC),
+  INDEX `fk_curso2_idx` (`curso_id_curso` ASC),
+  CONSTRAINT `fk_usuario2`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_curso2`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`secretaria`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`secretaria` (
+  `id_secretaria` INT NOT NULL AUTO_INCREMENT,
+  `setor` VARCHAR(50) NOT NULL,
+  `usuario_id_usuario` INT NOT NULL,
+  PRIMARY KEY (`id_secretaria`),
+  INDEX `fk_usuario_idx` (`usuario_id_usuario` ASC),
+  CONSTRAINT `fk_usuario`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+ALTER TABLE `escoladb`.`secretaria` 
+ADD COLUMN `pode_registrar` TINYINT(1) NOT NULL DEFAULT 0 AFTER `setor`;
+
+-- Inserir usuário padrão da secretaria
+INSERT INTO `escoladb`.`usuario` (nome, email, senha, bi_numero, tipo, status) 
+VALUES ('Secretaria Padrão', 'secretaria@gmail.com', 'admin', '123456789LA123', 'secretaria', 'ativo');
+
+-- Inserir registro da secretaria com permissão para registrar outras
+INSERT INTO `escoladb`.`secretaria` (setor, pode_registrar, usuario_id_usuario) 
+VALUES ('Administrativo', 1, LAST_INSERT_ID());
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`disciplina`
+-- -----------------------------------------------------
+CREATE TABLE `escoladb`.`disciplina` (
+  `id_disciplina` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(50) NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  `professor_id_professor` INT NULL, -- AGORA PODE SER NULL
+  PRIMARY KEY (`id_disciplina`, `curso_id_curso`),
+  UNIQUE INDEX `id_disciplina_UNIQUE` (`id_disciplina`), 
+  INDEX `fk_curso5_idx` (`curso_id_curso`), 
+  INDEX `fk_professor5_idx` (`professor_id_professor`), 
+  CONSTRAINT `fk_curso5`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_professor5`
+    FOREIGN KEY (`professor_id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE SET NULL -- SE O PROFESSOR FOR DELETADO, A DISCIPLINA FICA SEM PROFESSOR
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`nota`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`nota` (
+  `id_nota` INT NOT NULL AUTO_INCREMENT,
+  `nota` DECIMAL(5,2) NOT NULL,
+  `data` DATE NOT NULL,
+  `tipo_avaliacao` ENUM('prova', 'avaliacao_continua', 'trabalho', 'recuperacao', 'projeto') NOT NULL DEFAULT 'prova',
+  `trimestre` TINYINT(1) NULL,
+  `descricao` VARCHAR(100) NULL,
+  `peso` DECIMAL(3,2) NOT NULL DEFAULT 1.00,
+  `aluno_id_aluno` INT NOT NULL,
+  `disciplina_id_disciplina` INT NOT NULL,
+  PRIMARY KEY (`id_nota`),
+  INDEX `fk_aluno1_idx` (`aluno_id_aluno` ASC),
+  INDEX `fk_disciplina1_idx` (`disciplina_id_disciplina` ASC),
+  CONSTRAINT `fk_aluno1`
+    FOREIGN KEY (`aluno_id_aluno`)
+    REFERENCES `escoladb`.`aluno` (`id_aluno`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_disciplina1`
+    FOREIGN KEY (`disciplina_id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`comunicado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`comunicado` (
+  `id_comunicado` INT NOT NULL AUTO_INCREMENT,
+  `titulo` VARCHAR(255) NOT NULL,
+  `mensagem` TEXT NOT NULL,
+  `data` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_id_usuario` INT NOT NULL,
+  PRIMARY KEY (`id_comunicado`),
+  INDEX `fk_usuario5_idx` (`usuario_id_usuario` ASC),
+  CONSTRAINT `fk_usuario5`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`password_reset`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`password_reset` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(255) NOT NULL,
+  `token` VARCHAR(255) NOT NULL,
+  `expira_em` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`frequencia_aluno`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`frequencia_aluno` (
+  `id_frequencia_aluno` INT NOT NULL AUTO_INCREMENT,
+  `data_aula` DATE NOT NULL,
+  `presenca` ENUM('presente', 'ausente', 'justificado') NOT NULL DEFAULT 'ausente',
+  `tipo_aula` ENUM('normal', 'reposicao', 'atividade_externa') NOT NULL DEFAULT 'normal',
+  `observacao` TEXT NULL,
+  `aluno_id_aluno` INT NOT NULL,
+  `disciplina_id_disciplina` INT NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  PRIMARY KEY (`id_frequencia_aluno`),
+  INDEX `fk_aluno2_idx` (`aluno_id_aluno` ASC),
+  INDEX `fk_disciplina4_idx` (`disciplina_id_disciplina` ASC),
+  INDEX `fk_turma4_idx` (`turma_id_turma` ASC),
+  CONSTRAINT `fk_aluno2`
+    FOREIGN KEY (`aluno_id_aluno`)
+    REFERENCES `escoladb`.`aluno` (`id_aluno`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_disciplina4`
+    FOREIGN KEY (`disciplina_id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_turma4`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`materiais_apoio`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`materiais_apoio` (
+  `id_material` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(255) NOT NULL,
+  `descricao` TEXT NOT NULL,
+  `caminho_arquivo` VARCHAR(255) NOT NULL,
+  `id_disciplina` INT NOT NULL,
+  PRIMARY KEY (`id_material`),
+  INDEX `fk_disciplina2_idx` (`id_disciplina` ASC),
+  CONSTRAINT `fk_disciplina2`
+    FOREIGN KEY (`id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`cronograma_aula`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`cronograma_aula` (
+  `id_cronograma_aula` INT NOT NULL AUTO_INCREMENT,
+  `dia_semana` ENUM('segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado') NOT NULL,
+  `horario_inicio` TIME NOT NULL,
+  `horario_fim` TIME NOT NULL,
+  `sala` VARCHAR(10) NOT NULL,
+  `id_professor` INT NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  `id_disciplina` INT NOT NULL,
+  PRIMARY KEY (`id_cronograma_aula`),
+  INDEX `fk_professor3_idx` (`id_professor` ASC),
+  INDEX `fk_turma7_idx` (`turma_id_turma` ASC),
+  INDEX `fk_disciplina5_idx` (`id_disciplina` ASC),
+  CONSTRAINT `fk_professor3`
+    FOREIGN KEY (`id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_turma7`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_disciplina5`
+    FOREIGN KEY (`id_disciplina`)
+    REFERENCES `escoladb`.`disciplina` (`id_disciplina`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`historico_professor`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`historico_professor` (
+  `id_historico` INT NOT NULL AUTO_INCREMENT,
+  `data_inicio` DATE NOT NULL,
+  `data_fim` DATE NULL DEFAULT NULL,
+  `descricao` TEXT NOT NULL,
+  `professor_id_professor` INT NOT NULL,
+  PRIMARY KEY (`id_historico`),
+  INDEX `fk_professor2_idx` (`professor_id_professor` ASC),
+  CONSTRAINT `fk_professor2`
+    FOREIGN KEY (`professor_id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`matricula`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`matricula` (
+  `id_matricula` INT NOT NULL AUTO_INCREMENT,
+  `ano_letivo` YEAR NOT NULL,
+  `classe` VARCHAR(10) NOT NULL,
+  `turno` VARCHAR(20) NOT NULL,
+  `numero_matricula` VARCHAR(20) NOT NULL UNIQUE,
+  `data_matricula` DATE NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  `aluno_id_aluno` INT NOT NULL,
+  `curso_id_curso` INT NOT NULL,
+  `status_matricula` ENUM('ativa', 'trancada', 'cancelada') NOT NULL DEFAULT 'ativa',
+  `comprovativo_pagamento` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_matricula`),
+  INDEX `fk_turma6_idx` (`turma_id_turma` ASC),
+  INDEX `fk_aluno3_idx` (`aluno_id_aluno` ASC),
+  INDEX `fk_curso6_idx` (`curso_id_curso` ASC),
+  CONSTRAINT `fk_turma6`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aluno3`
+    FOREIGN KEY (`aluno_id_aluno`)
+    REFERENCES `escoladb`.`aluno` (`id_aluno`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_curso6`
+    FOREIGN KEY (`curso_id_curso`)
+    REFERENCES `escoladb`.`curso` (`id_curso`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`professor_tem_turma`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`professor_tem_turma` (
+  `professor_id_professor` INT NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  PRIMARY KEY (`professor_id_professor`, `turma_id_turma`),
+  INDEX `idx_turma2` (`turma_id_turma` ASC),
+  INDEX `idx_professor2` (`professor_id_professor` ASC),
+  CONSTRAINT `fk_professor_tem_turma_professor`
+    FOREIGN KEY (`professor_id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_professor_tem_turma_turma`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`materiais_apoio_tem_usuario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`materiais_apoio_tem_usuario` (
+  `materiais_apoio_id_material` INT NOT NULL,
+  `usuario_id_usuario` INT NOT NULL,
+  PRIMARY KEY (`materiais_apoio_id_material`, `usuario_id_usuario`),
+  INDEX `fk_materiais_apoio1_idx` (`materiais_apoio_id_material` ASC),
+  INDEX `fk_usuario6_idx` (`usuario_id_usuario` ASC),
+  CONSTRAINT `fk_materiais_apoio1`
+    FOREIGN KEY (`materiais_apoio_id_material`)
+    REFERENCES `escoladb`.`materiais_apoio` (`id_material`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_usuario6`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`professor_tem_turma1`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`professor_tem_turma1` (
+  `professor_id_professor` INT NOT NULL,
+  `turma_id_turma` INT NOT NULL,
+  PRIMARY KEY (`professor_id_professor`, `turma_id_turma`),
+  INDEX `idx_turma3` (`turma_id_turma` ASC),
+  INDEX `idx_professor4` (`professor_id_professor` ASC),
+  CONSTRAINT `fk_professor_tem_turma1_professor`
+    FOREIGN KEY (`professor_id_professor`)
+    REFERENCES `escoladb`.`professor` (`id_professor`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_professor_tem_turma1_turma`
+    FOREIGN KEY (`turma_id_turma`)
+    REFERENCES `escoladb`.`turma` (`id_turma`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `escoladb`.`documentos_administrativos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `escoladb`.`documentos_administrativos` (
+  `id_documento` INT NOT NULL AUTO_INCREMENT,
+  `titulo` VARCHAR(255) NOT NULL,
+  `descricao` TEXT NULL,
+  `caminho_arquivo` VARCHAR(255) NOT NULL,
+  `tipo` VARCHAR(50) NOT NULL,
+  `data_upload` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_id_usuario` INT NOT NULL,
+  PRIMARY KEY (`id_documento`),
+  INDEX `fk_usuario7_idx` (`usuario_id_usuario` ASC),
+  CONSTRAINT `fk_usuario7`
+    FOREIGN KEY (`usuario_id_usuario`)
+    REFERENCES `escoladb`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
