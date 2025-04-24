@@ -28,7 +28,7 @@ $filtro_status = isset($_GET['status']) ? $_GET['status'] : 'ativos';
 
 // Obter professores do curso
 $sql_professores = "SELECT p.id_professor, u.nome, u.email, u.status,
-                   (SELECT COUNT(*) FROM disciplina d WHERE d.professor_id_professor = p.id_professor) as total_disciplinas,
+                   (SELECT COUNT(*) FROM professor_tem_disciplina dp WHERE dp.professor_id_professor = p.id_professor) as total_disciplinas,
                    (SELECT COUNT(DISTINCT pt.turma_id_turma) FROM professor_tem_turma pt WHERE pt.professor_id_professor = p.id_professor) as total_turmas
                    FROM professor p
                    JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
@@ -53,8 +53,9 @@ foreach ($professores as $professor) {
                        COUNT(n.id_nota) as total_avaliacoes,
                        d.nome as disciplina_nome
                        FROM nota n
+                       JOIN professor_tem_disciplina dp ON n.disciplina_id_disciplina = dp.disciplina_id_disciplina
                        JOIN disciplina d ON n.disciplina_id_disciplina = d.id_disciplina
-                       WHERE d.professor_id_professor = ?
+                       WHERE dp.professor_id_professor = ?
                        GROUP BY n.disciplina_id_disciplina";
     
     $stmt = $conn->prepare($sql_desempenho);
@@ -81,7 +82,7 @@ foreach ($professores as $professor) {
     $sql_materiais = "SELECT ma.nome, ma.data_upload 
                      FROM materiais_apoio ma
                      WHERE ma.id_disciplina IN (
-                         SELECT id_disciplina FROM disciplina WHERE professor_id_professor = ?
+                         SELECT id_disciplina FROM professor_tem_disciplina WHERE professor_id_professor = ?
                      )
                      ORDER BY ma.data_upload DESC
                      LIMIT 3";

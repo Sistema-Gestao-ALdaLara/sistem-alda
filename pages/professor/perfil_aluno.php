@@ -1,11 +1,9 @@
-
 <?php
 require_once '../../includes/common/permissoes.php';
 verificarPermissao(['professor']);
 require_once '../../process/verificar_sessao.php';
 require_once '../../database/conexao.php';
 
-// Configurações iniciais
 $title = "Perfil do Aluno";
 $currentYear = date('Y');
 
@@ -48,8 +46,9 @@ try {
     $queryAluno = "SELECT 
                     u.id_usuario, u.nome, u.email, u.bi_numero, u.foto_perfil, u.status,
                     a.data_nascimento, a.genero, a.naturalidade, a.nacionalidade, a.municipio,
-                    m.numero_matricula, m.classe, m.turno, m.ano_letivo, m.status_matricula,
-                    t.nome AS nome_turma, c.nome AS nome_curso
+                    a.nome_encarregado, a.contacto_encarregado,
+                    m.numero_matricula, m.classe, m.ano_letivo, m.status_matricula,
+                    t.nome AS nome_turma, t.turno, c.nome AS nome_curso
                   FROM aluno a
                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
                   JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
@@ -71,10 +70,10 @@ try {
     // Obter histórico de matrículas
     $queryHistorico = "SELECT 
                         m.ano_letivo, t.nome AS nome_turma, c.nome AS nome_curso, 
-                        m.classe, m.turno, m.status_matricula, m.data_matricula
+                        m.classe, t.turno, m.status_matricula, m.data_matricula
                       FROM matricula m
-                      LEFT JOIN turma t ON m.turma_id_turma = t.id_turma
-                      LEFT JOIN curso c ON t.curso_id_curso = c.id_curso
+                      JOIN turma t ON m.turma_id_turma = t.id_turma
+                      JOIN curso c ON t.curso_id_curso = c.id_curso
                       WHERE m.aluno_id_aluno = ?
                       ORDER BY m.ano_letivo DESC";
     
@@ -85,8 +84,8 @@ try {
 
     // Obter notas do aluno para o ano letivo atual
     $queryNotas = "SELECT 
-                    n.nota, n.data, n.tipo_avaliacao, n.bimestre, n.descricao, n.peso,
-                    d.nome AS nome_disciplina
+                    n.id_nota, n.nota, n.data, n.tipo_avaliacao, n.trimestre, 
+                    n.descricao, n.peso, d.nome AS nome_disciplina
                   FROM nota n
                   JOIN disciplina d ON n.disciplina_id_disciplina = d.id_disciplina
                   WHERE n.aluno_id_aluno = ? 
@@ -130,8 +129,8 @@ try {
 
     // Obter frequência do aluno (últimos 30 dias)
     $queryFrequencia = "SELECT 
-                        fa.data_aula, fa.presenca, fa.tipo_aula, fa.observacao,
-                        d.nome AS nome_disciplina
+                        fa.id_frequencia_aluno, fa.data_aula, fa.presenca, 
+                        fa.tipo_aula, fa.observacao, d.nome AS nome_disciplina
                        FROM frequencia_aluno fa
                        JOIN disciplina d ON fa.disciplina_id_disciplina = d.id_disciplina
                        WHERE fa.aluno_id_aluno = ?
@@ -227,6 +226,10 @@ require_once '../../includes/common/head.php';
                                                                 <i class="feather icon-hash"></i> 
                                                                 Matrícula: <?= htmlspecialchars($aluno['numero_matricula']) ?>
                                                             </p>
+                                                            <p class="mb-1">
+                                                                <i class="feather icon-user"></i> 
+                                                                Encarregado: <?= htmlspecialchars($aluno['nome_encarregado']) ?>
+                                                            </p>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <p class="mb-1">
@@ -236,6 +239,10 @@ require_once '../../includes/common/head.php';
                                                             <p class="mb-1">
                                                                 <i class="feather icon-award"></i> 
                                                                 Classe: <?= htmlspecialchars($aluno['classe']) ?>
+                                                            </p>
+                                                            <p class="mb-1">
+                                                                <i class="feather icon-clock"></i> 
+                                                                Turno: <?= htmlspecialchars($aluno['turno']) ?>
                                                             </p>
                                                         </div>
                                                     </div>
@@ -444,6 +451,14 @@ require_once '../../includes/common/head.php';
                                                                                     </span>
                                                                                 </td>
                                                                             </tr>
+                                                                            <tr>
+                                                                                <th>Encarregado</th>
+                                                                                <td><?= htmlspecialchars($aluno['nome_encarregado']) ?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>Contacto Encarregado</th>
+                                                                                <td><?= htmlspecialchars($aluno['contacto_encarregado']) ?></td>
+                                                                            </tr>
                                                                         </tbody>
                                                                     </table>
                                                                 </div>
@@ -509,6 +524,7 @@ require_once '../../includes/common/head.php';
                                                                                                     <th>Tipo</th>
                                                                                                     <th>Nota</th>
                                                                                                     <th>Peso</th>
+                                                                                                    <th>Trimestre</th>
                                                                                                 </tr>
                                                                                             </thead>
                                                                                             <tbody>
@@ -518,6 +534,7 @@ require_once '../../includes/common/head.php';
                                                                                                         <td><?= ucfirst(str_replace('_', ' ', $nota['tipo_avaliacao'])) ?></td>
                                                                                                         <td><?= number_format($nota['nota'], 2, ',', '.') ?></td>
                                                                                                         <td><?= number_format($nota['peso'], 1) ?></td>
+                                                                                                        <td><?= $nota['trimestre'] ?? '-' ?></td>
                                                                                                     </tr>
                                                                                                 <?php endforeach; ?>
                                                                                             </tbody>

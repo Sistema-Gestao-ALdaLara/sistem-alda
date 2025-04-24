@@ -38,11 +38,12 @@
         $result_turmas = $stmt_turmas->get_result();
         $turmas = $result_turmas->fetch_all(MYSQLI_ASSOC);
 
-        // Disciplinas do professor
+        // Disciplinas do professor (através da tabela professor_tem_disciplina)
         $query_disciplinas = "SELECT d.id_disciplina, d.nome, c.nome as curso_nome
                             FROM disciplina d
                             JOIN curso c ON d.curso_id_curso = c.id_curso
-                            WHERE d.professor_id_professor = ?";
+                            JOIN professor_tem_disciplina pd ON pd.disciplina_id_disciplina = d.id_disciplina
+                            WHERE pd.professor_id_professor = ?";
         $stmt_disciplinas = $conn->prepare($query_disciplinas);
         $stmt_disciplinas->bind_param("i", $professor_id);
         $stmt_disciplinas->execute();
@@ -52,8 +53,8 @@
 
     // Processar o formulário de lançamento de frequência
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lancar_frequencia'])) {
-        $turma_id = intval($_POST['turma_id']);
-        $disciplina_id = intval($_POST['disciplina_id']);
+        $turma_id = intval($_POST['id_turma']);
+        $disciplina_id = intval($_POST['id_disciplina']);
         $ano_letivo = intval($_POST['ano_letivo']);
         $data_aula = $_POST['data_aula'];
         $tipo_aula = $_POST['tipo_aula'];
@@ -109,7 +110,7 @@
                 $conn->rollback();
                 $_SESSION['mensagem_erro'] = "Erro ao lançar frequência: " . $e->getMessage();
             }
-            header("Location: frequencia.php?turma_id=$turma_id&disciplina_id=$disciplina_id&ano_letivo=$ano_letivo");
+            header("Location: frequencia.php?id_turma=$turma_id&id_disciplina=$disciplina_id&ano_letivo=$ano_letivo");
             exit();
         } else {
             $_SESSION['mensagem_erro'] = "Você não tem permissão para lançar frequência nesta disciplina.";
@@ -259,11 +260,11 @@
                                                         <div class="col-md-4">
                                                             <div class="form-group">
                                                                 <label>Turma</label>
-                                                                <select class="form-control" name="turma_id" required>
+                                                                <select class="form-control" name="id_turma" required>
                                                                     <option value="">Selecione...</option>
                                                                     <?php foreach ($turmas as $turma): ?>
                                                                         <option value="<?= $turma['id_turma'] ?>"
-                                                                            <?= isset($_GET['turma_id']) && $_GET['turma_id'] == $turma['id_turma'] ? 'selected' : '' ?>>
+                                                                            <?= isset($_GET['id_turma']) && $_GET['id_turma'] == $turma['id_turma'] ? 'selected' : '' ?>>
                                                                             <?= $turma['nome'] ?> - <?= $turma['curso_nome'] ?>
                                                                         </option>
                                                                     <?php endforeach; ?>
@@ -273,11 +274,11 @@
                                                         <div class="col-md-4">
                                                             <div class="form-group">
                                                                 <label>Disciplina</label>
-                                                                <select class="form-control" name="disciplina_id" required>
+                                                                <select class="form-control" name="id_disciplina" required>
                                                                     <option value="">Selecione...</option>
                                                                     <?php foreach ($disciplinas as $disciplina): ?>
                                                                         <option value="<?= $disciplina['id_disciplina'] ?>"
-                                                                            <?= isset($_GET['disciplina_id']) && $_GET['disciplina_id'] == $disciplina['id_disciplina'] ? 'selected' : '' ?>>
+                                                                            <?= isset($_GET['id_disciplina']) && $_GET['id_disciplina'] == $disciplina['id_disciplina'] ? 'selected' : '' ?>>
                                                                             <?= $disciplina['nome'] ?> - <?= $disciplina['curso_nome'] ?>
                                                                         </option>
                                                                     <?php endforeach; ?>
@@ -308,10 +309,10 @@
                                             </div>
                                         </div>
 
-                                        <?php if (isset($_GET['turma_id']) && isset($_GET['disciplina_id']) && isset($_GET['ano_letivo'])): ?>
+                                        <?php if (isset($_GET['id_turma']) && isset($_GET['id_disciplina']) && isset($_GET['ano_letivo'])): ?>
                                             <?php
-                                                $turma_id = intval($_GET['turma_id']);
-                                                $disciplina_id = intval($_GET['disciplina_id']);
+                                                $turma_id = intval($_GET['id_turma']);
+                                                $disciplina_id = intval($_GET['id_disciplina']);
                                                 $ano_letivo = intval($_GET['ano_letivo']);
                                                 
                                                 // Verificar permissão na disciplina
@@ -326,10 +327,11 @@
                                                 if ($disciplina_valida) {
                                                     // Buscar alunos da turma
                                                     $query_alunos = "SELECT a.id_aluno, u.nome, u.foto_perfil, 
-                                                                    m.numero_matricula, m.classe, m.turno
+                                                                    m.numero_matricula, m.classe, t.turno
                                                                   FROM matricula m
                                                                   JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
                                                                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
+                                                                  JOIN turma t ON m.turma_id_turma = t.id_turma
                                                                   WHERE m.turma_id_turma = ? AND m.ano_letivo = ?
                                                                   ORDER BY u.nome";
                                                     $stmt_alunos = $conn->prepare($query_alunos);
@@ -350,17 +352,17 @@
                                                     
                                                     // Buscar estatísticas de frequência
                                                     $query_stats = "SELECT 
-                                                                    COUNT(DISTINCT fa.aluno_id_aluno) as total_registros,
-                                                                    COUNT(DISTINCT CASE WHEN fa.presenca = 'presente' THEN fa.id_frequencia_aluno END) as total_presentes,
-                                                                    COUNT(DISTINCT CASE WHEN fa.presenca = 'ausente' THEN fa.id_frequencia_aluno END) as total_ausentes,
-                                                                    COUNT(DISTINCT CASE WHEN fa.presenca = 'justificado' THEN fa.id_frequencia_aluno END) as total_justificados,
-                                                                    COUNT(DISTINCT CASE WHEN fa.tipo_aula = 'normal' THEN fa.id_frequencia_aluno END) as total_aulas_normais,
-                                                                    COUNT(DISTINCT CASE WHEN fa.tipo_aula = 'reposicao' THEN fa.id_frequencia_aluno END) as total_reposicoes,
-                                                                    COUNT(DISTINCT CASE WHEN fa.tipo_aula = 'atividade_externa' THEN fa.id_frequencia_aluno END) as total_atividades_externas
-                                                                  FROM frequencia_aluno fa
-                                                                  JOIN matricula m ON m.aluno_id_aluno = fa.aluno_id_aluno
-                                                                  WHERE fa.disciplina_id_disciplina = ? 
-                                                                  AND fa.turma_id_turma = ? 
+                                                                    COUNT(DISTINCT f.aluno_id_aluno) as total_registros,
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'presente' THEN f.id_frequencia END) as total_presentes,
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'ausente' THEN f.id_frequencia END) as total_ausentes,
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'justificado' THEN f.id_frequencia END) as total_justificados,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'normal' THEN f.id_frequencia END) as total_aulas_normais,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'reposicao' THEN f.id_frequencia END) as total_reposicoes,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'atividade_externa' THEN f.id_frequencia END) as total_atividades_externas
+                                                                  FROM frequencia f
+                                                                  JOIN matricula m ON m.aluno_id_aluno = f.aluno_id_aluno
+                                                                  WHERE f.disciplina_id_disciplina = ? 
+                                                                  AND f.turma_id_turma = ? 
                                                                   AND m.ano_letivo = ?";
                                                     $stmt_stats = $conn->prepare($query_stats);
                                                     $stmt_stats->bind_param("iii", $disciplina_id, $turma_id, $ano_letivo);
@@ -368,17 +370,17 @@
                                                     $stats = $stmt_stats->get_result()->fetch_assoc();
                                                     
                                                     // Buscar frequência para o histórico
-                                                    $query_frequencia = "SELECT fa.id_frequencia_aluno, fa.data_aula, fa.presenca, 
-                                                                      fa.tipo_aula, fa.observacao,
+                                                    $query_frequencia = "SELECT f.id_frequencia, f.data_aula, f.presenca, 
+                                                                      f.tipo_aula, f.observacao,
                                                                       u.nome as aluno_nome, m.numero_matricula
-                                                                  FROM frequencia_aluno fa
-                                                                  JOIN aluno a ON fa.aluno_id_aluno = a.id_aluno
+                                                                  FROM frequencia f
+                                                                  JOIN aluno a ON f.aluno_id_aluno = a.id_aluno
                                                                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
                                                                   JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
-                                                                  WHERE fa.disciplina_id_disciplina = ? 
-                                                                  AND fa.turma_id_turma = ? 
+                                                                  WHERE f.disciplina_id_disciplina = ? 
+                                                                  AND f.turma_id_turma = ? 
                                                                   AND m.ano_letivo = ?
-                                                                  ORDER BY fa.data_aula DESC, u.nome";
+                                                                  ORDER BY f.data_aula DESC, u.nome";
                                                     $stmt_frequencia = $conn->prepare($query_frequencia);
                                                     $stmt_frequencia->bind_param("iii", $disciplina_id, $turma_id, $ano_letivo);
                                                     $stmt_frequencia->execute();
@@ -391,8 +393,8 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <form id="formLancarFrequencia" method="POST" action="frequencia.php">
-                                                        <input type="hidden" name="turma_id" value="<?= $turma_id ?>">
-                                                        <input type="hidden" name="disciplina_id" value="<?= $disciplina_id ?>">
+                                                        <input type="hidden" name="id_turma" value="<?= $turma_id ?>">
+                                                        <input type="hidden" name="id_disciplina" value="<?= $disciplina_id ?>">
                                                         <input type="hidden" name="ano_letivo" value="<?= $ano_letivo ?>">
                                                         
                                                         <div class="row mb-4">
@@ -541,7 +543,7 @@
                                                                             </td>
                                                                             <td><?= htmlspecialchars($freq['observacao'] ?? '-') ?></td>
                                                                             <td>
-                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia_aluno'] ?>">
+                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia'] ?>">
                                                                                     <i class="feather icon-trash-2"></i>
                                                                                 </button>
                                                                             </td>
@@ -614,14 +616,14 @@
                 
                 // Excluir frequência
                 $('.btn-excluir').click(function() {
-                    const id = $(this).data('id');
+                    const id = $(this).data('id_frequencia');
                     const linha = $(this).closest('tr');
                     
                     if (confirm('Tem certeza que deseja excluir este registro de frequência?')) {
                         $.ajax({
                             url: '../../process/professor/excluir_frequencia.php',
                             method: 'POST',
-                            data: { id_frequencia: id },
+                            data: { id_frequencia: id_frequencia },
                             dataType: 'json',
                             success: function(response) {
                                 if (response.success) {

@@ -22,7 +22,7 @@ $stmt_professor->execute();
 $professor = $stmt_professor->get_result()->fetch_assoc();
 
 if (!$professor) {
-    header("Location: /professor/dashboard.php");
+    header("Location: dashboard.php");
     exit();
 }
 
