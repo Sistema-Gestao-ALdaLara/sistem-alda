@@ -97,8 +97,34 @@
                 <li class="user-profile header-notification">
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-toggle="dropdown">
-                            <img src="../../public/libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                            <span><?php echo htmlspecialchars($_SESSION['nome_usuario']); ?></span>
+                            <?php
+                            require_once '../../database/conexao.php';
+                            
+                            $id_usuario = $_SESSION['id_usuario'];
+                            $nome_usuario = $_SESSION['nome_usuario'];
+                            
+                            $query = "SELECT foto_perfil FROM usuario WHERE id_usuario = ?";
+                            $stmt = $conn->prepare($query);
+                            $stmt->bind_param('i', $id_usuario);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            
+                            if ($result->num_rows > 0) {
+                                $user = $result->fetch_assoc();
+                                $foto_perfil = $user['foto_perfil'];
+                                
+                                if (!empty($foto_perfil) && file_exists('../../' . $foto_perfil)) {
+                                    echo '<img src="../../' . htmlspecialchars($foto_perfil) . '" class="img-radius" alt="User-Profile-Image">';
+                                } else {
+                                    // Mostra avatar com a primeira letra do nome
+                                    $inicial = strtoupper(substr($nome_usuario, 0, 1));
+                                    echo '<div class="avatar-inicial" style="display:inline-block; width:40px; height:40px; border-radius:50%; background-color:gray; font-size: 16px; color:black; text-align:center; line-height:40px; font-weight:bold;">' . $inicial . '</div>';
+                                }
+                            } else {
+                                echo '<img src="../../public/libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">';
+                            }
+                            ?>
+                            <span><?php echo htmlspecialchars($nome_usuario); ?></span>
                             <i class="feather icon-chevron-down"></i>
                         </div>
                         <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">

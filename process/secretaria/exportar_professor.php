@@ -1,69 +1,56 @@
 <?php
-require_once "../auth/permissoes.php";
-verificarPermissao(['secretaria']);
 require_once '../../database/conexao.php';
 
-// Filtros recebidos via GET
+// Verificar permissões
+require_once '../../includes/common/permissoes.php';
+verificarPermissao(['secretaria']);
+
+// Obter filtro de curso se existir
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
 
-// Query base para listar professores
+// Consultar professores
 $query = "SELECT 
              p.id_professor,
              u.nome, 
              u.email,
              u.bi_numero,
-             u.status,
-             c.nome AS curso
+             c.nome AS curso,
+             u.status
           FROM professor p
           JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
           JOIN curso c ON p.curso_id_curso = c.id_curso";
 
-// Adiciona filtros dinamicamente
-$where = [];
-$params = [];
-
 if ($id_curso) {
-    $where[] = "c.id_curso = ?";
-    $params[] = $id_curso;
+    $query .= " WHERE c.id_curso = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('i', $id_curso);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($query);
 }
-
-if (!empty($where)) {
-    $query .= " WHERE " . implode(" AND ", $where);
-}
-
-$query .= " ORDER BY u.nome ASC";
-
-$stmt = $pdo->prepare($query);
-$stmt->execute($params);
-$professores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Configurar cabeçalhos para download
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=professores_' . date('Y-m-d') . '.csv');
 
-// Criar arquivo CSV
+// Criar arquivo de saída
 $output = fopen('php://output', 'w');
 
-// Cabeçalhos do CSV
-fputcsv($output, [
-    'Nome',
-    'BI',
-    'Email',
-    'Curso',
-    'Status'
-], ';');
+// Escrever cabeçalho
+fputcsv($output, ['ID', 'Nome', 'Email', 'BI', 'Curso', 'Status'], ';');
 
-// Dados
-foreach ($professores as $professor) {
+// Escrever dados
+while ($row = $result->fetch_assoc()) {
     fputcsv($output, [
-        $professor['nome'],
-        $professor['bi_numero'],
-        $professor['email'],
-        $professor['curso'],
-        $professor['status']
+        $row['id_professor'],
+        $row['nome'],
+        $row['email'],
+        $row['bi_numero'],
+        $row['curso'],
+        $row['status']
     ], ';');
 }
 
 fclose($output);
 exit;
-?>

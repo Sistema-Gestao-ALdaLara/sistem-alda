@@ -21,8 +21,6 @@
                     <div class="main-search morphsearch-search">
                         <div class="input-group">
                             <span class="input-group-addon search-close"><i class="feather icon-x"></i></span>
-                            <input type="text" class="form-control">
-                            <span class="input-group-addon search-btn"><i class="feather icon-search"></i></span>
                         </div>
                     </div>
                 </li>
@@ -99,7 +97,37 @@
                 <li class="user-profile header-notification">
                     <div class="dropdown-primary dropdown">
                         <div class="dropdown-toggle" data-toggle="dropdown">
-                            <img src="../../public/libraries/assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
+                            <?php
+                            // Conexão com o banco de dados (já deve estar estabelecida)
+                            require_once '../../database/conexao.php';
+                            
+                            // ID do usuário logado
+                            $id_usuario = $_SESSION['id_usuario'];
+                            
+                            // Consulta para obter a foto do usuário
+                            $query = "SELECT foto_perfil FROM usuario WHERE id_usuario = ?";
+                            $stmt = $conn->prepare($query);
+                            $stmt->bind_param('i', $id_usuario);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            
+                            if ($result->num_rows > 0) {
+                                $user = $result->fetch_assoc();
+                                $foto_perfil = $user['foto_perfil'];
+                                
+                                // Verifica se há foto cadastrada e se o arquivo existe
+                                if (!empty($foto_perfil) && file_exists('../../' . $foto_perfil)) {
+                                    $imagem_src = '../../' . htmlspecialchars($foto_perfil);
+                                } else {
+                                    // Imagem padrão caso não tenha foto ou o arquivo não exista
+                                    $imagem_src = '../../public/libraries/assets/images/avatar-4.jpg';
+                                }
+                            } else {
+                                // Imagem padrão caso ocorra algum erro na consulta
+                                $imagem_src = '../../public/libraries/assets/images/avatar-4.jpg';
+                            }
+                            ?>
+                            <img src="<?php echo $imagem_src; ?>" class="img-radius cover" height="50px" alt="User-Profile-Image">
                             <span><?php echo htmlspecialchars($_SESSION['nome_usuario']); ?></span>
                             <i class="feather icon-chevron-down"></i>
                         </div>

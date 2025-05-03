@@ -11,11 +11,10 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 
 // 1. Obter informações do aluno
-$query_aluno = "SELECT a.id_aluno, a.turma_id_turma, a.curso_id_curso, 
-                       t.nome as nome_turma, c.nome as nome_curso
+$query_aluno = "SELECT a.id_aluno, a.turma_id_turma, t.curso_id_curso, 
+                       t.nome as nome_turma, t.nome as nome_curso
                 FROM aluno a
                 JOIN turma t ON a.turma_id_turma = t.id_turma
-                JOIN curso c ON a.curso_id_curso = c.id_curso
                 WHERE a.usuario_id_usuario = ?";
 $stmt_aluno = $conn->prepare($query_aluno);
 $stmt_aluno->bind_param("i", $_SESSION['id_usuario']);
@@ -32,7 +31,8 @@ $query_disciplinas = "SELECT d.id_disciplina, d.nome as nome_disciplina,
                              u.nome as nome_professor, u.foto_perfil
                       FROM disciplina d
                       JOIN curso c ON d.curso_id_curso = c.id_curso
-                      LEFT JOIN professor p ON d.professor_id_professor = p.id_professor
+                      LEFT JOIN professor_tem_disciplina pt ON pt.disciplina_id_disciplina = d.id_disciplina
+                      LEFT JOIN professor p ON pt.professor_id_professor = p.id_professor
                       LEFT JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
                       WHERE d.curso_id_curso = ?
                       ORDER BY d.nome";

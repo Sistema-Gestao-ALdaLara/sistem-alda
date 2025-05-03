@@ -9,7 +9,7 @@ require_once __DIR__ . '/../../database/conexao.php';
 $query_aluno = "SELECT a.id_aluno, t.id_turma, c.id_curso 
                 FROM aluno a
                 JOIN turma t ON a.turma_id_turma = t.id_turma
-                JOIN curso c ON a.curso_id_curso = c.id_curso
+                JOIN curso c ON t.curso_id_curso = c.id_curso
                 WHERE a.usuario_id_usuario = ?";
 $stmt_aluno = $conn->prepare($query_aluno);
 $stmt_aluno->bind_param("i", $_SESSION['id_usuario']);

@@ -41,11 +41,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <span class="pcoded-mtext">G. Professor</span>
                         </a>
                     </li>
-                    <li class="<?= ($current_page == 'coordenador.php') ? 'active' : '' ?> ">
-                        <a href="./coordenador.php">
-                            <span class="pcoded-mtext">G. Coordenador</span>
-                        </a>
-                    </li>
                 </ul>
             </li>
             <li class="pcoded-hasmenu<?= ($current_page == 'turmas.php') ? 'active pcoded-trigger' : '' ?>">

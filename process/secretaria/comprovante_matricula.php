@@ -4,18 +4,25 @@ require_once '../../database/conexao.php';
 if (isset($_GET['id'])) {
     $id_matricula = intval($_GET['id']);
     
-    $query = "SELECT m.*, u.nome, u.bi_numero, c.nome as curso_nome, t.turno, t.nome as turma_nome
+    // Consulta atualizada para alinhar com o schema do banco de dados
+    $query = "SELECT m.*, u.nome, u.bi_numero, t.nome as turma_nome, t.classe, t.turno,
+                     c.nome as curso_nome, a.nome_encarregado, a.contacto_encarregado
               FROM matricula m
               JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
               JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
-              LEFT JOIN curso c ON m.curso_id_curso = c.id_curso
-              LEFT JOIN turma t ON m.turma_id_turma = t.id_turma
+              JOIN turma t ON m.turma_id_turma = t.id_turma
+              JOIN curso c ON t.curso_id_curso = c.id_curso
               WHERE m.id_matricula = ?";
     
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $id_matricula);
     $stmt->execute();
     $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        die("Matrícula não encontrada");
+    }
+    
     $matricula = $result->fetch_assoc();
 
     // Gerar HTML do comprovante
@@ -38,6 +45,7 @@ if (isset($_GET['id'])) {
         .dados td:first-child { font-weight: bold; width: 30%; }
         .footer { text-align: center; margin-top: 40px; font-size: 12px; }
         .assinatura { margin-top: 60px; border-top: 1px solid #000; width: 300px; text-align: center; margin-left: auto; }
+        .comprovativo { margin-top: 20px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -64,11 +72,11 @@ if (isset($_GET['id'])) {
                 </tr>
                 <tr>
                     <td>Curso:</td>
-                    <td><?= htmlspecialchars($matricula['curso_nome'] ?? 'N/D') ?></td>
+                    <td><?= htmlspecialchars($matricula['curso_nome']) ?></td>
                 </tr>
                 <tr>
                     <td>Turma:</td>
-                    <td><?= htmlspecialchars($matricula['turma_nome'] ?? 'N/D') ?></td>
+                    <td><?= htmlspecialchars($matricula['turma_nome']) ?></td>
                 </tr>
                 <tr>
                     <td>Classe:</td>
@@ -83,6 +91,14 @@ if (isset($_GET['id'])) {
                     <td><?= htmlspecialchars($matricula['ano_letivo']) ?></td>
                 </tr>
                 <tr>
+                    <td>Nome do Encarregado:</td>
+                    <td><?= htmlspecialchars($matricula['nome_encarregado']) ?></td>
+                </tr>
+                <tr>
+                    <td>Contacto do Encarregado:</td>
+                    <td><?= htmlspecialchars($matricula['contacto_encarregado']) ?></td>
+                </tr>
+                <tr>
                     <td>Data da Matrícula:</td>
                     <td><?= date('d/m/Y', strtotime($matricula['data_matricula'])) ?></td>
                 </tr>
@@ -91,6 +107,10 @@ if (isset($_GET['id'])) {
                     <td><?= ucfirst($matricula['status_matricula']) ?></td>
                 </tr>
             </table>
+            
+            <div class="comprovativo">
+                <p>Comprovativo de pagamento: <?= htmlspecialchars($matricula['comprovativo_pagamento']) ?></p>
+            </div>
         </div>
         
         <div class="assinatura">

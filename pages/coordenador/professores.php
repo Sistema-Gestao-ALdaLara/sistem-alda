@@ -104,8 +104,28 @@ $title = "Supervisão de Professores - " . htmlspecialchars($nome_curso);
 
 <!DOCTYPE html>
 <html lang="pt">
-
-<?php require_once '../../includes/common/head.php'; ?>
+<head>
+    <?php require_once '../../includes/common/head.php'; ?>
+    <style>
+        .teacher-card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .teacher-info p {
+            margin-bottom: 8px;
+        }
+        .teacher-info i {
+            width: 20px;
+            text-align: center;
+            margin-right: 5px;
+        }
+        @media (max-width: 768px) {
+            .teacher-card .row > div {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
 
 <body>
     <?php require_once '../../includes/common/preloader.php'; ?>
@@ -249,24 +269,5 @@ $title = "Supervisão de Professores - " . htmlspecialchars($nome_curso);
 
     <?php require_once '../../includes/common/js_imports.php'; ?>
     
-    <style>
-        .teacher-card {
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .teacher-info p {
-            margin-bottom: 8px;
-        }
-        .teacher-info i {
-            width: 20px;
-            text-align: center;
-            margin-right: 5px;
-        }
-        @media (max-width: 768px) {
-            .teacher-card .row > div {
-                margin-bottom: 15px;
-            }
-        }
-    </style>
 </body>
 </html>

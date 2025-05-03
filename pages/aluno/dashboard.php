@@ -22,7 +22,7 @@
             FROM aluno a 
             JOIN usuario u ON a.usuario_id_usuario = u.id_usuario 
             JOIN turma t ON a.turma_id_turma = t.id_turma 
-            JOIN curso c ON a.curso_id_curso = c.id_curso
+            JOIN curso c ON t.curso_id_curso = c.id_curso
             JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
             WHERE u.id_usuario = ? AND m.status_matricula = 'ativa'";
     
@@ -112,8 +112,8 @@
                                                 <div class="card user-card">
                                                     <div class="card-block text-center">
                                                         <div class="user-image">
-                                                            <img src="<?php echo $dados_aluno['foto_perfil'] ? '../../uploads/perfil/'.$dados_aluno['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
-                                                                 class="img-radius" id="profile-pic" width="100" height="100" alt="Foto do Aluno">
+                                                            <img src="<?php echo $dados_aluno['foto_perfil'] ? '../../uploads/alunos/'.$dados_aluno['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                                class="img-radius" id="profile-pic" width="100" height="100" alt="Foto do Aluno">
                                                         </div>
                                                         <h4 class="m-t-15 text-uppercase"><?php echo htmlspecialchars($dados_aluno['nome'] ?? $_SESSION['nome_usuario']); ?></h4>
                                                         <p class="text-muted">Curso: <?php echo htmlspecialchars($curso_aluno); ?></p>
@@ -135,7 +135,7 @@
                                             <!-- Acesso Rápido -->
                                             <div class="col-xl-8 col-md-6">
                                                 <div class="row">
-                                                    <a href="disciplinas-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                    <a href="disciplinas.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
                                                         <div class="card bg-c-yellow">
                                                             <div class="card-block text-center">
                                                                 <i class="feather icon-book f-30 text-white"></i>
@@ -148,7 +148,7 @@
                                                             </div>
                                                         </div>
                                                     </a>
-                                                    <a href="notas-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                    <a href="notas.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
                                                         <div class="card bg-c-green">
                                                             <div class="card-block text-center">
                                                                 <i class="feather icon-bar-chart f-30 text-white"></i>
@@ -161,7 +161,7 @@
                                                             </div>
                                                         </div>
                                                     </a>
-                                                    <a href="calendario-aln.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                    <a href="calendario.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
                                                         <div class="card bg-c-blue">
                                                             <div class="card-block text-center">
                                                                 <i class="feather icon-calendar f-30 text-white"></i>
@@ -292,57 +292,57 @@
 
     <script>
         function validateImage() {
-            let fileInput = document.getElementById('file-input');
-            let profilePic = document.getElementById('profile-pic');
-        
-            if (fileInput.files.length > 0) {
-                let file = fileInput.files[0];
-        
-                // Verifica o tipo de arquivo
-                if (!file.type.startsWith('image/')) {
-                    alert("Por favor, envie uma imagem válida.");
-                    return;
-                }
-        
-                // Verifica o tamanho do arquivo (máximo 2MB)
-                if (file.size > 2 * 1024 * 1024) {
-                    alert("A imagem deve ter no máximo 2MB.");
-                    return;
-                }
-        
-                // Mostra a imagem selecionada
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    profilePic.src = e.target.result;
-                    
-                    // Aqui você pode adicionar código para enviar a imagem para o servidor
-                    // Exemplo com AJAX:
-                    /*
-                    let formData = new FormData();
-                    formData.append('foto_perfil', file);
-                    formData.append('id_usuario', <?php echo $id_usuario; ?>);
-                    
-                    fetch('../../process/upload_foto_perfil.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Foto atualizada com sucesso!');
-                        } else {
-                            alert('Erro ao atualizar foto: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Erro ao enviar foto');
-                    });
-                    */
-                };
-                reader.readAsDataURL(file);
+        let fileInput = document.getElementById('file-input');
+        let profilePic = document.getElementById('profile-pic');
+
+        if (fileInput.files.length > 0) {
+            let file = fileInput.files[0];
+
+            // Verifica o tipo de arquivo
+            if (!file.type.startsWith('image/')) {
+                alert("Por favor, envie uma imagem válida.");
+                return;
             }
+
+            // Verifica o tamanho do arquivo (máximo 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert("A imagem deve ter no máximo 2MB.");
+                return;
+            }
+
+            // Mostra a imagem selecionada
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                profilePic.src = e.target.result;
+                
+                // Enviar a imagem para o servidor
+                let formData = new FormData();
+                formData.append('foto_perfil', file);
+                formData.append('id_usuario', <?php echo $id_usuario; ?>);
+                
+                fetch('../../process/atualizar_foto_perfil.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Foto atualizada com sucesso!');
+                        // Recarregar a página para mostrar a nova foto
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao atualizar foto: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao enviar foto');
+                });
+            };
+            reader.readAsDataURL(file);
         }
+    }
+
     </script>
 </body>
 </html>

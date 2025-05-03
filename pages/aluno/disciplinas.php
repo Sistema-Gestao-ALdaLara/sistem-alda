@@ -6,10 +6,11 @@ require_once __DIR__ . '/../../database/conexao.php';
 
 // Função para obter informações do aluno
 function getAlunoInfo($conn, $id_usuario) {
-    $query = "SELECT a.id_aluno, t.nome as turma, c.nome as curso, c.id_curso as curso_id 
+    $query = "SELECT a.id_aluno, t.nome as turma, c.nome as curso, c.id_curso as curso_id, 
+                     t.classe as classe, t.turno as turno
               FROM aluno a
               JOIN turma t ON a.turma_id_turma = t.id_turma
-              JOIN curso c ON a.curso_id_curso = c.id_curso
+              JOIN curso c ON t.curso_id_curso = c.id_curso
               WHERE a.usuario_id_usuario = ?";
     
     $stmt = $conn->prepare($query);
@@ -20,15 +21,17 @@ function getAlunoInfo($conn, $id_usuario) {
     return $result->fetch_assoc();
 }
 
-// Função para obter disciplinas do aluno
+// Função para obter disciplinas do aluno (atualizada para nova estrutura)
 function getDisciplinasAluno($conn, $curso_id) {
     $query = "SELECT d.id_disciplina, d.nome as disciplina, 
-                     u.nome as professor, u.foto_perfil,
-                     p.id_professor
+                     GROUP_CONCAT(DISTINCT CONCAT(u.nome) SEPARATOR ', ') as professores,
+                     GROUP_CONCAT(DISTINCT u.foto_perfil SEPARATOR ', ') as fotos_perfil
               FROM disciplina d
-              LEFT JOIN professor p ON d.professor_id_professor = p.id_professor
+              LEFT JOIN professor_tem_disciplina ptd ON d.id_disciplina = ptd.disciplina_id_disciplina
+              LEFT JOIN professor p ON ptd.professor_id_professor = p.id_professor
               LEFT JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
               WHERE d.curso_id_curso = ?
+              GROUP BY d.id_disciplina, d.nome
               ORDER BY d.nome";
     
     $stmt = $conn->prepare($query);
@@ -41,6 +44,7 @@ function getDisciplinasAluno($conn, $curso_id) {
 // Obter dados do aluno e disciplinas
 $aluno = getAlunoInfo($conn, $_SESSION['id_usuario']);
 $disciplinas = $aluno ? getDisciplinasAluno($conn, $aluno['curso_id']) : null;
+$title = "Aluno";
 ?>
 
 <!DOCTYPE html>
@@ -80,6 +84,17 @@ $disciplinas = $aluno ? getDisciplinasAluno($conn, $aluno['curso_id']) : null;
             margin-top: 10px;
             font-weight: 500;
         }
+        .professor-list {
+            max-height: 100px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .badge-turno {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
@@ -105,9 +120,11 @@ $disciplinas = $aluno ? getDisciplinasAluno($conn, $aluno['curso_id']) : null;
                                                     <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between">
                                                         <h5 class="mb-2 mb-md-0"><i class="feather icon-book"></i> Minhas Disciplinas</h5>
                                                         <?php if ($aluno): ?>
-                                                            <div class="d-flex flex-wrap justify-content-center justify-content-md-end mt-2 mt-md-0 ">
+                                                            <div class="d-flex flex-wrap justify-content-center justify-content-md-end mt-2 mt-md-0">
                                                                 <span class="text-dark badge badge-primary mr-2 mb-2 mb-md-0">Curso: <?= htmlspecialchars($aluno['curso']) ?></span>
-                                                                <span class="text-dark badge badge-primary">Turma: <?= htmlspecialchars($aluno['turma']) ?></span>
+                                                                <span class="text-dark badge badge-primary mr-2 mb-2 mb-md-0">Turma: <?= htmlspecialchars($aluno['turma']) ?></span>
+                                                                <span class="text-dark badge badge-info mr-2 mb-2 mb-md-0">Classe: <?= htmlspecialchars($aluno['classe']) ?></span>
+                                                                <span class="text-dark badge badge-secondary">Turno: <?= htmlspecialchars($aluno['turno']) ?></span>
                                                             </div>
                                                         <?php endif; ?>
                                                     </div>
@@ -117,21 +134,31 @@ $disciplinas = $aluno ? getDisciplinasAluno($conn, $aluno['curso_id']) : null;
                                                                 <?php while ($disciplina = $disciplinas->fetch_assoc()): ?>
                                                                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                                                                         <div class="card card-disciplina h-100">
-                                                                            <div class="card-header text-truncate">
+                                                                            <div class="card-header text-truncate position-relative">
                                                                                 <?= htmlspecialchars($disciplina['disciplina']) ?>
+                                                                                <span class="badge badge-turno badge-light"><?= htmlspecialchars($aluno['turno']) ?></span>
                                                                             </div>
                                                                             <div class="card-body text-center">
                                                                                 <div class="disciplina-info">
-                                                                                    <img src="<?= !empty($disciplina['foto_perfil']) ? 
-                                                                                        htmlspecialchars($disciplina['foto_perfil']) : 
-                                                                                        'libraries/assets/images/avatar-2.jpg' ?>" 
+                                                                                    <?php 
+                                                                                    $fotos = explode(', ', $disciplina['fotos_perfil']);
+                                                                                    $primeiraFoto = !empty($fotos[0]) ? $fotos[0] : 'libraries/assets/images/avatar-2.jpg';
+                                                                                    ?>
+                                                                                    <img src="<?= htmlspecialchars($primeiraFoto) ?>" 
                                                                                          alt="Professor" class="professor-img mb-3">
+                                                                                    
                                                                                     <div class="professor-nome text-truncate w-100">
-                                                                                        <i class="feather icon-user"></i> 
-                                                                                        <?= $disciplina['professor'] ? 
-                                                                                            htmlspecialchars($disciplina['professor']) : 
+                                                                                        <i class="feather icon-users"></i> 
+                                                                                        <?= $disciplina['professores'] ? 
+                                                                                            'Professores' : 
                                                                                             'Professor não atribuído' ?>
                                                                                     </div>
+                                                                                    
+                                                                                    <?php if ($disciplina['professores']): ?>
+                                                                                        <div class="professor-list small text-muted mt-2">
+                                                                                            <?= htmlspecialchars($disciplina['professores']) ?>
+                                                                                        </div>
+                                                                                    <?php endif; ?>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="card-footer text-center bg-white">
@@ -155,7 +182,7 @@ $disciplinas = $aluno ? getDisciplinasAluno($conn, $aluno['curso_id']) : null;
                                                                 <i class="feather icon-book-open" style="font-size: 3rem;"></i>
                                                                 <p class="mt-3">
                                                                     <?= $aluno ? 
-                                                                        'Nenhuma disciplina encontrada para o seu curso.' : 
+                                                                        'Nenhuma disciplina encontrada para sua turma e classe.' : 
                                                                         'Não foi possível carregar suas informações de aluno.' ?>
                                                                 </p>
                                                             </div>

@@ -125,13 +125,14 @@ $stmt->execute();
 $alunos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Obter disciplinas da turma (atualizada para usar professor_tem_disciplina)
-$sql_disciplinas = "SELECT DISTINCT d.id_disciplina, d.nome, d.classe, 
+$sql_disciplinas = "SELECT DISTINCT d.id_disciplina, d.nome, t.classe, 
                    GROUP_CONCAT(DISTINCT u.nome SEPARATOR ', ') as nome_professor
             FROM disciplina d
             LEFT JOIN professor_tem_disciplina ptd ON d.id_disciplina = ptd.disciplina_id_disciplina
             LEFT JOIN professor p ON ptd.professor_id_professor = p.id_professor
             LEFT JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
-            WHERE d.curso_id_curso = ? AND d.classe = ?
+            LEFT JOIN turma t ON d.curso_id_curso = t.curso_id_curso
+            WHERE d.curso_id_curso = ? AND t.classe = ?
             GROUP BY d.id_disciplina
             ORDER BY d.nome";
 $stmt = $conn->prepare($sql_disciplinas);
@@ -141,9 +142,10 @@ $disciplinas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Obter horário da turma
 $sql_horario = "SELECT ca.*, d.nome as nome_disciplina, 
-               u.nome as nome_professor, d.classe
+               u.nome as nome_professor, t.classe
             FROM cronograma_aula ca
             JOIN disciplina d ON ca.id_disciplina = d.id_disciplina
+            JOIN turma t ON d.curso_id_curso = t.curso_id_curso
             JOIN professor p ON ca.id_professor = p.id_professor
             JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
             WHERE ca.turma_id_turma = ?
@@ -162,7 +164,7 @@ $sql_estatisticas = "SELECT
                 FROM turma t
                 LEFT JOIN aluno a ON t.id_turma = a.turma_id_turma
                 LEFT JOIN matricula m ON m.aluno_id_aluno = a.id_aluno
-                LEFT JOIN disciplina d ON d.curso_id_curso = t.curso_id_curso AND d.classe = t.classe
+                LEFT JOIN disciplina d ON d.curso_id_curso = t.curso_id_curso
                 WHERE t.id_turma = ?";
 $stmt = $conn->prepare($sql_estatisticas);
 $stmt->bind_param("i", $id_turma);

@@ -34,7 +34,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <!-- Planos de Ensino -->
             <li class="<?= ($current_page == 'planos.php') ? 'active pcoded-trigger' : '' ?>">
                 <a href="./planos.php">
-                    <span class="pcoded-micon"><i class="feather icon-book-open"></i></span>
+                    <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
                     <span class="pcoded-mtext">Planos de Ensino</span>
                 </a>
             </li>
@@ -42,7 +42,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <!-- Difinir Horarios do curso -->
             <li class="<?= ($current_page == 'horarios.php') ? 'active pcoded-trigger' : '' ?>">
                 <a href="./horarios.php">
-                    <span class="pcoded-micon"><i class="feather icon-settings"></i></span>
+                    <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
                     <span class="pcoded-mtext">Definir Horarios</span>
                 </a>
             </li>
