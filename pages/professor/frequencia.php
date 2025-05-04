@@ -327,7 +327,7 @@
                                                 if ($disciplina_valida) {
                                                     // Buscar alunos da turma
                                                     $query_alunos = "SELECT a.id_aluno, u.nome, u.foto_perfil, 
-                                                                    m.numero_matricula, m.classe, t.turno
+                                                                    m.numero_matricula, t.classe, t.turno
                                                                   FROM matricula m
                                                                   JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
                                                                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
@@ -353,13 +353,13 @@
                                                     // Buscar estatísticas de frequência
                                                     $query_stats = "SELECT 
                                                                     COUNT(DISTINCT f.aluno_id_aluno) as total_registros,
-                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'presente' THEN f.id_frequencia END) as total_presentes,
-                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'ausente' THEN f.id_frequencia END) as total_ausentes,
-                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'justificado' THEN f.id_frequencia END) as total_justificados,
-                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'normal' THEN f.id_frequencia END) as total_aulas_normais,
-                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'reposicao' THEN f.id_frequencia END) as total_reposicoes,
-                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'atividade_externa' THEN f.id_frequencia END) as total_atividades_externas
-                                                                  FROM frequencia f
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'presente' THEN f.id_frequencia_aluno END) as total_presentes,
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'ausente' THEN f.id_frequencia_aluno END) as total_ausentes,
+                                                                    COUNT(DISTINCT CASE WHEN f.presenca = 'justificado' THEN f.id_frequencia_aluno END) as total_justificados,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'normal' THEN f.id_frequencia_aluno END) as total_aulas_normais,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'reposicao' THEN f.id_frequencia_aluno END) as total_reposicoes,
+                                                                    COUNT(DISTINCT CASE WHEN f.tipo_aula = 'atividade_externa' THEN f.id_frequencia_aluno END) as total_atividades_externas
+                                                                  FROM frequencia_aluno f
                                                                   JOIN matricula m ON m.aluno_id_aluno = f.aluno_id_aluno
                                                                   WHERE f.disciplina_id_disciplina = ? 
                                                                   AND f.turma_id_turma = ? 
@@ -370,10 +370,10 @@
                                                     $stats = $stmt_stats->get_result()->fetch_assoc();
                                                     
                                                     // Buscar frequência para o histórico
-                                                    $query_frequencia = "SELECT f.id_frequencia, f.data_aula, f.presenca, 
+                                                    $query_frequencia = "SELECT f.id_frequencia_aluno, f.data_aula, f.presenca, 
                                                                       f.tipo_aula, f.observacao,
                                                                       u.nome as aluno_nome, m.numero_matricula
-                                                                  FROM frequencia f
+                                                                  FROM frequencia_aluno f
                                                                   JOIN aluno a ON f.aluno_id_aluno = a.id_aluno
                                                                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
                                                                   JOIN matricula m ON m.aluno_id_aluno = a.id_aluno

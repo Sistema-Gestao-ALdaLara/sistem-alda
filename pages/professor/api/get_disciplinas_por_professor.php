@@ -1,40 +1,58 @@
 <?php
 require_once __DIR__ . '/../../../database/conexao.php';
-require_once __DIR__ . '/../../../process/verificar_sessao.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['id_usuario'])) {
-    echo json_encode(['error' => 'Não autorizado']);
-    exit();
-}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     echo json_encode(['error' => 'Método não permitido']);
     exit();
 }
 
-$professor_id = isset($_GET['professor_id']) ? (int)$_GET['professor_id'] : 0;
-$classe = isset($_GET['classe']) ? $_GET['classe'] : '';
+// Obtém parâmetros
+$professor_id = filter_input(INPUT_GET, 'professor_id', FILTER_VALIDATE_INT);
+$turma_id = filter_input(INPUT_GET, 'turma_id', FILTER_VALIDATE_INT);
 
-if (!$professor_id || !$classe) {
+if (!$professor_id || !$turma_id) {
     echo json_encode(['error' => 'Parâmetros inválidos']);
     exit();
 }
 
-$query = "SELECT d.id_disciplina, d.nome as nome_disciplina
-          FROM professor_tem_disciplina ptd
-          JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina
-          WHERE ptd.professor_id_professor = ? AND ptd.classe = ?
-          ORDER BY d.nome";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("is", $professor_id, $classe);
-$stmt->execute();
-$result = $stmt->get_result();
+try {
+    // Obtém o curso da turma
+    $query_curso = "SELECT curso_id_curso FROM turma WHERE id_turma = ?";
+    $stmt_curso = $conn->prepare($query_curso);
+    $stmt_curso->bind_param("i", $turma_id);
+    $stmt_curso->execute();
+    $result_curso = $stmt_curso->get_result();
 
-$disciplinas = [];
-while ($row = $result->fetch_assoc()) {
-    $disciplinas[] = $row;
+    if ($result_curso->num_rows === 0) {
+        throw new Exception('Turma não encontrada');
+    }
+
+    $curso_id = $result_curso->fetch_assoc()['curso_id_curso'];
+
+    // Consulta para obter disciplinas do professor naquela turma
+    $query = "SELECT DISTINCT d.id_disciplina, d.nome as nome_disciplina
+              FROM professor_tem_disciplina ptd
+              JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina
+              JOIN turma t ON t.curso_id_curso = d.curso_id_curso
+              WHERE ptd.professor_id_professor = ?
+              AND t.id_turma = ?
+              ORDER BY d.nome";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ii", $professor_id, $turma_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $disciplinas = [];
+    while ($row = $result->fetch_assoc()) {
+        $disciplinas[] = $row;
+    }
+
+    echo json_encode($disciplinas);
+
+} catch (Exception $e) {
+    echo json_encode(['error' => $e->getMessage()]);
 }
-
-echo json_encode($disciplinas);

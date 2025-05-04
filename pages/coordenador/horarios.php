@@ -138,7 +138,7 @@
                                             <?php unset($_SESSION['mensagem'], $_SESSION['tipo_mensagem']); ?>
                                         <?php endif; ?>
 
-                                        <div class="card mb-4">
+                                        <div class="card mb-4 card-table">
                                             <div class="card-header">
                                                 <h5>Definir Horários - <?= htmlspecialchars($nome_curso) ?></h5>
                                             </div>
@@ -214,7 +214,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="card">
+                                        <div class="card card-table">
                                             <div class="card-header">
                                                 <h5>Cronograma de Aulas</h5>
                                             </div>

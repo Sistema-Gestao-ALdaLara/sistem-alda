@@ -7,28 +7,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="pcoded-navigatio-lavel">Navegacao</div>
         <ul class="pcoded-item pcoded-left-item">
             <li class="pcoded-hasmenu <?= ($current_page == 'dashboard.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./dashboard.php">
+                <a href="../secretaria/dashboard.php">
                     <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                     <span class="pcoded-mtext">Dashboard</span>
                 </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'matricula.php') ? 'active pcoded-trigger' : '' ?> <?= ($current_page == 'tranferencias.php') ? 'active' : '' ?></li>">
-                <a href="javascript:void(0)">
+                <a href="../compartilhados/matricular.php">
                     <span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
                     <span class="pcoded-mtext">Matrículas</span>
                 </a>
-                <ul class="pcoded-submenu">
-                    <li class="<?= ($current_page == 'matricula.php') ? 'active' : '' ?> ">
-                        <a href="./matricula.php">
-                            <span class="pcoded-mtext">Matrículas</span>
-                        </a>
-                    </li>
-                    <li class="<?= ($current_page == 'tranferencias.php') ? 'active' : '' ?> ">
-                        <a href="#">
-                            <span class="pcoded-mtext">Transferências</span>
-                        </a>
-                    </li>
-                </ul>
+            </li>
+            <li class="pcoded-hasmenu<?= ($current_page == 'turmas.php') ? 'active pcoded-trigger' : '' ?>">
+                <a href="../secretaria/turmas.php">
+                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
+                    <span class="pcoded-mtext">Gerenciar Turmas</span>
+                </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'matricula.php') ? 'active pcoded-trigger' : '' ?> <?= ($current_page == 'tranferencias.php') ? 'active' : '' ?></li>">
                 <a href="javascript:void(0)">
@@ -36,33 +30,33 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="pcoded-mtext">Gerenciar Usuarios</span>
                 </a>
                 <ul class="pcoded-submenu">
-                    <li class="<?= ($current_page == 'matricula.php') ? 'active' : '' ?> ">
-                        <a href="./professor.php">
+                    <li class="<?= ($current_page == 'professor.php') ? 'active' : '' ?> ">
+                        <a href="../compartilados/professor.php">
                             <span class="pcoded-mtext">G. Professor</span>
                         </a>
                     </li>
                 </ul>
             </li>
-            <li class="pcoded-hasmenu<?= ($current_page == 'turmas.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./turmas.php">
+            <li class="pcoded-hasmenu<?= ($current_page == 'boletins.php') ? 'active pcoded-trigger' : '' ?>">
+                <a href="../secretaria/boletins.php">
                     <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                    <span class="pcoded-mtext">Gerenciar Turmas</span>
+                    <span class="pcoded-mtext">Boletins</span>
                 </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'documentos.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./documentos.php">
+                <a href="../secretaria/documentos.php">
                     <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
                     <span class="pcoded-mtext">Documentos Admins.</span>
                 </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'comunicados.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./comunicados.php">
+                <a href="../compartilhados/comunicados.php">
                     <span class="pcoded-micon"><i class="feather icon-mail"></i></span>
                     <span class="pcoded-mtext">Envio de Comunicados</span>
                 </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'relatorios.php') ? 'active' : '' ?>">
-                <a href="./relatorios.php">
+                <a href="../compartilhados/relatorios.php">
                     <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
                     <span class="pcoded-mtext">Relatórios Acadêmicos</span>
                 </a>

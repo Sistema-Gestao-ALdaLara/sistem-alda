@@ -27,14 +27,14 @@ if (!$professor) {
 }
 
 // 2. Obter disciplinas do professor agrupadas por classe e turma
-$query_disciplinas = "SELECT d.id_disciplina, d.nome as nome_disciplina, ptd.classe,
+$query_disciplinas = "SELECT d.id_disciplina, d.nome as nome_disciplina, t.classe,
                       GROUP_CONCAT(DISTINCT t.nome ORDER BY t.nome SEPARATOR ', ') as turmas
                       FROM professor_tem_disciplina ptd
                       JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina
-                      JOIN turma t ON t.classe = ptd.classe
+                      JOIN turma t ON t.curso_id_curso = d.curso_id_curso
                       WHERE ptd.professor_id_professor = ?
-                      GROUP BY d.id_disciplina, ptd.classe
-                      ORDER BY ptd.classe, d.nome";
+                      GROUP BY d.id_disciplina, t.classe
+                      ORDER BY t.classe, d.nome";
 $stmt_disciplinas = $conn->prepare($query_disciplinas);
 $stmt_disciplinas->bind_param("i", $professor['id_professor']);
 $stmt_disciplinas->execute();
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lancar_nota'])) {
     } else {
         // Verificar se o professor tem permissão para lançar nota nesta disciplina/turma
         $query_verifica = "SELECT 1 FROM professor_tem_disciplina ptd
-                          JOIN turma t ON t.classe = ptd.classe
+                          JOIN turma t
                           WHERE ptd.professor_id_professor = ? 
                           AND ptd.disciplina_id_disciplina = ?
                           AND t.id_turma = ?";
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lancar_nota'])) {
 // 4. Obter turmas do professor (para seleção)
 $query_turmas = "SELECT DISTINCT t.id_turma, t.nome, t.classe, t.turno
                 FROM turma t
-                JOIN professor_tem_disciplina ptd ON t.classe = ptd.classe
+                JOIN professor_tem_disciplina ptd
                 WHERE ptd.professor_id_professor = ?
                 ORDER BY t.classe, t.turno, t.nome";
 $stmt_turmas = $conn->prepare($query_turmas);
@@ -167,16 +167,16 @@ $turmas = $stmt_turmas->get_result();
                     
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
-                            <div class="main-body">
+                            <div class="main-body bg-img">
                                 <div class="page-wrapper">
                                     <div class="page-body">
                                         <div class="row">
                                             <div class="col-12">
-                                                <div class="card">
+                                                <div class="card card-table">
                                                     <div class="card-header">
                                                         <h5>
                                                             <i class="feather icon-edit"></i> Lançamento de Notas
-                                                            <span class="float-right">
+                                                            <span class="text-center text-dark">
                                                                 Curso: <?= htmlspecialchars($professor['nome_curso']) ?> | 
                                                                 Prof. <?= htmlspecialchars($professor['nome_professor']) ?>
                                                             </span>
@@ -201,7 +201,7 @@ $turmas = $stmt_turmas->get_result();
                                                             </div>
                                                         <?php endif; ?>
                                                         
-                                                        <div class="form-nota">
+                                                        <div class="form-nota text-dark">
                                                             <h5><i class="feather icon-plus"></i> Lançar Nova Nota</h5>
                                                             <form method="POST">
                                                                 <div class="row">
@@ -364,46 +364,94 @@ $turmas = $stmt_turmas->get_result();
                 var turmaId = $(this).val();
                 var professorId = <?= $professor['id_professor'] ?>;
                 
+                console.log("Iniciando requisição - Professor:", professorId, "Turma:", turmaId);
+                
                 if (turmaId) {
-                    // Obter a classe da turma selecionada
-                    var selectedOption = $(this).find('option:selected');
-                    var classe = selectedOption.text().split(' - ')[0];
+                    // 1. Carregar disciplinas
+                    carregarDisciplinas(professorId, turmaId);
                     
-                    // Carregar disciplinas do professor para aquela classe
-                    $.ajax({
-                        url: '/api/get_disciplinas_por_professor.php',
-                        type: 'GET',
-                        data: { 
-                            professor_id: professorId,
-                            classe: classe
-                        },
-                        success: function(data) {
-                            $('#disciplina_id').empty().append('<option value="">Selecione a disciplina</option>');
-                            $.each(data, function(key, value) {
-                                $('#disciplina_id').append('<option value="'+value.id_disciplina+'">'+value.nome_disciplina+'</option>');
-                            });
-                            $('#disciplina_id').prop('disabled', false);
-                        }
-                    });
-                    
-                    // Carregar alunos da turma
-                    $.ajax({
-                        url: '/api/get_alunos_por_turma.php',
-                        type: 'GET',
-                        data: { turma_id: turmaId },
-                        success: function(data) {
-                            $('#aluno_id').empty().append('<option value="">Selecione o aluno</option>');
-                            $.each(data, function(key, value) {
-                                $('#aluno_id').append('<option value="'+value.id_aluno+'">'+value.nome_aluno+'</option>');
-                            });
-                            $('#aluno_id').prop('disabled', false);
-                        }
-                    });
+                    // 2. Carregar alunos
+                    carregarAlunos(turmaId);
                 } else {
-                    $('#disciplina_id').empty().append('<option value="">Selecione primeiro a turma</option>').prop('disabled', true);
-                    $('#aluno_id').empty().append('<option value="">Selecione primeiro a turma</option>').prop('disabled', true);
+                    resetarCampos();
                 }
             });
+
+            function carregarDisciplinas(professorId, turmaId) {
+                $('#disciplina_id').empty().append('<option value="">Carregando...</option>').prop('disabled', true);
+                
+                $.ajax({
+                    url: '/sistem-alda/pages/professor/api/get_disciplinas_por_professor.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { 
+                        professor_id: professorId,
+                        turma_id: turmaId
+                    },
+                    success: function(response) {
+                        console.log("Resposta Disciplinas:", response);
+                        
+                        $('#disciplina_id').empty().append('<option value="">Selecione a disciplina</option>');
+                        
+                        if (response.length > 0) {
+                            $.each(response, function(index, disciplina) {
+                                $('#disciplina_id').append(
+                                    $('<option></option>').val(disciplina.id_disciplina).text(disciplina.nome_disciplina)
+                                );
+                            });
+                            $('#disciplina_id').prop('disabled', false);
+                        } else {
+                            $('#disciplina_id').append('<option value="">Nenhuma disciplina encontrada</option>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Erro ao carregar disciplinas:", status, error);
+                        $('#disciplina_id').empty()
+                            .append('<option value="">Erro ao carregar (ver console)</option>');
+                    }
+                });
+            }
+
+            function carregarAlunos(turmaId) {
+                $('#aluno_id').empty().append('<option value="">Carregando...</option>').prop('disabled', true);
+                
+                $.ajax({
+                    url: '/sistem-alda/pages/professor/api/get_alunos_por_turma.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { turma_id: turmaId },
+                    success: function(response) {
+                        console.log("Resposta Alunos:", response);
+                        
+                        $('#aluno_id').empty().append('<option value="">Selecione o aluno</option>');
+                        
+                        if (response.length > 0) {
+                            $.each(response, function(index, aluno) {
+                                $('#aluno_id').append(
+                                    $('<option></option>').val(aluno.id_aluno).text(aluno.nome_aluno)
+                                );
+                            });
+                            $('#aluno_id').prop('disabled', false);
+                        } else {
+                            $('#aluno_id').append('<option value="">Nenhum aluno encontrado</option>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Erro ao carregar alunos:", status, error);
+                        $('#aluno_id').empty()
+                            .append('<option value="">Erro ao carregar (ver console)</option>');
+                    }
+                });
+            }
+
+            function resetarCampos() {
+                $('#disciplina_id').empty()
+                    .append('<option value="">Selecione primeiro a turma</option>')
+                    .prop('disabled', true);
+                $('#aluno_id').empty()
+                    .append('<option value="">Selecione primeiro a turma</option>')
+                    .prop('disabled', true);
+            }
         });
     </script>
 </body>

@@ -9,7 +9,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Dashboard -->
             <li class="pcoded-hasmenu <?= ($current_page == 'dashboard.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./dashboard.php">
+                <a href="../coordenador/dashboard.php">
                     <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                     <span class="pcoded-mtext">Dashboard</span>
                 </a>
@@ -17,7 +17,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Supervisão de Professores -->
             <li class="<?= ($current_page == 'professores.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./professores.php">
+                <a href="../coordenador/professores.php">
                     <span class="pcoded-micon"><i class="feather icon-users"></i></span>
                     <span class="pcoded-mtext">Supervisão de Professores</span>
                 </a>
@@ -25,7 +25,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Desempenho dos Alunos -->
             <li class="<?= ($current_page == 'desempenho.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./desempenho.php">
+                <a href="../coordenador/desempenho.php">
                     <span class="pcoded-micon"><i class="feather icon-bar-chart-2"></i></span>
                     <span class="pcoded-mtext">Desempenho dos Alunos</span>
                 </a>
@@ -33,15 +33,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Planos de Ensino -->
             <li class="<?= ($current_page == 'planos.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./planos.php">
+                <a href="../coordenador/planos.php">
                     <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
                     <span class="pcoded-mtext">Planos de Ensino</span>
                 </a>
             </li>
 
+            <!-- Lancar Disciplinas -->
+            <li class="<?= ($current_page == 'disciplinas.php') ? 'active pcoded-trigger' : '' ?>">
+                <a href="../coordenador/disciplinas.php">
+                    <span class="pcoded-micon"><i class="feather icon-book"></i></span>
+                    <span class="pcoded-mtext">G. Disciplinas</span>
+                </a>
+            </li>
+
             <!-- Difinir Horarios do curso -->
             <li class="<?= ($current_page == 'horarios.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="./horarios.php">
+                <a href="../coordenador/horarios.php">
                     <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
                     <span class="pcoded-mtext">Definir Horarios</span>
                 </a>
