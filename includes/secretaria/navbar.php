@@ -125,7 +125,7 @@
                         </div>
                         <ul class="show-notification profile-notification dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
                             <li>
-                                <a href="user-profile.htm">
+                                <a href="../compartilhados/perfil.php">
                                     <i class="feather icon-user"></i> Perfil
                                 </a>
                             </li>

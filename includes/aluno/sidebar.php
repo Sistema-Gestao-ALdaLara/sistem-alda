@@ -56,7 +56,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Atualizar Perfil -->
             <li class="<?= ($current_page == 'perfil.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="perfil.php">
+                <a href="../compartilhados/perfil.php">
                     <span class="pcoded-micon"><i class="feather icon-user"></i></span>
                     <span class="pcoded-mtext">Atualizar Perfil</span>
                 </a>
