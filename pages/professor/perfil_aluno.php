@@ -47,7 +47,7 @@ try {
                     u.id_usuario, u.nome, u.email, u.bi_numero, u.foto_perfil, u.status,
                     a.data_nascimento, a.genero, a.naturalidade, a.nacionalidade, a.municipio,
                     a.nome_encarregado, a.contacto_encarregado,
-                    m.numero_matricula, m.classe, m.ano_letivo, m.status_matricula,
+                    m.numero_matricula, t.classe, m.ano_letivo, m.status_matricula,
                     t.nome AS nome_turma, t.turno, c.nome AS nome_curso
                   FROM aluno a
                   JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
@@ -70,7 +70,7 @@ try {
     // Obter histórico de matrículas
     $queryHistorico = "SELECT 
                         m.ano_letivo, t.nome AS nome_turma, c.nome AS nome_curso, 
-                        m.classe, t.turno, m.status_matricula, m.data_matricula
+                        t.classe, t.turno, m.status_matricula, m.data_matricula
                       FROM matricula m
                       JOIN turma t ON m.turma_id_turma = t.id_turma
                       JOIN curso c ON t.curso_id_curso = c.id_curso
@@ -151,7 +151,7 @@ try {
 
 } catch (Exception $e) {
     $_SESSION['erro'] = "Erro ao carregar perfil do aluno: " . $e->getMessage();
-    header("Location: lista_alunos.php");
+    echo "erro";
     exit();
 }
 
@@ -208,7 +208,7 @@ require_once '../../includes/common/head.php';
                                         <?php endif; ?>
 
                                         <!-- Cabeçalho do Perfil -->
-                                        <div class="profile-header bg-primary text-white rounded p-3 mb-4">
+                                        <div class="profile-header bg-primary text-dark rounded p-3 mb-4">
                                             <div class="row align-items-center">
                                                 <div class="col-md-2 text-center">
                                                     <img src="../../public/uploads/perfil/<?= !empty($aluno['foto_perfil']) ? htmlspecialchars($aluno['foto_perfil']) : 'default.png' ?>" 
@@ -261,7 +261,7 @@ require_once '../../includes/common/head.php';
                                         <!-- Estatísticas Rápidas -->
                                         <div class="row mb-4">
                                             <div class="col-md-3">
-                                                <div class="card border-left-primary shadow-sm h-100">
+                                                <div class="card border-left-primary shadow-sm h-100 card-table card-estatistica">
                                                     <div class="card-body">
                                                         <div class="row no-gutters align-items-center">
                                                             <div class="col mr-2">
@@ -279,7 +279,7 @@ require_once '../../includes/common/head.php';
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="card border-left-success shadow-sm h-100">
+                                                <div class="card border-left-success shadow-sm h-100 card-avaliacoes card-estatistica">
                                                     <div class="card-body">
                                                         <div class="row no-gutters align-items-center">
                                                             <div class="col mr-2">
@@ -297,7 +297,7 @@ require_once '../../includes/common/head.php';
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="card border-left-info shadow-sm h-100">
+                                                <div class="card border-left-info shadow-sm h-100 card-table card-estatistica">
                                                     <div class="card-body">
                                                         <div class="row no-gutters align-items-center">
                                                             <div class="col mr-2">
@@ -315,7 +315,7 @@ require_once '../../includes/common/head.php';
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="card border-left-warning shadow-sm h-100">
+                                                <div class="card border-left-warning shadow-sm h-100 card-estatistica card-trabalhos">
                                                     <div class="card-body">
                                                         <div class="row no-gutters align-items-center">
                                                             <div class="col mr-2">
@@ -364,13 +364,13 @@ require_once '../../includes/common/head.php';
                                             <div class="tab-pane fade show active" id="dados" role="tabpanel">
                                                 <div class="row">
                                                     <div class="col-md-6">
-                                                        <div class="card shadow-sm">
-                                                            <div class="card-header bg-white">
+                                                        <div class="card shadow-sm card-table">
+                                                            <div class="card-header ">
                                                                 <h5 class="mb-0"><i class="feather icon-user"></i> Informações Pessoais</h5>
                                                             </div>
                                                             <div class="card-body">
                                                                 <div class="table-responsive">
-                                                                    <table class="table table-sm">
+                                                                    <table class="table table-sm text-white">
                                                                         <tbody>
                                                                             <tr>
                                                                                 <th width="40%">Nome Completo</th>
@@ -408,7 +408,7 @@ require_once '../../includes/common/head.php';
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="card shadow-sm">
-                                                            <div class="card-header bg-white">
+                                                            <div class="card-header bg-primary">
                                                                 <h5 class="mb-0"><i class="feather icon-book"></i> Informações Acadêmicas</h5>
                                                             </div>
                                                             <div class="card-body">
@@ -470,11 +470,11 @@ require_once '../../includes/common/head.php';
 
                                             <!-- Tab Desempenho -->
                                             <div class="tab-pane fade" id="desempenho" role="tabpanel">
-                                                <div class="card shadow-sm">
-                                                    <div class="card-header bg-white">
+                                                <div class="card shadow-sm card-table">
+                                                    <div class="card-header">
                                                         <h5 class="mb-0"><i class="feather icon-bar-chart-2"></i> Desempenho Acadêmico</h5>
                                                     </div>
-                                                    <div class="card-body">
+                                                    <div class="card-body text-white">
                                                         <?php if (empty($mediasDisciplinas)): ?>
                                                             <div class="alert alert-info">
                                                                 Nenhuma nota registrada para este aluno no ano letivo atual.
@@ -487,8 +487,8 @@ require_once '../../includes/common/head.php';
                                                                         $cor = ($mediaDisciplina >= 14) ? 'success' : 
                                                                                ($mediaDisciplina >= 10 ? 'warning' : 'danger');
                                                                     ?>
-                                                                    <div class="col-md-4 mb-4">
-                                                                        <div class="card border-<?= $cor ?> shadow-sm h-100">
+                                                                    <div class="col-md-4 mb-4 card-table">
+                                                                        <div class="card border-<?= $cor ?> shadow-sm h-100 card-table">
                                                                             <div class="card-header bg-<?= $cor ?> text-white">
                                                                                 <h6 class="mb-0"><?= htmlspecialchars($disciplina) ?></h6>
                                                                             </div>
@@ -517,7 +517,7 @@ require_once '../../includes/common/head.php';
                                                                                 
                                                                                 <div class="collapse mt-3" id="notas-<?= md5($disciplina) ?>">
                                                                                     <div class="table-responsive">
-                                                                                        <table class="table table-sm table-bordered">
+                                                                                        <table class="table table-sm table-bordered text-white">
                                                                                             <thead class="thead-light">
                                                                                                 <tr>
                                                                                                     <th>Data</th>

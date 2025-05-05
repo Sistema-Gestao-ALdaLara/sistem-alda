@@ -20,21 +20,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <ul class="pcoded-submenu">
                     <li class="<?= ($current_page == '') ? 'active pcoded-trigger' : '' ?>">
                         <a href="#">
-                            <span class="pcoded-mtext">Task1</span>
+                            <span class="pcoded-mtext">Visualizar</span>
                         </a>
                     </li>
                     <li class="<?= ($current_page == '') ? 'active pcoded-trigger' : '' ?>">
                         <a href="#">
-                            <span class="pcoded-mtext">Task2</span>
-                        </a>
-                    </li>
-                    <li class="<?= ($current_page == '') ? 'active pcoded-trigger' : '' ?></li>">
-                        <a href="#">
-                            <span class="pcoded-mtext">Task3</span>
+                            <span class="pcoded-mtext">Criar</span>
                         </a>
                     </li>
 
                 </ul>
+            </li>
+            <li class="pcoded-hasmenu <?= ($current_page == 'aprovacao_planos.php') ? 'active pcoded-trigger' : '' ?>">
+                <a href="../compartilhados/aprovacao_planos.php">
+                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
+                    <span class="pcoded-mtext">Aprovar Planos-Aula</span>
+                </a>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == '') ? 'active pcoded-trigger' : '' ?>">
                 <a href="javascript:void(0)">
@@ -72,7 +73,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         </ul>
                     </li>
                     <li class="<?= ($current_page == 'coordenador.php') ? 'active pcoded-trigger' : '' ?>">
-                        <a href="coordenador.php">
+                        <a href="../diretor_geral/coordenador.php">
                             <span class="pcoded-mtext">G. Coordenadores</span>
                         </a>
                     </li>
@@ -85,23 +86,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
                 <ul class="pcoded-submenu">
                     <li class="<?= ($current_page == 'matricular.php') ? 'active pcoded-trigger' : '' ?>">
-                        <a href="../compartilhados/matricular.php">
-                            <span class="pcoded-mtext">Matrículas</span>
+                        <a href="../diretor_geral/matricular.php">
+                            <span class="pcoded-mtext">Fazer Matrículas</span>
                         </a>
                     </li>
                 </ul>
             </li>
             <li class="pcoded-hasmenu <?= ($current_page == 'cursos.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="cursos.php">
+                <a href="../diretor_geral/cursos.php">
                     <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                    <span class="pcoded-mtext">G. Cursos</span>
-                </a>
-            </li>
-
-            <li class="pcoded-hasmenu <?= ($current_page == '') ? 'active pcoded-trigger' : '' ?>">
-                <a href="javascript:void(0)">
-                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                    <span class="pcoded-mtext">Configurações</span>
+                    <span class="pcoded-mtext">Gerenciar Cursos</span>
                 </a>
             </li>
 

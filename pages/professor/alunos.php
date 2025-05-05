@@ -61,7 +61,7 @@ try {
 
         if ($turmaValida) {
             $queryAlunos = "SELECT a.id_aluno, u.nome, u.email, u.foto_perfil, 
-                           m.numero_matricula, m.classe, t.turno, m.status_matricula
+                           m.numero_matricula, t.classe, t.turno, m.status_matricula
                           FROM matricula m
                           JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
                           JOIN usuario u ON a.usuario_id_usuario = u.id_usuario

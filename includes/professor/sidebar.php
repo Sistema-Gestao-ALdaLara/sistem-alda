@@ -28,6 +28,12 @@
                 </a>
             </li>
             <li class="pcoded-hasmenu">
+                <a href="./meus_planos.php">
+                    <span class="pcoded-micon"><i class="feather icon-edit"></i></span>
+                    <span class="pcoded-mtext">Planos de Aula</span>
+                </a>
+            </li>
+            <li class="pcoded-hasmenu">
                 <a href="./alunos.php">
                     <span class="pcoded-micon"><i class="feather icon-users"></i></span>
                     <span class="pcoded-mtext">Perfil dos Alunos</span>
@@ -40,7 +46,7 @@
                 </a>
             </li>
             <li class="pcoded-hasmenu">
-                <a href="./planos.php">
+                <a href="./meus_planos.php">
                     <span class="pcoded-micon"><i class="feather icon-file-text"></i></span>
                     <span class="pcoded-mtext">Planos de Aula</span>
                 </a>

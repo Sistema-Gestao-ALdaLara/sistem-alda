@@ -31,10 +31,11 @@ if (!$turma) {
 // Obter alunos da turma
 $query_alunos = "SELECT u.id_usuario, u.nome, u.email, u.bi_numero, 
                 a.data_nascimento, a.genero, a.naturalidade, a.nacionalidade,
-                m.numero_matricula, m.classe, m.turno, m.status_matricula
+                m.numero_matricula, t.classe, t.turno, m.status_matricula
                 FROM matricula m
                 JOIN aluno a ON m.aluno_id_aluno = a.id_aluno
                 JOIN usuario u ON a.usuario_id_usuario = u.id_usuario
+                JOIN turma t ON m.turma_id_turma = t.id_turma
                 WHERE m.turma_id_turma = ? AND m.ano_letivo = ?
                 ORDER BY u.nome";
 $stmt_alunos = $conn->prepare($query_alunos);
@@ -47,7 +48,8 @@ $query_professores = "SELECT u.nome, u.email, d.nome AS disciplina
                      FROM professor_tem_turma pt
                      JOIN professor p ON pt.professor_id_professor = p.id_professor
                      JOIN usuario u ON p.usuario_id_usuario = u.id_usuario
-                     LEFT JOIN disciplina d ON d.professor_id_professor = p.id_professor AND d.curso_id_curso = (SELECT curso_id_curso FROM turma WHERE id_turma = ?)
+                     JOIN professor_tem_disciplina ptd ON p.id_professor = ptd.professor_id_professor
+                     LEFT JOIN disciplina d ON ptd.disciplina_id_disciplina = d.id_disciplina AND d.curso_id_curso = (SELECT curso_id_curso FROM turma WHERE id_turma = ?)
                      WHERE pt.turma_id_turma = ?
                      GROUP BY u.id_usuario, u.nome, u.email, d.nome";
 $stmt_professores = $conn->prepare($query_professores);
@@ -146,7 +148,7 @@ $title = "Detalhes da Turma: " . $turma['nome_turma'];
                                             <div class="col-md-6">
                                                 <div class="card card-table">
                                                     <div class="card-header">
-                                                        <h5>Professores da Turma</h5>
+                                                        <h5>Professor Responsavel Pela Turma</h5>
                                                     </div>
                                                     <div class="card-block">
                                                         <div class="table-responsive">
