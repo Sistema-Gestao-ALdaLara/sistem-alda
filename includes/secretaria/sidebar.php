@@ -31,7 +31,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
                 <ul class="pcoded-submenu">
                     <li class="<?= ($current_page == 'professor.php') ? 'active' : '' ?> ">
-                        <a href="../compartilados/professor.php">
+                        <a href="../compartilhados/professor.php">
                             <span class="pcoded-mtext">G. Professor</span>
                         </a>
                     </li>

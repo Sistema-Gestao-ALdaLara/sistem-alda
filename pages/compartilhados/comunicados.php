@@ -198,7 +198,7 @@ $tipo = $_SESSION['tipo_usuario'];
                                                                 <textarea class="form-control" id="mensagem" name="mensagem" rows="10"></textarea>
                                                             </div>
                                                             
-                                                            <div class="form-group text-dark">
+                                                            <div class="form-group">
                                                                 <label>Destinatários *</label>
                                                                 <div class="destinatarios-container">
                                                                     <div class="destinatario-option">
