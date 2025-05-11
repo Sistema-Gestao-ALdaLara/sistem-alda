@@ -8,7 +8,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Dashboard -->
             <li class="pcoded-hasmenu <?= ($current_page == 'dashboard.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="dashboard.php">
+                <a href="../aluno/dashboard.php">
                     <span class="pcoded-micon"><i class="feather icon-home"></i></span>
                     <span class="pcoded-mtext">Dashboard</span>
                 </a>
@@ -16,7 +16,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Minhas Disciplinas -->
             <li class="<?= ($current_page == 'disciplinas.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="disciplinas.php">
+                <a href="../aluno/disciplinas.php">
                     <span class="pcoded-micon"><i class="feather icon-book"></i></span>
                     <span class="pcoded-mtext">Minhas Disciplinas</span>
                 </a>
@@ -24,7 +24,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Minhas Notas -->
             <li class="<?= ($current_page == 'notas.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="notas.php">
+                <a href="../aluno/notas.php">
                     <span class="pcoded-micon"><i class="feather icon-bar-chart"></i></span>
                     <span class="pcoded-mtext">Minhas Notas</span>
                 </a>
@@ -32,7 +32,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Horários e Calendário -->
             <li class="<?= ($current_page == 'calendario.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="calendario.php">
+                <a href="../aluno/calendario.php">
                     <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
                     <span class="pcoded-mtext">Horários e Calendário</span>
                 </a>
@@ -40,7 +40,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Materiais de Apoio -->
             <li class="<?= ($current_page == 'materiais.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="materiais.php">
+                <a href="../aluno/materiais.php">
                     <span class="pcoded-micon"><i class="feather icon-folder"></i></span>
                     <span class="pcoded-mtext">Materiais de Apoio</span>
                 </a>
@@ -48,7 +48,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Notificações -->
             <li class="<?= ($current_page == 'notificacoes.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="notificacoes.php">
+                <a href="../aluno/notificacoes.php">
                     <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
                     <span class="pcoded-mtext">Notificações</span>
                 </a>
@@ -64,7 +64,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Contato com a Escola -->
             <li class="<?= ($current_page == 'contato.php') ? 'active pcoded-trigger' : '' ?>">
-                <a href="contato.php">
+                <a href="../aluno/contato.php">
                     <span class="pcoded-micon"><i class="feather icon-mail"></i></span>
                     <span class="pcoded-mtext">Contato com a Escola</span>
                 </a>

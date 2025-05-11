@@ -248,7 +248,8 @@ $tipo = $_SESSION['tipo_usuario'];
                                                                     <div class="form-group">
                                                                         <label for="nome">Nome Completo *</label>
                                                                         <input type="text" class="form-control" id="nome" name="nome" 
-                                                                            value="<?= htmlspecialchars($usuario['nome'] ?? 'ups') ?>" required>
+                                                                            value="<?= htmlspecialchars($usuario['nome'] ?? 'ups') ?>" required 
+                                                                            <?= ($_SESSION['tipo_usuario'] == 'aluno') ? 'readonly' : '' ?>>
                                                                     </div>
                                                                     
                                                                     <div class="form-group">
