@@ -83,7 +83,7 @@
                                                 </label>
                                             </div>
                                             <div class="forgot-phone text-right f-right">
-                                                <a href="#" class="text-right f-w-600"> Esqueceu a senha?</a>
+                                                <a href="recuperacao/esqueci_senha.php" class="text-right f-w-600"> Esqueceu a senha?</a>
                                             </div>
                                         </div>
                                     </div>

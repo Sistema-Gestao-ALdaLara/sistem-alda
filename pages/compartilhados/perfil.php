@@ -47,7 +47,7 @@ $foto_perfil = $usuario['foto_perfil'] ?? null;
 // Processar atualização do perfil
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Sanitizar inputs
-    $nome = trim(filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_STRING)) ?? '';
+    $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL)) ?? '';
     $senha_atual = trim($_POST['senha_atual'] ?? '');
     $nova_senha = trim($_POST['nova_senha'] ?? '');

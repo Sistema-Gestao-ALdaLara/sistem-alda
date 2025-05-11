@@ -105,7 +105,29 @@
 <!DOCTYPE html>
 <html lang="pt">
 
-<?php require_once '../../includes/common/head.php'; ?>
+<head>
+    <?php require_once '../../includes/common/head.php'; ?>
+    <style>
+        .custom-file-label{
+            background-color: rgb(5, 200, 203);;
+            width: 25vw;
+            height: 70%;
+            text-align: center;
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .custom-file-label::after {
+        background-color:rgb(0, 213, 255);
+        color: white;
+        }
+
+        .custom-file-input:focus ~ .custom-file-label {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+</head>
 
 <body>
     <?php require_once '../../includes/common/preloader.php'; ?>
@@ -186,14 +208,24 @@
                                                                 <label for="documento">Arquivo *</label>
                                                                 <div class="custom-file">
                                                                     <input type="file" class="custom-file-input" id="documento" name="documento" required>
-                                                                    <label class="custom-file-label" for="documento">Escolher arquivo...</label>
+                                                                    <label class="custom-file-label" for="documento" data-browse="Procurar">Escolher arquivo...</label>
                                                                 </div>
-                                                                <div class="bg-primary text-white p-2">
+                                                                <div class="bg-primary text-white p-2 mt-2">
                                                                     <small class="form-text">
-                                                                        <span class="text-dark">FORMATOS ACEITOS:</span> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG
+                                                                    <span class="font-weight-bold">FORMATOS ACEITOS:</span> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG
                                                                     </small>
                                                                 </div>
                                                             </div>
+
+                                                                <!-- JavaScript necessário -->
+                                                                <script>
+                                                                // Atualiza o label do input file com o nome do arquivo selecionado
+                                                                document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+                                                                var fileName = document.getElementById("documento").files[0].name;
+                                                                var nextSibling = e.target.nextElementSibling;
+                                                                nextSibling.innerText = fileName;
+                                                                });
+                                                                </script>
                                                             
                                                             <button type="submit" class="btn btn-primary">
                                                                 <i class="feather icon-upload"></i> Enviar Documento
@@ -252,9 +284,6 @@
                                                                         <td><?= date('d/m/Y H:i', strtotime($doc['data_upload'])) ?></td>
                                                                         <td>
                                                                             <div class="btn-group btn-group-sm">
-                                                                                <a href="<?= $doc['caminho_arquivo'] ?>" target="_blank" class="btn btn-info">
-                                                                                    <i class="feather icon-eye"></i>
-                                                                                </a>
                                                                                 <a href="<?= $doc['caminho_arquivo'] ?>" download class="btn btn-success">
                                                                                     <i class="feather icon-download"></i>
                                                                                 </a>

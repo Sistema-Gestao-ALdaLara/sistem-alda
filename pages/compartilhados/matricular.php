@@ -476,7 +476,7 @@ $tipo = $_SESSION['tipo_usuario'];
                             }
                         },
                         error: function() {
-                            alert('Erro na comunicação com o servidor');
+                            alert('Erro na comun1icação com o servidor');
                         }
                     });
                 }
@@ -498,72 +498,12 @@ $tipo = $_SESSION['tipo_usuario'];
                             }
                         },
                         error: function() {
-                            alert('Erro na comunicação com o servidor');
+                            alert('Erro na comuni5cação com o servidor');
                         }
                     });
                 }
             }
             
-            // Validação do formulário
-           /* $('#formMatricula').submit(function(e) {
-                e.preventDefault();
-                
-                // Validar BI
-                if (!validarBI($('#bi_numero').val())) {
-                    alert('Número de BI inválido. Formato correto: 123456789LA123');
-                    return false;
-                }
-                
-                // Validar senha
-                if ($('#senha').val().length < 6) {
-                    alert('A senha deve ter no mínimo 6 caracteres');
-                    return false;
-                }
-                
-                // Validar data de nascimento
-                const dataNasc = new Date($('#data_nascimento').val());
-                const hoje = new Date();
-                let idade = hoje.getFullYear() - dataNasc.getFullYear();
-                const mes = hoje.getMonth() - dataNasc.getMonth();
-                
-                if (mes < 0 || (mes === 0 && hoje.getDate() < dataNasc.getDate())) {
-                    idade--;
-                }
-                
-                if (idade < 15) {
-                    alert('O aluno deve ter pelo menos 15 anos de idade');
-                    return false;
-                }
-                
-                // Criar FormData para enviar arquivos
-                var formData = new FormData(this);
-                
-                $.ajax({
-                    url: $(this).attr('action'),
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.message);
-                            $('#modalMatricula').modal('hide');
-                            location.reload();
-                        } else {
-                            alert('Erro: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Erro na comunicação com o servidor');
-                    }
-                });
-            });
-            
-            function validarBI(bi) {
-                const regex = /^[0-9]{9}[A-Z]{2}[0-9]{3}$/;
-                return regex.test(bi);
-            }*/
         </script>
 
         <script>
@@ -632,7 +572,7 @@ $tipo = $_SESSION['tipo_usuario'];
                         }
                     },
                     error: function() {
-                        alert('Erro na comunicação com o servidor');
+                        alert('Erro na comunic4ação com o servidor');
                     }
                 });
             }
@@ -697,7 +637,7 @@ $tipo = $_SESSION['tipo_usuario'];
                         }
                     },
                     error: function() {
-                        alert('Erro na comunicação com o servidor');
+                        alert('Erro na comunic9ação com o servidor');
                     }
                 });
             });

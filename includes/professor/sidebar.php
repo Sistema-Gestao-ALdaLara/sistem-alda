@@ -33,6 +33,12 @@
                     <span class="pcoded-mtext">Planos de Aula</span>
                 </a>
             </li>
+            <li class="pcoded-hasmenu <?= ($current_page == 'admins_docs.php') ? 'active pcoded-trigger' : '' ?>">
+                <a href="../compartilhados/admins_docs.php">
+                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
+                    <span class="pcoded-mtext">Documentos Administrativos</span>
+                </a>
+            </li>
             <li class="pcoded-hasmenu">
                 <a href="./alunos.php">
                     <span class="pcoded-micon"><i class="feather icon-users"></i></span>
