@@ -1,6 +1,6 @@
 <?php
     require_once '../../includes/common/permissoes.php';
-    verificarPermissao(['diretor_geral']);
+    verificarPermissao(['diretor_geral', 'diretor_pedagogico']);
     require_once '../../process/verificar_sessao.php';
     require_once '../../database/conexao.php';
     

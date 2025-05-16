@@ -129,7 +129,7 @@ $title = "Materiais de Apoio";
                                             <div class="card-block">
                                                 <?php if (!empty($materiais)): ?>
                                                     <div class="table-responsive">
-                                                        <table class="table table-bordered table-striped">
+                                                        <table class="table table-bordered table-striped text-white">
                                                             <thead>
                                                                 <tr>
                                                                     <th>Nome</th>
@@ -147,7 +147,7 @@ $title = "Materiais de Apoio";
                                                                         <td><?= htmlspecialchars($material['descricao']) ?></td>
                                                                         <td><?= date('d/m/Y H:i', strtotime($material['data_upload'])) ?></td>
                                                                         <td>
-                                                                            <a href="../../<?= htmlspecialchars($material['caminho_arquivo']) ?>" 
+                                                                            <a href="<?= htmlspecialchars($material['caminho_arquivo']) ?>" 
                                                                                class="btn btn-primary btn-sm"
                                                                                download="<?= htmlspecialchars($material['nome']) ?>">
                                                                                 <i class="feather icon-download"></i> Baixar

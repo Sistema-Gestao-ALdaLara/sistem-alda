@@ -122,9 +122,6 @@ $title = "Meus Relatórios";
                                                                     <a href="../../../<?= $relatorio['caminho_arquivo'] ?>" download class="btn btn-sm btn-primary">
                                                                         <i class="feather icon-download"></i> Baixar
                                                                     </a>
-                                                                    <a href="visualizar.php?id=<?= $relatorio['id_relatorio'] ?>" class="btn btn-sm btn-info">
-                                                                        <i class="feather icon-eye"></i> Visualizar
-                                                                    </a>
                                                                 </td>
                                                             </tr>
                                                             <?php endforeach; ?>

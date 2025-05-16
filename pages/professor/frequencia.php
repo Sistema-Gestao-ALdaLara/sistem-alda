@@ -543,7 +543,7 @@
                                                                             </td>
                                                                             <td><?= htmlspecialchars($freq['observacao'] ?? '-') ?></td>
                                                                             <td>
-                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia'] ?>">
+                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia_aluno'] ?>">
                                                                                     <i class="feather icon-trash-2"></i>
                                                                                 </button>
                                                                             </td>

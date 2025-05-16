@@ -55,8 +55,8 @@ $title = "Visualizar Plano: " . htmlspecialchars($plano['titulo']);
                     <?php require_once '../../includes/professor/sidebar.php'; ?>
                     
                     <div class="pcoded-content">
-                        <div class="pcoded-inner-content">
-                            <div class="main-body bg-img">
+                        <div class="pcoded-inner-content bg-img">
+                            <div class="main-body">
                                 <div class="page-wrapper">
 
                                     <div class="page-body">
@@ -64,7 +64,7 @@ $title = "Visualizar Plano: " . htmlspecialchars($plano['titulo']);
                                             <div class="card-header">
                                                 <h5>Plano de Ensino: <?= htmlspecialchars($plano['titulo']) ?></h5>
                                             </div>
-                                            <div class="card-block">
+                                            <div class="card-block text-dark">
                                                 <div class="row mb-4">
                                                     <div class="col-md-6">
                                                         <p><strong>Disciplina:</strong> <?= htmlspecialchars($plano['disciplina_nome']) ?></p>
@@ -96,25 +96,25 @@ $title = "Visualizar Plano: " . htmlspecialchars($plano['titulo']);
 
                                                 <div class="row mb-4">
                                                     <div class="col-md-12">
-                                                        <h4>Conteúdo Programático</h4>
+                                                        <h4 class="text-light">Conteúdo Programático</h4>
                                                         <div class="border p-3 bg-light"><?= nl2br(htmlspecialchars($plano['conteudo_programatico'])) ?></div>
                                                     </div>
                                                 </div>
 
                                                 <div class="row mb-4">
                                                     <div class="col-md-6">
-                                                        <h4>Metodologia</h4>
+                                                        <h4 class="text-light">Metodologia</h4>
                                                         <div class="border p-3 bg-light"><?= nl2br(htmlspecialchars($plano['metodologia'])) ?></div>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <h4>Critérios de Avaliação</h4>
+                                                        <h4 class="text-light">Critérios de Avaliação</h4>
                                                         <div class="border p-3 bg-light"><?= nl2br(htmlspecialchars($plano['criterios_avaliacao'])) ?></div>
                                                     </div>
                                                 </div>
 
                                                 <div class="row">
                                                     <div class="col-md-12">
-                                                        <h4>Bibliografia</h4>
+                                                        <h4 class="text-light">Bibliografia</h4>
                                                         <div class="border p-3 bg-light"><?= nl2br(htmlspecialchars($plano['bibliografia'])) ?></div>
                                                     </div>
                                                 </div>

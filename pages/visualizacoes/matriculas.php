@@ -161,7 +161,7 @@ $title = "Relatório de Matrículas";
             <button onclick="window.print()" class="btn btn-primary">
                 <i class="feather icon-printer"></i> Imprimir/Salvar PDF
             </button>
-            <a href="../index.php" class="btn btn-secondary">
+            <a href="../compartilhados/relatorios.php" class="btn btn-secondary">
                 <i class="feather icon-arrow-left"></i> Voltar
             </a>
             

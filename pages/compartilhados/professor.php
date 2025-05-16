@@ -4,7 +4,8 @@ verificarPermissao(['secretaria', 'diretor_geral', 'diretor_pedagogico']);
 require_once '../../process/verificar_sessao.php';
 require_once '../../database/conexao.php';
 
-$title = "Secretaria";
+$title = "Cadastro P";
+$tipo = $_SESSION['tipo_usuario'];
 
 // Filtros recebidos via GET
 $id_curso = isset($_GET['id_curso']) ? intval($_GET['id_curso']) : null;
@@ -71,11 +72,11 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
 
-            <?php require_once '../../includes/secretaria/navbar.php'; ?>
+            <?php require_once "../../includes/$tipo/navbar.php"; ?>
 
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
-                    <?php require_once '../../includes/secretaria/sidebar.php'; ?>
+                    <?php require_once "../../includes/$tipo/sidebar.php"; ?>
 
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
@@ -166,9 +167,6 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                                         <td class="action-buttons">
                                                                             <button class="btn btn-warning btn-sm" onclick="editarProfessor(<?= $professor['id_professor'] ?>)">
                                                                                 <i class="feather icon-edit"></i>
-                                                                            </button>
-                                                                            <button class="btn btn-info btn-sm" onclick="verDisciplinas(<?= $professor['id_professor'] ?>)">
-                                                                                <i class="feather icon-book"></i>
                                                                             </button>
                                                                             <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $professor['id_professor'] ?>)">
                                                                                 <i class="feather icon-trash"></i>

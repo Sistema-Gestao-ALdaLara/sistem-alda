@@ -11,9 +11,6 @@ try {
         throw new Exception('Método não permitido');
     }
 
-    // Verificar permissões
-    require_once '../../includes/common/permissoes.php';
-    verificarPermissao(['diretor_geral', 'secretaria']);
 
     // Obter ID do professor
     $professorId = isset($_GET['id']) ? intval($_GET['id']) : 0;

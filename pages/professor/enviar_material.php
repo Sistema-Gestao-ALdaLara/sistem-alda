@@ -205,7 +205,7 @@ $title = "Enviar Material de Apoio";
                                                         <label class="col-sm-2 col-form-label">Classe</label>
                                                         <div class="col-sm-10">
                                                             <select class="form-control" name="classe">
-                                                                <option value="">-- Todas as Classes --</option>
+                                                                <option value="10ª">-- Todas as Classes --</option>
                                                                 <option value="10ª">10ª Classe</option>
                                                                 <option value="11ª">11ª Classe</option>
                                                                 <option value="12ª">12ª Classe</option>
