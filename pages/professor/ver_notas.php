@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../process/verificar_sessao.php';
 require_once __DIR__ . '/../../database/conexao.php';
 
 if (!isset($_GET['disciplina_id']) || !isset($_GET['classe'])) {
-    header("Location: /professor/nota1s.php");
+    header("Location: notas.php");
     exit();
 }
 

@@ -12,20 +12,6 @@ if (!isset($_GET['disciplina_id']) || !isset($_GET['classe'])) {
 $disciplina_id = (int)$_GET['disciplina_id'];
 $classe = $_GET['classe'];
 
-// Verificar se o professor tem acesso a esta disciplina/classe
-$query_verifica = "SELECT 1 FROM professor_tem_disciplina 
-                  WHERE professor_id_professor = ? 
-                  AND disciplina_id_disciplina = ? 
-                  AND classe = ?";
-$stmt_verifica = $conn->prepare($query_verifica);
-$stmt_verifica->bind_param("iis", $_SESSION['id_professor'], $disciplina_id, $classe);
-$stmt_verifica->execute();
-
-if ($stmt_verifica->get_result()->num_rows === 0) {
-    header("Location: /professor/lancar_notas.php");
-    exit();
-}
-
 // Obter informações da disciplina
 $query_disciplina = "SELECT nome FROM disciplina WHERE id_disciplina = ?";
 $stmt_disciplina = $conn->prepare($query_disciplina);
@@ -96,12 +82,12 @@ if (isset($_GET['turma_id'])) {
                     
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">
-                            <div class="main-body">
+                            <div class="main- bg-img">
                                 <div class="page-wrapper">
                                     <div class="page-body">
                                         <div class="row">
                                             <div class="col-12">
-                                                <div class="card">
+                                                <div class="card card-table m-5">
                                                     <div class="card-header">
                                                         <h5>
                                                             <i class="feather icon-users"></i> Alunos - <?= htmlspecialchars($disciplina['nome']) ?>
@@ -166,7 +152,7 @@ if (isset($_GET['turma_id'])) {
                                                                                     <?php endif; ?>
                                                                                 </td>
                                                                                 <td>
-                                                                                    <a href="ver_notas_aluno.php?aluno_id=<?= $aluno['id_aluno'] ?>&disciplina_id=<?= $disciplina_id ?>" 
+                                                                                    <a href="ver_notas.php?aluno_id=<?= $classe ?>&disciplina_id=<?= $disciplina_id ?>" 
                                                                                        class="btn btn-sm btn-outline-primary">
                                                                                         <i class="feather icon-list"></i> Notas
                                                                                     </a>

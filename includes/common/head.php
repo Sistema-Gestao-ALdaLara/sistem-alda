@@ -1,4 +1,5 @@
     <head>
+        <?php if (!isset($title)){$title = $_SESSION['tipo_usuario'];}?>
         <title><?php echo $title . ' | Alda Lara' ?></title>
         <!-- HTML5 Shim and Respond.js IE10 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -18,7 +19,7 @@
         <style>
             .bg-img {
                 width: 100%;
-                height: auto;
+                height: 100vh;
                 background-image: url('../../public/img/bg.jpg');
                 background-size: cover;
                 background-position: center;

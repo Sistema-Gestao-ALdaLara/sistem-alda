@@ -202,7 +202,7 @@ $turmas = $stmt_turmas->get_result();
                                                         <?php endif; ?>
                                                         
                                                         <div class="form-nota text-dark">
-                                                            <h5><i class="feather icon-plus"></i> Lançar Nova Nota</h5>
+                                                            <h5><i class="feather icon-plus"></i> Lançar Nota</h5>
                                                             <form method="POST">
                                                                 <div class="row">
                                                                     <div class="col-md-4">

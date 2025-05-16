@@ -58,48 +58,75 @@ while ($nota = $result_notas->fetch_assoc()) {
     $notas[$nota['trimestre']][$nota['disciplina_id_disciplina']][] = $nota;
 }
 
-// Calcular médias
-$medias = [];
+// Calcular médias ponderadas por trimestre
+$medias_trimestrais = [];
+$pesos_trimestrais = [1 => 0.3, 2 => 0.3, 3 => 0.4]; // Pesos dos trimestres (ajuste conforme necessário)
+
 foreach ([1, 2, 3] as $trimestre) {
     foreach ($disciplinas as $disciplina) {
-        $soma = 0;
-        $count = 0;
+        $id_disciplina = $disciplina['id_disciplina'];
+        $soma_ponderada = 0;
+        $total_pesos = 0;
         
-        if (isset($notas[$trimestre][$disciplina['id_disciplina']])) {
-            foreach ($notas[$trimestre][$disciplina['id_disciplina']] as $nota) {
-                $soma += $nota['nota'];
-                $count++;
+        if (isset($notas[$trimestre][$id_disciplina])) {
+            foreach ($notas[$trimestre][$id_disciplina] as $nota) {
+                $soma_ponderada += $nota['nota'] * $nota['peso'];
+                $total_pesos += $nota['peso'];
             }
             
-            if ($count > 0) {
-                $medias[$trimestre][$disciplina['id_disciplina']] = round($soma / $count, 1);
+            if ($total_pesos > 0) {
+                $media = $soma_ponderada / $total_pesos;
+                // Arredondamento para 1 casa decimal (0.5 arredonda para cima)
+                $medias_trimestrais[$trimestre][$id_disciplina] = round($media * 2) / 2;
+            } else {
+                $medias_trimestrais[$trimestre][$id_disciplina] = 0.0;
             }
+        } else {
+            $medias_trimestrais[$trimestre][$id_disciplina] = 0.0;
         }
     }
 }
 
-// Calcular média final por disciplina
-$medias_finais = [];
+// Calcular médias finais por disciplina (considerando pesos dos trimestres)
+$medias_finais_disciplinas = [];
 foreach ($disciplinas as $disciplina) {
+    $id_disciplina = $disciplina['id_disciplina'];
     $soma_final = 0;
-    $count_final = 0;
+    $pesos_utilizados = 0;
     
     foreach ([1, 2, 3] as $trimestre) {
-        if (isset($medias[$trimestre][$disciplina['id_disciplina']])) {
-            $soma_final += $medias[$trimestre][$disciplina['id_disciplina']];
-            $count_final++;
+        if (isset($medias_trimestrais[$trimestre][$id_disciplina])) {
+            $soma_final += $medias_trimestrais[$trimestre][$id_disciplina] * $pesos_trimestrais[$trimestre];
+            $pesos_utilizados += $pesos_trimestrais[$trimestre];
         }
     }
     
-    if ($count_final > 0) {
-        $medias_finais[$disciplina['id_disciplina']] = round($soma_final / $count_final, 1);
+    if ($pesos_utilizados > 0) {
+        $media_final = $soma_final / $pesos_utilizados;
+        $medias_finais_disciplinas[$id_disciplina] = round($media_final * 2) / 2;
+    } else {
+        $medias_finais_disciplinas[$id_disciplina] = 0.0;
     }
 }
 
-// Calcular média geral
-$media_geral = 0;
-if (!empty($medias_finais)) {
-    $media_geral = round(array_sum($medias_finais) / count($medias_finais), 1);
+// Calcular média geral do aluno
+$soma_geral = 0;
+$count_disciplinas = 0;
+
+foreach ($medias_finais_disciplinas as $media) {
+    $soma_geral += $media;
+    $count_disciplinas++;
+}
+
+$media_geral = $count_disciplinas > 0 ? round(($soma_geral / $count_disciplinas) * 2) / 2 : 0.0;
+
+// Determinar situação final
+$situacao_final = 'APROVADO';
+foreach ($medias_finais_disciplinas as $media) {
+    if ($media < 10) {
+        $situacao_final = 'REPROVADO';
+        break;
+    }
 }
 
 // Determinar situação
@@ -205,7 +232,7 @@ header('Content-Type: text/html; charset=utf-8');
             <thead>
                 <tr>
                     <th rowspan="2">Disciplinas</th>
-                    <th colspan="3">Trimestres</th>
+                    <th colspan="3">Médias Trimestrais</th>
                     <th rowspan="2">Média Final</th>
                 </tr>
                 <tr>
@@ -216,23 +243,49 @@ header('Content-Type: text/html; charset=utf-8');
             </thead>
             <tbody>
                 <?php foreach ($disciplinas as $disciplina): 
-                    $media_final = $medias_finais[$disciplina['id_disciplina']] ?? '-';
+                    $id_disciplina = $disciplina['id_disciplina'];
+                    $media_final = number_format($medias_finais_disciplinas[$id_disciplina] ?? 0.0, 1);
+                    
+                    // Classes CSS para formatação
+                    $classe_media_final = ($medias_finais_disciplinas[$id_disciplina] < 10) ? 'nota-baixa' : 'nota-alta';
                 ?>
                 <tr>
                     <td class="disciplina"><?= htmlspecialchars($disciplina['disciplina_nome']) ?></td>
-                    <td><?= $medias[1][$disciplina['id_disciplina']] ?? '-' ?></td>
-                    <td><?= $medias[2][$disciplina['id_disciplina']] ?? '-' ?></td>
-                    <td><?= $medias[3][$disciplina['id_disciplina']] ?? '-' ?></td>
-                    <td><?= $media_final ?></td>
+                    
+                    <!-- 1º Trimestre -->
+                    <td class="<?= ($medias_trimestrais[1][$id_disciplina] < 10) ? 'nota-baixa' : '0' ?>">
+                        <?= number_format($medias_trimestrais[1][$id_disciplina] ?? 0.0, 1) ?>
+                    </td>
+                    
+                    <!-- 2º Trimestre -->
+                    <td class="<?= ($medias_trimestrais[2][$id_disciplina] < 10) ? 'nota-baixa' : '0' ?>">
+                        <?= number_format($medias_trimestrais[2][$id_disciplina] ?? 0.0, 1) ?>
+                    </td>
+                    
+                    <!-- 3º Trimestre -->
+                    <td class="<?= ($medias_trimestrais[3][$id_disciplina] < 10) ? 'nota-baixa' : '0' ?>">
+                        <?= number_format($medias_trimestrais[3][$id_disciplina] ?? 0.0, 1) ?>
+                    </td>
+                    
+                    <!-- Média Final da Disciplina -->
+                    <td class="<?= $classe_media_final ?>">
+                        <?= $media_final ?>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
+                
+                <!-- Média Geral -->
                 <tr class="media-final">
-                    <td colspan="4" style="text-align: right;">MÉDIA GERAL:</td>
-                    <td><?= $media_geral ?></td>
+                    <td colspan="4" style="text-align: right; font-weight: bold;">MÉDIA GERAL:</td>
+                    <td style="font-weight: bold;"><?= number_format($media_geral, 1) ?></td>
                 </tr>
+                
+                <!-- Situação Final -->
                 <tr>
-                    <td colspan="4" style="text-align: right;">SITUAÇÃO FINAL:</td>
-                    <td class="<?= strtolower($situacao_final) ?>"><?= $situacao_final ?></td>
+                    <td colspan="4" style="text-align: right; font-weight: bold;">SITUAÇÃO FINAL:</td>
+                    <td class="situacao-<?= strtolower($situacao_final) ?>">
+                        <?= $situacao_final ?>
+                    </td>
                 </tr>
             </tbody>
         </table>
