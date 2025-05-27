@@ -81,8 +81,8 @@ foreach ($professores as $professor) {
     // Materiais de apoio recentes
     $sql_materiais = "SELECT ma.nome, ma.data_upload 
                      FROM materiais_apoio ma
-                     WHERE ma.id_disciplina IN (
-                         SELECT id_disciplina FROM professor_tem_disciplina WHERE professor_id_professor = ?
+                     WHERE ma.disciplina_id IN (
+                         SELECT disciplina_id_disciplina FROM professor_tem_disciplina WHERE professor_id_professor = ?
                      )
                      ORDER BY ma.data_upload DESC
                      LIMIT 3";

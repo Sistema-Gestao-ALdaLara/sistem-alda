@@ -66,7 +66,8 @@
                                         </div>
                                     </div>
                                     <div class="form-group form-primary">
-                                        <input type="text" name="email" class="form-control" required="" placeholder="Insira Seu Email">
+                                        <input type="text" name="email" id="email" class="form-control" required="" placeholder="Insira Seu Email">
+                                        <span id="emailError" style="color: red; display: none;">Email inválido</span>
                                         <span class="form-bar"></span>
                                     </div>
                                     <div class="form-group form-primary">
@@ -112,7 +113,27 @@
         </div>
         <!-- end of container-fluid -->
     </section>
-    
+        <script>
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        
+        emailInput.addEventListener('input', function() {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (regex.test(this.value)) {
+            emailError.style.display = 'none';
+            } else {
+            emailError.style.display = 'inline';
+            }
+        });
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!regex.test(emailInput.value)) {
+            e.preventDefault();
+            emailError.style.display = 'inline';
+            }
+        });
+    </script>
     <?php require_once '../includes/common/js_imports.php'; ?>
 </body>
 

@@ -44,13 +44,13 @@ if (!$professor) {
 }
 
 // Obter disciplinas ministradas pelo professor
-$sql_disciplinas = "SELECT d.id_disciplina, d.nome, d.classe, 
+$sql_disciplinas = "SELECT d.id_disciplina, d.nome, 
                    (SELECT COUNT(*) FROM nota WHERE disciplina_id_disciplina = d.id_disciplina) as total_avaliacoes,
                    (SELECT AVG(nota) FROM nota WHERE disciplina_id_disciplina = d.id_disciplina) as media_notas
                    FROM disciplina d
                    JOIN professor_tem_disciplina pd ON d.id_disciplina = pd.disciplina_id_disciplina
                    WHERE pd.professor_id_professor = ?
-                   ORDER BY d.classe, d.nome";
+                   ORDER BY  d.nome";
 $stmt = $conn->prepare($sql_disciplinas);
 $stmt->bind_param("i", $professor_id);
 $stmt->execute();
@@ -88,7 +88,7 @@ $aulas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $sql_materiais = "SELECT ma.id_material, ma.nome, ma.descricao, ma.data_upload,
                  d.nome as disciplina_nome
                  FROM materiais_apoio ma
-                 JOIN disciplina d ON ma.id_disciplina = d.id_disciplina
+                 JOIN disciplina d ON ma.disciplina_id = d.id_disciplina
                  JOIN professor_tem_disciplina pd ON d.id_disciplina = pd.disciplina_id_disciplina
                  WHERE pd.professor_id_professor = ?
                  ORDER BY ma.data_upload DESC
@@ -239,7 +239,6 @@ $title = "Detalhes do Professor - " . htmlspecialchars($professor['nome']);
                                                                             <thead>
                                                                                 <tr>
                                                                                     <th>Disciplina</th>
-                                                                                    <th>Classe</th>
                                                                                     <th>Avaliações</th>
                                                                                     <th>Média</th>
                                                                                 </tr>
@@ -248,7 +247,6 @@ $title = "Detalhes do Professor - " . htmlspecialchars($professor['nome']);
                                                                                 <?php foreach ($disciplinas as $disciplina): ?>
                                                                                     <tr>
                                                                                         <td><?= htmlspecialchars($disciplina['nome']) ?></td>
-                                                                                        <td><?= htmlspecialchars($disciplina['classe']) ?></td>
                                                                                         <td><?= $disciplina['total_avaliacoes'] ?></td>
                                                                                         <td class="<?= $disciplina['media_notas'] < 10 ? 'text-danger' : 'text-success' ?>">
                                                                                             <?= $disciplina['media_notas'] ? number_format($disciplina['media_notas'], 2) : '-' ?>

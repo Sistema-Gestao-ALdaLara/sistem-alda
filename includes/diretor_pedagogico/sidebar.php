@@ -51,6 +51,20 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </ul>
             </li>
 
+            <li class="pcoded-hasmenu <?= (in_array($current_page, ['secretaria.php'])) ? 'active pcoded-trigger' : '' ?>">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                    <span class="pcoded-mtext">Secretaria</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="<?= ($current_page == 'professor.php') ? 'active' : '' ?>">
+                        <a href="../compartilhados/secretaria.php">
+                            <span class="pcoded-mtext">Registro de Secretarias</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <!-- 3. RELATÓRIOS E DOCUMENTOS -->
             <div class="pcoded-navigatio-lavel">Relatórios e Documentos</div>
             
