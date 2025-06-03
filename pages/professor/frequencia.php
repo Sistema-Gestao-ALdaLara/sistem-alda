@@ -542,7 +542,7 @@
                                                                                 <span class="badge <?= $badge_class ?>"><?= $presenca_text ?></span>
                                                                             </td>
                                                                             <td><?= htmlspecialchars($freq['observacao'] ?? '-') ?></td>
-                                                                            <td>
+                                                                            <td><!--remover -->
                                                                                 <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia_aluno'] ?>">
                                                                                     <i class="feather icon-trash-2"></i>
                                                                                 </button>
