@@ -141,8 +141,8 @@ $title = "Aluno";
                                                                             <div class="card-body text-center">
                                                                                 <div class="disciplina-info">
                                                                                     <?php 
-                                                                                    $fotos = explode(', ', $disciplina['fotos_perfil']);
-                                                                                    $primeiraFoto = !empty($fotos[0]) ? $fotos[0] : 'libraries/assets/images/avatar-2.jpg';
+                                                                                    #$fotos = explode(', ', $disciplina['fotos_perfil']);
+                                                                                    $primeiraFoto = '../../public/libraries/assets/images/avatar-2.jpg';
                                                                                     ?>
                                                                                     <img src="<?= htmlspecialchars($primeiraFoto) ?>" 
                                                                                          alt="Professor" class="professor-img mb-3">

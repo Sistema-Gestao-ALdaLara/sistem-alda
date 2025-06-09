@@ -112,7 +112,7 @@
                                                 <div class="card user-card">
                                                     <div class="card-block text-center">
                                                         <div class="user-image">
-                                                            <img src="<?php echo $dados_aluno['foto_perfil'] ? '../../uploads/alunos/'.$dados_aluno['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                            <img src="../../public/libraries/assets/images/avatar-4.jpg" 
                                                                 class="img-radius" id="profile-pic" width="100" height="100" alt="Foto do Aluno">
                                                         </div>
                                                         <h4 class="m-t-15 text-uppercase"><?php echo htmlspecialchars($dados_aluno['nome'] ?? $_SESSION['nome_usuario']); ?></h4>

@@ -114,7 +114,7 @@
                                                 <div class="card user-card">
                                                     <div class="card-block text-center">
                                                         <div class="user-image">
-                                                            <img src="<?php echo $dados_aluno['foto_perfil'] ? '../../uploads/alunos/'.$dados_aluno['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                            <img src="../../public/libraries/assets/images/avatar-4.jpg" 
                                                                 class="img-radius" width="100" height="100" alt="Foto do Aluno">
                                                         </div>
                                                         <h4 class="m-t-15 text-uppercase"><?php echo htmlspecialchars($dados_aluno['nome'] ?? $_SESSION['nome_usuario']); ?></h4>
@@ -177,9 +177,9 @@
                                                     </div>
                                                     <div class="card-block">
                                                         <?php if ($coordenador): ?>
-                                                            <div class="row align-items-center">
+                                                            <div class="row align-items-center"> 
                                                                 <div class="col-auto">
-                                                                    <img src="<?php echo $coordenador['foto_perfil'] ? '../../uploads/professores/'.$coordenador['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                                    <img src="../../public/libraries/assets/images/avatar-5.jpg" 
                                                                         class="img-radius" width="80" height="80" alt="Foto do Coordenador">
                                                                 </div>
                                                                 <div class="col">
@@ -225,7 +225,7 @@
                                                                             <tr>
                                                                                 <td>
                                                                                     <div class="d-flex align-items-center">
-                                                                                        <img src="<?php echo $professor['foto_perfil'] ? '../../uploads/professores/'.$professor['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                                                        <img src="../../public/libraries/assets/images/avatar-3.jpg" 
                                                                                             class="img-radius" width="40" height="40" alt="Foto do Professor">
                                                                                         <div class="ml-3">
                                                                                             <h6 class="m-b-0"><?php echo htmlspecialchars($professor['nome']); ?></h6>
@@ -269,7 +269,7 @@
                                                                             <div class="card-block">
                                                                                 <div class="row align-items-center">
                                                                                     <div class="col-auto">
-                                                                                        <img src="<?php echo $secretario['foto_perfil'] ? '../../uploads/secretaria/'.$secretario['foto_perfil'] : '../../public/libraries/assets/images/avatar-4.jpg'; ?>" 
+                                                                                        <img src="../../public/libraries/assets/images/avatar-2.jpg" 
                                                                                             class="img-radius" width="60" height="60" alt="Foto da Secretaria">
                                                                                     </div>
                                                                                     <div class="col">
