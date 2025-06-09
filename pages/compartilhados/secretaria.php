@@ -6,9 +6,6 @@ require_once '../../database/conexao.php';
 
 $tipo = $_SESSION['tipo_usuario'];
 
-// Verificar se o usuário atual pode registrar outras secretarias
-$podeRegistrar = in_array($_SESSION['tipo_usuario'], ['diretor_geral', 'diretor_pedagogico']);
-
 // Obter lista de secretarias
 $query = "SELECT 
              s.id_secretaria,
@@ -30,18 +27,17 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
 
 <!DOCTYPE html>
 <html lang="pt">
-
+<head>
     <?php require_once '../../includes/common/head.php'; ?>
     <?php require_once '../../includes/common/css_imports.php'; ?>
-
-
+    <title>Gestão de Secretarias</title>
+</head>
 <body>
     <?php require_once '../../includes/common/preloader.php'; ?>
 
     <div id="pcoded" class="pcoded">
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
-
             <?php require_once "../../includes/$tipo/navbar.php"; ?>
 
             <div class="pcoded-main-container">
@@ -64,12 +60,12 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                                                     </div>
                                                     <div class="card-block">
                                                         <div class="table-responsive">
-                                                            <table class="table table-custom">
+                                                            <table class="table table-custom" id="tabelaSecretarias">
                                                                 <thead>
                                                                     <tr>
+                                                                        <th>Foto</th>
                                                                         <th>Nome</th>
                                                                         <th>Setor</th>
-                                                                        <th>BI</th>
                                                                         <th>Email</th>
                                                                         <th>Permissões</th>
                                                                         <th>Status</th>
@@ -87,17 +83,20 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                                                                     ?>
                                                                     <tr>
                                                                         <td>
+                                                                            <img src="<?= !empty($secretaria['foto_perfil']) ? '../../uploads/perfil/'.$secretaria['foto_perfil'] : '../../assets/images/user-default.png' ?>" 
+                                                                                 class="img-radius" width="40" height="40" alt="Foto de perfil">
+                                                                        </td>
+                                                                        <td>
                                                                             <?= htmlspecialchars($secretaria['nome']) ?>
                                                                             <?php if ($ehUsuarioAtual): ?>
                                                                             <span class="badge badge-info">Você</span>
                                                                             <?php endif; ?>
                                                                         </td>
                                                                         <td><?= htmlspecialchars($secretaria['setor']) ?></td>
-                                                                        <td><?= htmlspecialchars($secretaria['bi_numero']) ?></td>
                                                                         <td><?= htmlspecialchars($secretaria['email']) ?></td>
                                                                         <td>
                                                                             <?php if ($secretaria['pode_registrar']): ?>
-                                                                            <span class="badge badge-registrador">Pode registrar</span>
+                                                                            <span class="badge badge-primary">Pode registrar</span>
                                                                             <?php endif; ?>
                                                                         </td>
                                                                         <td>
@@ -135,7 +134,7 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                                                                 </button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <form id="formSecretaria" method="POST" action="../../actions/diretor_geral/salvar_secretaria.php">
+                                                                <form id="formSecretaria" method="POST" action="../../actions/diretor_geral/salvar_secretaria.php" enctype="multipart/form-data">
                                                                     <input type="hidden" id="secretariaId" name="secretariaId">
                                                                     <input type="hidden" id="usuarioId" name="usuarioId">
                                                                     
@@ -197,6 +196,12 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                                                                     </div>
                                                                     
                                                                     <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label for="foto_perfil">Foto de Perfil</label>
+                                                                                <input type="file" class="form-control" id="foto_perfil" name="foto_perfil" accept="image/*">
+                                                                            </div>
+                                                                        </div>
                                                                         <div class="col-md-6">
                                                                             <div class="form-group">
                                                                                 <div class="form-check">
@@ -286,7 +291,7 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
         function confirmarExclusao(id) {
             if(confirm('Tem certeza que deseja excluir esta secretaria?\nEsta ação não pode ser desfeita.')) {
                 $.ajax({
-                    url: '../../actions/secretaria/excluir_secretaria.php',
+                    url: '../../actions/diretor_geral/excluir_secretaria.php',
                     method: 'POST',
                     data: { id: id },
                     dataType: 'json',
@@ -299,7 +304,7 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                         }
                     },
                     error: function() {
-                        alert('Erro na comunicação com o servidor');
+                        alert('Erro na1 comunicação com o servidor');
                     }
                 });
             }
@@ -320,10 +325,14 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                 return false;
             }
             
+            var formData = new FormData(this);
+            
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,
+                contentType: false,
                 dataType: 'json',
                 success: function(response) {
                     if(response.success) {
@@ -334,7 +343,7 @@ $secretarias = $result->fetch_all(MYSQLI_ASSOC);
                     }
                 },
                 error: function() {
-                    alert('Erro na comunicaçnão com o servidor');
+                    alert('Erro na2 comunicação com o servidor');
                 }
             });
         });

@@ -290,10 +290,10 @@ $tipo = $_SESSION['tipo_usuario'];
                                                             </div>
                                                             
                                                             <div id="destinatariosSection" style="display: none;">
-                                                                <div class="form-group text-dark">
+                                                                <div class="form-group text-white">
                                                                     <label>Destinatários</label>
                                                                     
-                                                                    <ul class="nav nav-tabs" id="destinatariosTab" role="tablist">
+                                                                    <ul class="nav nav-tabs bg-primary" id="destinatariosTab" role="tablist">
                                                                         <?php if (!empty($turmas)): ?>
                                                                         <li class="nav-item">
                                                                             <a class="nav-link active" id="turmas-tab" data-toggle="tab" href="#turmas" role="tab">Turmas</a>

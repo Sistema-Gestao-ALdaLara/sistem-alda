@@ -18,7 +18,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <!-- 2. GESTÃO DE MATRÍCULAS -->
             <div class="pcoded-navigatio-lavel">Gestão de Matrículas</div>
             
-            <li class="<?= ($current_page == 'matricula.php' || $current_page == 'tranferencias.php') ? 'active pcoded-trigger' : '' ?>">
+            <li class="<?= ($current_page == 'matricular.php' || $current_page == 'tranferencias.php') ? 'active pcoded-trigger' : '' ?>">
                 <a href="../compartilhados/matricular.php">
                     <span class="pcoded-micon"><i class="feather icon-user-plus"></i></span>
                     <span class="pcoded-mtext">Processos de Matrícula</span>
@@ -80,7 +80,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <!-- 6. RELATÓRIOS -->
             <div class="pcoded-navigatio-lavel">Relatórios</div>
             
-            <li class="pcoded-hasmenu <?= ($current_page == 'visualizar_relatorio.php' || $current_page == 'relatorio.php') ? 'active pcoded-trigger' : '' ?>">
+            <li class="pcoded-hasmenu <?= (($current_page == 'visualizar_relatorio.php') || ($current_page == 'relatorios.php')) ? 'active pcoded-trigger' : '' ?>">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-printer"></i></span>
                     <span class="pcoded-mtext">Relatórios</span>
@@ -91,7 +91,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <span class="pcoded-mtext">Visualizar</span>
                         </a>
                     </li>
-                    <li class="<?= ($current_page == 'relatorio.php') ? 'active' : '' ?>">
+                    <li class="<?= ($current_page == 'relatorios.php') ? 'active' : '' ?>">
                         <a href="../compartilhados/relatorios.php">
                             <span class="pcoded-mtext">Gerar</span>
                         </a>

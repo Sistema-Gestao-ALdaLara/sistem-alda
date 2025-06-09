@@ -410,6 +410,31 @@ $tipo = $_SESSION['tipo_usuario'];
         <?php require_once '../../includes/common/js_imports.php'; ?>
 
         <script>
+            // Verificar comprovativo
+            document.getElementById('comprovativo').addEventListener('change', function() {
+                const file = this.files[0];
+                const feedback = this.nextElementSibling;
+                
+                if (!file && this.required) {
+                    feedback.textContent = 'Selecione um arquivo!';
+                    feedback.style.color = 'red';
+                    return;
+                }
+
+                if (file) {
+                    const validFormats = ['pdf', 'jpg', 'jpeg', 'png'];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    
+                    if (!validFormats.includes(ext)) {
+                        feedback.textContent = 'Formato inválido!';
+                        feedback.style.color = 'red';
+                    } else {
+                        feedback.textContent = 'Arquivo válido!';
+                        feedback.style.color = 'green';
+                    }
+                }
+            });
+
             // Carregar turmas quando um curso é selecionado
             $('#id_curso').change(function() {
                 const id_curso = $(this).val();

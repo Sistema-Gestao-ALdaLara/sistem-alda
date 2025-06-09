@@ -441,7 +441,7 @@
                                                                             <tr>
                                                                                 <td><?= $i + 1 ?></td>
                                                                                 <td class="text-center">
-                                                                                    <img src="../../public/uploads/perfil/<?= !empty($aluno['foto_perfil']) ? $aluno['foto_perfil'] : 'default.png' ?>" 
+                                                                                    <img src="../../uploads/perfil/default.png" 
                                                                                          class="img-radius img-40" alt="Foto">
                                                                                 </td>
                                                                                 <td><?= htmlspecialchars($aluno['nome']) ?></td>
@@ -508,7 +508,6 @@
                                                                     <th>Aluno</th>
                                                                     <th>Presença</th>
                                                                     <th>Observação</th>
-                                                                    <th>Ações</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -542,11 +541,6 @@
                                                                                 <span class="badge <?= $badge_class ?>"><?= $presenca_text ?></span>
                                                                             </td>
                                                                             <td><?= htmlspecialchars($freq['observacao'] ?? '-') ?></td>
-                                                                            <td><!--remover -->
-                                                                                <button class="btn btn-sm btn-danger btn-excluir" data-id="<?= $freq['id_frequencia_aluno'] ?>">
-                                                                                    <i class="feather icon-trash-2"></i>
-                                                                                </button>
-                                                                            </td>
                                                                         </tr>
                                                                     <?php endforeach; ?>
                                                                 <?php else: ?>
@@ -614,33 +608,6 @@
                     });
                 });
                 
-                // Excluir frequência
-                $('.btn-excluir').click(function() {
-                    const id = $(this).data('id_frequencia');
-                    const linha = $(this).closest('tr');
-                    
-                    if (confirm('Tem certeza que deseja excluir este registro de frequência?')) {
-                        $.ajax({
-                            url: '../../process/professor/excluir_frequencia.php',
-                            method: 'POST',
-                            data: { id_frequencia: id_frequencia },
-                            dataType: 'json',
-                            success: function(response) {
-                                if (response.success) {
-                                    linha.fadeOut(function() {
-                                        linha.remove();
-                                        alert('Registro de frequência excluído com sucesso!');
-                                    });
-                                } else {
-                                    alert('Erro: ' + response.message);
-                                }
-                            },
-                            error: function() {
-                                alert('Erro ao conectar com o servidor');
-                            }
-                        });
-                    }
-                });
                 
                 // Validação do formulário
                 $('#formLancarFrequencia').validate({

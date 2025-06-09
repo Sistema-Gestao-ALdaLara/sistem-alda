@@ -250,7 +250,7 @@ $title = "Ver Notas";
                                                         <?php elseif (isset($_GET['turma_id'])): ?>
                                                             <div class="alert alert-info">
                                                                 <i class="feather icon-info"></i> Nenhuma nota lançada para esta turma/disciplina.
-                                                                <a href="adicionar_nota.php?disciplina_id=<?= $disciplina_id ?>&classe=<?= $classe ?>&turma_id=<?= $_GET['turma_id'] ?>" 
+                                                                <a href="notas.php?disciplina_id=<?= $disciplina_id ?>&classe=<?= $classe ?>&turma_id=<?= $_GET['turma_id'] ?>" 
                                                                    class="btn btn-sm btn-primary ml-3">
                                                                     <i class="feather icon-plus"></i> Adicionar Nota
                                                                 </a>

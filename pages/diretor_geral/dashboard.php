@@ -88,10 +88,6 @@
                                 <div class="page-wrapper">
 
                                     <div class="page-body">
-                                        <div class="alert alert-info mb-4">
-                                            <strong>Informação:</strong> Alguns dados como "Movimentação de Alunos" não estão disponíveis na base de dados atual.
-                                        </div>
-                                        
                                         <div class="row">
                                             <!-- Total de Alunos Matriculados -->
                                             <a href="#" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
@@ -198,7 +194,7 @@
                                             </a>
                                             
                                             <!-- Movimentação de Alunos (dados não disponíveis) -->
-                                            <a href="#" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
+                                            <!-- <a href="#" class="col-xl-3 col-md-6 d-block text-decoration-none text-reset">
                                                 <div class="card bg-c-lite-green update-card">
                                                     <div class="card-block">
                                                         <div class="row align-items-end">
@@ -217,7 +213,7 @@
                                                         <p class="text-white m-b-0"><i class="feather icon-clock text-white f-14 m-r-10"></i>Dados não disponíveis</p>
                                                     </div>
                                                 </div>
-                                            </a>
+                                            </a>-->
                                         </div>
                                         
                                         <div class="row">
