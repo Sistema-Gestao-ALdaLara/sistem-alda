@@ -76,13 +76,6 @@
                                     </div>
                                     <div class="row m-t-25 text-left">
                                         <div class="col-12">
-                                            <div class="checkbox-fade fade-in-primary d-">
-                                                <label>
-                                                    <input type="checkbox" value="">
-                                                    <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
-                                                    <span class="text-inverse">Manter-me conectado</span>
-                                                </label>
-                                            </div>
                                             <div class="forgot-phone text-right f-right">
                                                 <a href="recuperacao/esqueci_senha.php" class="text-right f-w-600"> Esqueceu a senha?</a>
                                             </div>

@@ -62,9 +62,9 @@
                             
                             <div class="text-center p-t-20">
                                 <p><i class="icofont icofont-ui-contact-list"></i> Secretaria Escolar</p>
-                                <p><i class="icofont icofont-phone"></i> (XX) XXXX-XXXX</p>
+                                <p><i class="icofont icofont-phone"></i> (+244) XXX-XXX-XXX</p>
                                 <p><i class="icofont icofont-email"></i> secretaria@escola.com</p>
-                                <p><i class="icofont icofont-clock-time"></i> Seg-Sex: 7h30 às 17h</p>
+                                <p><i class="icofont icofont-clock-time"></i> Seg-Sex: 8h30 às 15h</p>
                             </div>
 
                             <div class="row m-t-30">
