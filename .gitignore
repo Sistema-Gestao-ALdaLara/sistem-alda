@@ -1,4 +1,5 @@
-/database/
-/uploads/
-/public/assets/images/perfil/
-/.env
+./database/
+./uploads/
+./public/assets/images/perfil/
+./.env
+.gitignore

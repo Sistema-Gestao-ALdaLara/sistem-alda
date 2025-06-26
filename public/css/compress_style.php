@@ -1,7 +1,7 @@
 <style>
     .bg-img {
         width: 100%;
-        height: auto;
+        min-height: 100vh;;
         background-image: url('../../public/img/bg.jpg');
         background-size: cover;
         background-position: center;

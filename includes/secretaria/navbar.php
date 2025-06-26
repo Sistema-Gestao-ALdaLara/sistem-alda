@@ -7,7 +7,7 @@
             <a class="mobile-menu" id="mobile-collapse" href="#!">
                 <i class="feather icon-menu"></i>
             </a>
-            <a href="../secretaria/dashboard.php">
+            <a href="#">
                 <img class="img-fluid" src="../../public/libraries/assets/images/logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">SECRETARIA</span>
             </a>
             <a class="mobile-options">

@@ -7,7 +7,7 @@
             <a class="mobile-menu" id="mobile-collapse" href="#!">
                 <i class="feather icon-menu"></i>
             </a>
-            <a href="../professor/dashboard.php">
+            <a href="#">
                 <img class="img-fluid" src="../../public/libraries/assets/images/logo.png" height="50px" width="50px" alt="Theme-Logo"> <span class="font-italic font-weight-bold text-uppercase text-warning text-center">PROFESSOR</span>
             </a>
             <a class="mobile-options">

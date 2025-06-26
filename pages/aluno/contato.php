@@ -140,7 +140,7 @@
                                                             </div>
                                                         </div>
                                                     </a>
-                                                    <a href="mensagens.php" class="col-6 col-md-4 d-block text-decoration-none text-reset">
+                                                    <a href="#" class="col-6 col-md-4 d-block text-decoration-none text-reset">
                                                         <div class="card bg-c-green">
                                                             <div class="card-block text-center">
                                                                 <i class="feather icon-message-square f-30 text-white"></i>

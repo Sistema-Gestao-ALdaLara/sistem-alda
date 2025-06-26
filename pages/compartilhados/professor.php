@@ -127,9 +127,9 @@ $cursos = $result_cursos->fetch_all(MYSQLI_ASSOC);
                                                             <button class="btn btn-primary mr-2" onclick="novoProfessor()" data-toggle="modal" data-target="#modalProfessor">
                                                                 <i class="feather icon-plus"></i> Novo Professor
                                                             </button>
-                                                            <button class="btn btn-info" onclick="exportarProfessores()">
+                                                            <!--<button class="btn btn-info" onclick="exportarProfessores()">
                                                                 <i class="feather icon-download"></i> Exportar
-                                                            </button>
+                                                            </button>-->
                                                         </div>
                                                     </div>
                                                     <div class="card-block">

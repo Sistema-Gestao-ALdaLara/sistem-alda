@@ -83,10 +83,10 @@ $cursos = $result->fetch_all(MYSQLI_ASSOC);
                                                                         <td><?= $index + 1 ?></td>
                                                                         <td><?= htmlspecialchars($curso['nome']) ?></td>
                                                                         <td class="action-buttons">
-                                                                            <!-- Botão Editar -->
+                                                                            <!-- Botão Editar 
                                                                             <button class="btn btn-warning btn-sm" onclick="editarCurso(<?= $curso['id_curso'] ?>)">
                                                                                 <i class="feather icon-edit"></i>
-                                                                            </button>
+                                                                            </button> -->
                                                                             
                                                                             <!-- Botão Excluir -->
                                                                             <button class="btn btn-danger btn-sm" onclick="confirmarExclusao(<?= $curso['id_curso'] ?>)">
